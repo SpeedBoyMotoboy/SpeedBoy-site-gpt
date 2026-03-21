@@ -9,7 +9,7 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
   --bg:#0a0a0a;--bg2:#111;--card:#181818;--card2:#1f1f1f;--border:#2a2a2a;
-  --accent:#f5c518;--accent2:#ff6b00;--green:#00e676;--red:#ff3d3d;
+  --accent:#f5c518;--accent2:#ff6b00;--green:#00e676;--red:#ff3d3d;--blue:#3b82f6;
   --text:#f0f0f0;--muted:#888;--radius:14px;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;overscroll-behavior:none;}
@@ -25,11 +25,14 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .screen.active{display:flex;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-/* HOME */
 .home-actions{display:flex;gap:10px;padding:16px 16px 8px;}
 .btn-add{flex:1;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:.5px;padding:14px 20px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s;}
 .btn-add:active{transform:scale(.97);}
 .btn-cfg{background:var(--card);border:none;color:var(--text);padding:14px 16px;border-radius:var(--radius);cursor:pointer;font-size:20px;}
+
+/* Botão de importar lote */
+.btn-import-bulk{width:calc(100% - 32px);margin:0 16px 8px;background:var(--card);border:1px dashed var(--blue);color:var(--blue);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;padding:12px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s;}
+.btn-import-bulk:active{background:var(--card2);}
 
 .stops-list{flex:1;overflow-y:auto;padding:8px 16px 100px;}
 .stop-card{background:var(--card);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;border:1px solid var(--border);transition:border-color .2s;}
@@ -47,7 +50,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .stop-actions{display:none;padding:0 14px 14px;flex-wrap:wrap;gap:8px;}
 .stop-card.expanded .stop-actions{display:flex;}
 
-/* Gemini: feedback visual melhorado nos botões */
 .btn-action{flex:1;min-width:calc(50% - 4px);padding:10px 8px;border-radius:10px;border:none;font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .1s;}
 .btn-action:active{transform:scale(0.95);filter:brightness(1.2);}
 .btn-wpp{background:#25d366;color:#fff;}
@@ -66,12 +68,11 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .empty-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--muted);}
 .empty-sub{font-size:14px;color:var(--muted);opacity:.6;max-width:240px;line-height:1.5;}
 
-/* ADD */
+/* ADD SCREEN */
 .add-screen{padding:16px;overflow-y:auto;}
 .screen-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;letter-spacing:.3px;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:10px;}
 .screen-title .back{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;}
 
-/* Gemini: container com botão limpar */
 .paste-container{position:relative;width:100%;}
 .paste-area{background:var(--card);border:2px dashed var(--border);border-radius:var(--radius);padding:16px;padding-right:40px;font-size:14px;color:var(--text);width:100%;min-height:110px;resize:none;font-family:'Barlow',sans-serif;line-height:1.5;transition:border-color .2s;outline:none;}
 .paste-area:focus{border-color:var(--accent);}
@@ -93,19 +94,42 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .btn-save{width:100%;margin-top:8px;background:var(--green);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;}
 .btn-save:active{transform:scale(.98);}
 
+/* BULK IMPORT SCREEN */
+.bulk-screen{padding:16px;overflow-y:auto;}
+.bulk-info{background:var(--card);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--muted);line-height:1.7;border-left:3px solid var(--blue);margin-bottom:16px;}
+.bulk-info strong{color:var(--text);}
+.bulk-info code{background:var(--card2);padding:2px 6px;border-radius:4px;font-size:12px;color:var(--accent);}
+.btn-download-template{width:100%;background:var(--blue);color:#fff;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;padding:13px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;}
+.btn-download-template:active{opacity:.8;}
+
+.upload-zone{border:2px dashed var(--blue);border-radius:var(--radius);padding:32px 20px;text-align:center;cursor:pointer;transition:background .2s;margin-bottom:16px;position:relative;}
+.upload-zone:hover,.upload-zone.drag{background:rgba(59,130,246,.08);border-color:#60a5fa;}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:36px;margin-bottom:8px;}
+.upload-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:var(--text);margin-bottom:4px;}
+.upload-sub{font-size:13px;color:var(--muted);}
+
+.preview-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;}
+.preview-table th{background:var(--card2);color:var(--muted);padding:8px 10px;text-align:left;font-weight:600;letter-spacing:.5px;}
+.preview-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);}
+.preview-table tr:last-child td{border-bottom:none;}
+.preview-table .ok{color:var(--green);}
+.preview-table .warn{color:var(--accent);}
+.preview-count{font-size:13px;color:var(--muted);margin-bottom:12px;}
+.preview-count strong{color:var(--text);}
+.btn-confirm-bulk{width:100%;background:var(--green);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;}
+
 /* CONFIG */
 .config-screen{padding:16px;overflow-y:auto;}
 .config-section{margin-bottom:24px;}
 .config-section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
 .api-info{background:var(--card);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--muted);line-height:1.6;border-left:3px solid var(--green);margin-bottom:10px;}
-/* Gemini: aviso de segurança */
 .api-warn{border-left:3px solid var(--red);color:#e0e0e0;margin-top:0;margin-bottom:14px;}
 .api-link{color:var(--accent);text-decoration:none;}
 .btn-cfg-save{width:100%;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;margin-top:8px;}
-/* Gemini: botão GPS */
 .btn-location{background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:4px;}
 
-/* MODAL */
+/* MODAL CIRCUIT */
 .circuit-modal{position:fixed;inset:0;background:rgba(10,10,10,.9);display:flex;align-items:flex-end;justify-content:center;z-index:250;backdrop-filter:blur(4px);}
 .circuit-modal.hidden{display:none;}
 .circuit-sheet{background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;animation:slideUp .3s ease;}
@@ -146,19 +170,20 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   <div id="badgeCount" class="badge-count">0/10</div>
 </div>
 
-<!-- HOME -->
+<!-- ═══ HOME ═══ -->
 <div class="screen active" id="homeScreen">
   <div class="home-actions">
     <button class="btn-add" onclick="goTo('addScreen')"><span style="font-size:20px">+</span> Adicionar parada</button>
     <button class="btn-cfg" onclick="goTo('configScreen')">⚙️</button>
   </div>
+  <button class="btn-import-bulk" onclick="goTo('bulkScreen')">📂 Importar lista da loja</button>
   <div class="stops-list" id="stopsList"></div>
   <div class="export-bar">
     <button class="btn-export" id="exportBtn" onclick="exportCSV()">📤 Exportar pro Circuit</button>
   </div>
 </div>
 
-<!-- ADD -->
+<!-- ═══ ADD ═══ -->
 <div class="screen" id="addScreen">
   <div class="add-screen">
     <div class="screen-title">
@@ -184,23 +209,59 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     </div>
     <div class="field-group">
       <div class="field-label">Complemento / Ponto de referência</div>
-      <input class="field-input" id="fComplement" placeholder="Ex: Apto 302, portão azul" />
+      <input class="field-input" id="fComplement" placeholder="Ex: Casa amarela, portão preto" />
     </div>
     <div class="field-group">
       <div class="field-label">Telefone (WhatsApp)</div>
-      <!-- Gemini: máscara de telefone em tempo real -->
       <input class="field-input" id="fPhone" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" />
     </div>
     <div class="field-group">
       <div class="field-label">Observações</div>
-      <input class="field-input" id="fNotes" placeholder="Ex: Entregar após 18h" />
+      <input class="field-input" id="fNotes" placeholder="Ex: Cuidado com o cachorro" />
     </div>
     <input type="hidden" id="editIndex" value="-1">
     <button class="btn-save" onclick="saveStop()">✅ Salvar parada</button>
   </div>
 </div>
 
-<!-- CONFIG -->
+<!-- ═══ BULK IMPORT ═══ -->
+<div class="screen" id="bulkScreen">
+  <div class="bulk-screen">
+    <div class="screen-title">
+      <button class="back" onclick="goTo('homeScreen')">←</button>
+      Importar lista da loja
+    </div>
+
+    <div class="bulk-info">
+      <strong>Como funciona:</strong><br>
+      A loja preenche uma planilha CSV com os clientes do dia e te manda o arquivo. Você sobe aqui e todas as paradas são adicionadas de uma vez.<br><br>
+      <strong>Colunas obrigatórias:</strong><br>
+      <code>nome</code> · <code>endereco</code> · <code>complemento</code> · <code>telefone</code> · <code>observacao</code><br><br>
+      Baixe o modelo abaixo e mande pra loja preencher 👇
+    </div>
+
+    <button class="btn-download-template" onclick="downloadTemplate()">
+      ⬇️ Baixar planilha modelo (CSV)
+    </button>
+
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" accept=".csv" id="csvFileInput" onchange="handleFileUpload(this.files[0])" />
+      <div class="upload-icon">📂</div>
+      <div class="upload-title">Toque para selecionar o arquivo</div>
+      <div class="upload-sub">Arquivo .csv preenchido pela loja</div>
+    </div>
+
+    <div id="previewArea" style="display:none;">
+      <div class="preview-count" id="previewCount"></div>
+      <div style="overflow-x:auto;">
+        <table class="preview-table" id="previewTable"></table>
+      </div>
+      <button class="btn-confirm-bulk" onclick="confirmBulkImport()">✅ Adicionar todas as paradas</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CONFIG ═══ -->
 <div class="screen" id="configScreen">
   <div class="config-screen">
     <div class="screen-title">
@@ -208,7 +269,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       Configurações
     </div>
     <div class="config-section">
-      <!-- Gemini: botão GPS -->
       <div class="config-section-title">
         🏪 Endereço de origem
         <button class="btn-location" onclick="getGPSLocation()">📍 Usar GPS</button>
@@ -221,7 +281,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <div class="config-section">
       <div class="config-section-title">💬 Mensagem padrão WhatsApp</div>
       <div class="field-group">
-        <!-- Gemini: suporte a {nome} na mensagem -->
         <div class="field-label">Mensagem (use {nome} para o nome do cliente)</div>
         <input class="field-input" id="cfgWppMsg" placeholder="Olá {nome}! Estou a caminho com sua entrega 🚀" />
       </div>
@@ -232,7 +291,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
         O app funciona <strong style="color:var(--green)">100% grátis</strong> sem API Key!<br><br>
         A chave só é usada como reforço em mensagens muito desformatadas. <a class="api-link" href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
       </div>
-      <!-- Gemini: aviso de segurança -->
       <div class="api-info api-warn">
         ⚠️ Nunca compartilhe o link ou seu celular com a chave inserida aqui.
       </div>
@@ -254,21 +312,21 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 <script>
 let stops = JSON.parse(localStorage.getItem('sb_stops') || '[]');
 let cfg   = JSON.parse(localStorage.getItem('sb_cfg')   || '{}');
+let bulkPreview = [];
 
-// ── Gemini: verifica se é um novo dia e oferece limpar a lista ──
+// ── Verifica novo dia ──
 function checkNewDay() {
   const lastDate = localStorage.getItem('sb_last_date');
   const today = new Date().toLocaleDateString('pt-BR');
   if (lastDate && lastDate !== today && stops.length > 0) {
     if (confirm('Você tem paradas salvas de ontem. Deseja limpar a lista para começar o dia zerado?')) {
-      stops = [];
-      save();
+      stops = []; save();
     }
   }
   localStorage.setItem('sb_last_date', today);
 }
 
-// ── Gemini: máscara de telefone ──
+// ── Máscara telefone ──
 function maskPhone(input) {
   let v = input.value.replace(/\D/g,'');
   if (v.length > 11) v = v.substring(0,11);
@@ -283,39 +341,37 @@ function clearPaste() {
 }
 
 // ══════════════════════════════════════
-//  PARSER LOCAL — 100% grátis
+//  PARSER LOCAL
 // ══════════════════════════════════════
 function smartParse(text) {
   const r = { name:'', address:'', complement:'', phone:'', notes:'' };
   const t = text;
 
-  // TELEFONE
   const telRx = /(?:tel(?:efone)?|fone|whatsapp|cel(?:ular)?|contato)[\s:.\-]*(\(?\d{2}\)?\s?\d{4,5}[\s\-]?\d{4})/i;
   const telFree = /\b(\(?\d{2}\)?\s?9\d{4}[\s\-]?\d{4})\b/;
   const tm = t.match(telRx) || t.match(telFree);
   if (tm) r.phone = tm[1].replace(/\D/g,'');
 
-  // NOME
   const nameRx = /(?:cliente|nome|destinat[aá]rio|para|comprador)[\s:.\-]+([A-ZÀ-Úa-zà-ú][^\n,]{2,40})/i;
   const nm = t.match(nameRx);
-  if (nm) {
-    r.name = nm[1].trim().replace(/\s+/g,' ');
-  } else {
+  if (nm) { r.name = nm[1].trim().replace(/\s+/g,' '); }
+  else {
     const cap = t.match(/(?:^|[\n,]\s*)([A-ZÀ-Ú][a-zà-ú]+(?: [A-ZÀ-Ú][a-zà-ú]+)+)/m);
     if (cap) r.name = cap[1].trim();
   }
 
-  // COMPLEMENTO
-  const compRx = /\b((?:apto?\.?|apartamento|bloco|sala|casa|lote|conj\.?|conjunto|andar|piso|unid(?:ade)?)[\s:.\-]*[\w\s\/]{1,30}?)(?=[,\n]|$)/i;
+  const compRx = /(?:complemento|comp\.?)[\s:.\-]*([^\n,]{2,60})/i;
   const cm = t.match(compRx);
-  if (cm) r.complement = cm[1].trim();
+  if (cm) { r.complement = cm[1].trim(); }
+  else {
+    const cm2 = t.match(/\b((?:apto?\.?|apartamento|bloco|sala|casa|lote|conj\.?|andar|piso|unid(?:ade)?)[\s:.\-]*[\w\s\/]{1,30}?)(?=[,\n]|$)/i);
+    if (cm2) r.complement = cm2[1].trim();
+  }
 
-  // OBSERVAÇÕES
-  const obsRx = /(?:obs(?:erva[çc][aã]o)?|obs\.|recado|aten[çc][aã]o|detalhe|instru[çc][aã]o)[\s:.\-]*(.+?)(?=\n|$)/i;
+  const obsRx = /(?:obs(?:erva[çc][aã]o)?|obs\.|recado|aten[çc][aã]o|detalhe)[\s:.\-]*(.+?)(?=\n|$)/i;
   const om = t.match(obsRx);
   if (om) r.notes = om[1].trim();
 
-  // ENDEREÇO
   const addrRx = /((?:rua|r\.|avenida|av\.?|alameda|al\.?|estrada|estr\.?|travessa|tv\.?|pra[çc]a|pc\.?|rodovia|rod\.?|largo|viela|beco|via)\s+[^\n]{5,80})/i;
   const am = t.match(addrRx);
   if (am) {
@@ -323,6 +379,7 @@ function smartParse(text) {
     const rest = t.slice(t.indexOf(am[1]) + am[1].length);
     const extra = rest.match(/^[^\n]{0,80}/)?.[0]?.trim();
     if (extra) addr += (addr.endsWith(',') ? ' ' : ', ') + extra.replace(/^,\s*/,'');
+    // Remove complemento do endereço
     if (r.complement) addr = addr.replace(new RegExp(r.complement.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),'');
     r.address = addr.replace(/,\s*,/g,',').replace(/\s+/g,' ').trim().replace(/,$/,'');
   } else {
@@ -336,17 +393,14 @@ function smartParse(text) {
 async function parseMessage() {
   const text = document.getElementById('pasteArea').value.trim();
   if (!text) { toast('Cole uma mensagem primeiro', 'error'); return; }
-
-  // Gemini: feedback visual no botão durante processamento
   const btn = document.getElementById('parseBtn');
   const orig = btn.innerHTML;
-  btn.innerHTML = '⏳ Processando...';
-  btn.disabled = true;
+  btn.innerHTML = '⏳ Processando...'; btn.disabled = true;
 
   let parsed;
   if (cfg.apiKey) {
     try { parsed = await parseWithAPI(text, cfg.apiKey); }
-    catch(e) { parsed = smartParse(text); toast('API indisponível, usando parser local', ''); }
+    catch(e) { parsed = smartParse(text); }
   } else {
     parsed = smartParse(text);
   }
@@ -355,17 +409,13 @@ async function parseMessage() {
   document.getElementById('fAddress').value    = parsed.address    || '';
   document.getElementById('fComplement').value = parsed.complement || '';
   document.getElementById('fNotes').value      = parsed.notes      || '';
-
-  // Gemini: aplica máscara no telefone ao preencher
-  const phoneInput = document.getElementById('fPhone');
-  phoneInput.value = parsed.phone || '';
-  if (parsed.phone) maskPhone(phoneInput);
+  const ph = document.getElementById('fPhone');
+  ph.value = parsed.phone || '';
+  if (parsed.phone) maskPhone(ph);
 
   const ok = [parsed.name, parsed.address].filter(Boolean).length >= 2;
-  toast(ok ? '✅ Dados extraídos! Revise e salve.' : '⚠️ Revise os campos — complete o que faltar', ok?'success':'');
-
-  btn.innerHTML = orig;
-  btn.disabled = false;
+  toast(ok ? '✅ Dados extraídos! Revise e salve.' : '⚠️ Revise os campos manualmente', ok?'success':'');
+  btn.innerHTML = orig; btn.disabled = false;
 }
 
 async function parseWithAPI(text, apiKey) {
@@ -374,7 +424,7 @@ async function parseWithAPI(text, apiKey) {
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body: JSON.stringify({
       model:'claude-sonnet-4-20250514', max_tokens:400,
-      system:'Extrai dados de mensagens de entrega. Responda APENAS JSON sem markdown: {"name":"","address":"","complement":"","phone":"","notes":""}. address deve incluir cidade e estado.',
+      system:'Extrai dados de mensagens de entrega. Responda APENAS JSON sem markdown: {"name":"","address":"","complement":"","phone":"","notes":""}. address deve incluir cidade e estado. NÃO inclua complemento no address.',
       messages:[{role:'user',content:`Extraia:\n\n${text}`}]
     })
   });
@@ -384,31 +434,199 @@ async function parseWithAPI(text, apiKey) {
 }
 
 // ══════════════════════════════════════
+//  BULK IMPORT — planilha da loja
+// ══════════════════════════════════════
+function downloadTemplate() {
+  const header = 'nome,endereco,complemento,telefone,observacao';
+  const ex1 = '"Pedro Santos","Avenida Central, 890, Morada de Laranjeiras, Serra - ES","Casa amarela com portão preto","27988887654","Cuidado com o cachorro"';
+  const ex2 = '"Maria Silva","Rua das Flores, 200, Centro, Vitória - ES","Apto 301","27977776543","Ligar antes de entregar"';
+  const content = '\uFEFF' + [header, ex1, ex2].join('\n');
+  const blob = new Blob([content], { type:'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'modelo_speedboy.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('📥 Modelo baixado!', 'success');
+}
+
+function handleFileUpload(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      let text = e.target.result;
+      // Remove BOM se presente
+      text = text.replace(/^\uFEFF/, '');
+      const rows = parseCSV(text);
+      if (rows.length < 2) { toast('Arquivo vazio ou inválido', 'error'); return; }
+
+      const headers = rows[0].map(h => h.toLowerCase().trim()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // remove acentos para comparar
+        .replace(/\s+/g,''));
+
+      // Mapeia colunas flexivelmente
+      const col = {
+        nome:        findCol(headers, ['nome','name','cliente','destinatario']),
+        endereco:    findCol(headers, ['endereco','address','endereço','end']),
+        complemento: findCol(headers, ['complemento','comp','complement','referencia']),
+        telefone:    findCol(headers, ['telefone','tel','phone','celular','whatsapp','fone']),
+        observacao:  findCol(headers, ['observacao','obs','notes','nota','observação'])
+      };
+
+      if (col.nome < 0 || col.endereco < 0) {
+        toast('Colunas "nome" e "endereco" são obrigatórias', 'error'); return;
+      }
+
+      bulkPreview = rows.slice(1).filter(r => r.some(c=>c.trim())).map(r => ({
+        name:       (r[col.nome]       || '').trim(),
+        address:    (r[col.endereco]   || '').trim(),
+        complement: col.complemento >= 0 ? (r[col.complemento] || '').trim() : '',
+        phone:      col.telefone   >= 0 ? (r[col.telefone]   || '').replace(/\D/g,'') : '',
+        notes:      col.observacao >= 0 ? (r[col.observacao]  || '').trim() : '',
+        done: false
+      })).filter(s => s.name && s.address);
+
+      if (!bulkPreview.length) { toast('Nenhuma linha válida encontrada', 'error'); return; }
+      showPreview();
+    } catch(err) {
+      toast('Erro ao ler arquivo: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function findCol(headers, candidates) {
+  for (const c of candidates) {
+    const idx = headers.findIndex(h => h.includes(c));
+    if (idx >= 0) return idx;
+  }
+  return -1;
+}
+
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.split(/\r?\n/);
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const row = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (ch === ',' && !inQ) {
+        row.push(cur); cur = '';
+      } else cur += ch;
+    }
+    row.push(cur);
+    rows.push(row);
+  }
+  return rows;
+}
+
+function showPreview() {
+  const area  = document.getElementById('previewArea');
+  const table = document.getElementById('previewTable');
+  const count = document.getElementById('previewCount');
+  const avail = 10 - stops.length;
+  const toAdd = Math.min(bulkPreview.length, avail);
+
+  count.innerHTML = `<strong>${bulkPreview.length}</strong> clientes encontrados · <strong style="color:var(--green)">${toAdd}</strong> serão adicionados ${avail < bulkPreview.length ? `<span style="color:var(--accent)">(limite 10 paradas)</span>` : ''}`;
+
+  table.innerHTML = `
+    <tr>
+      <th>#</th><th>Nome</th><th>Endereço</th><th>Tel</th>
+    </tr>
+    ${bulkPreview.slice(0, toAdd).map((s,i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td class="ok">${s.name}</td>
+        <td>${s.address.substring(0,30)}${s.address.length>30?'…':''}</td>
+        <td>${s.phone ? formatPhone(s.phone) : '<span style="color:var(--muted)">—</span>'}</td>
+      </tr>`).join('')}
+  `;
+  area.style.display = 'block';
+}
+
+function confirmBulkImport() {
+  const avail = 10 - stops.length;
+  const toAdd = bulkPreview.slice(0, avail);
+  if (!toAdd.length) { toast('Lista já está cheia (10/10)', 'error'); return; }
+  stops = stops.concat(toAdd);
+  save();
+  toast(`✅ ${toAdd.length} parada(s) adicionada(s)!`, 'success');
+  bulkPreview = [];
+  document.getElementById('previewArea').style.display = 'none';
+  document.getElementById('csvFileInput').value = '';
+  setTimeout(() => goTo('homeScreen'), 600);
+}
+
+// ══════════════════════════════════════
+//  EXPORTAR CSV — formato Circuit correto
+// ══════════════════════════════════════
+function exportCSV() {
+  if (!stops.length) { toast('Nenhuma parada para exportar', 'error'); return; }
+
+  const rows = [['Recipient name', 'Address', 'Notes', 'Phone', 'Order #']];
+
+  stops.forEach((s, i) => {
+    // ① Endereço: SÓ o endereço puro, sem complemento
+    const address = s.address.trim();
+
+    // ② Notes: complemento + observação separados por " | " se ambos existirem
+    const noteParts = [];
+    if (s.complement) noteParts.push(s.complement);
+    if (s.notes)      noteParts.push(s.notes);
+    const notes = noteParts.join(' | ');
+
+    rows.push([
+      csv(s.name),
+      csv(address),
+      csv(notes),
+      csv(s.phone || ''),
+      String(i + 1)
+    ]);
+  });
+
+  const today   = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+  const content = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
+  const blob    = new Blob([content], { type:'text/csv;charset=utf-8;' });
+  const a       = document.createElement('a');
+  a.href        = URL.createObjectURL(blob);
+  a.download    = `speedboy_rota_${today}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+  document.getElementById('circuitModal').classList.remove('hidden');
+}
+function csv(v) { return '"' + String(v||'').replace(/"/g,'""') + '"'; }
+function closeCircuitModal() { document.getElementById('circuitModal').classList.add('hidden'); }
+
+// ══════════════════════════════════════
 //  NAVEGAÇÃO
 // ══════════════════════════════════════
 function goTo(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  window.scrollTo(0, 0); // Gemini: volta pro topo ao trocar tela
+  window.scrollTo(0, 0);
   if (id === 'homeScreen')   renderList();
   if (id === 'configScreen') loadConfig();
   if (id === 'addScreen' && document.getElementById('editIndex').value === '-1') resetForm();
 }
 
 // ══════════════════════════════════════
-//  RENDER LISTA
+//  RENDER
 // ══════════════════════════════════════
 function renderList() {
   const list  = document.getElementById('stopsList');
   const badge = document.getElementById('badgeCount');
   const total = stops.length;
-  // Mantive X/10 — importante mostrar o limite do Circuit
   badge.textContent = total + '/10';
   badge.classList.toggle('full', total >= 10);
   document.getElementById('exportBtn').disabled = total === 0;
 
   if (!total) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Nenhuma parada ainda</div><div class="empty-sub">Toque em "+ Adicionar parada" pra começar o dia!</div></div>`;
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Nenhuma parada ainda</div><div class="empty-sub">Adicione clientes manualmente ou importe a lista da loja</div></div>`;
     return;
   }
   list.innerHTML = stops.map((s,i) => `
@@ -422,13 +640,13 @@ function renderList() {
         <div class="stop-status"></div>
       </div>
       <div class="stop-detail">
-        ${s.phone    ? `<div><strong>Tel.:</strong> ${formatPhone(s.phone)}</div>` : ''}
-        ${s.complement ? `<div><strong>Compl.:</strong> ${s.complement}</div>` : ''}
-        ${s.notes    ? `<div><strong>Obs.:</strong> ${s.notes}</div>` : ''}
+        ${s.phone      ? `<div><strong>Tel.:</strong> ${formatPhone(s.phone)}</div>` : ''}
+        ${s.complement ? `<div><strong>Ref.:</strong> ${s.complement}</div>` : ''}
+        ${s.notes      ? `<div><strong>Obs.:</strong> ${s.notes}</div>` : ''}
       </div>
       <div class="stop-actions" onclick="event.stopPropagation()">
         ${s.phone ? `<button class="btn-action btn-wpp" onclick="openWpp('${s.phone}','${escAttr(s.name)}')">💬 WhatsApp</button>` : ''}
-        <button class="btn-action btn-maps" onclick="openMaps('${escAttr(s.address+(s.complement?' '+s.complement:''))}')">🗺️ Navegar</button>
+        <button class="btn-action btn-maps" onclick="openMaps('${escAttr(s.address)}')">🗺️ Navegar</button>
         <button class="btn-action btn-done" onclick="toggleDone(${i})">${s.done?'↩️ Reabrir':'✅ Entregue'}</button>
         <button class="btn-action btn-edit" onclick="editStop(${i})">✏️ Editar</button>
         <button class="btn-action btn-del"  onclick="deleteStop(${i})">🗑️ Remover</button>
@@ -443,39 +661,32 @@ function toggleCard(i) {
 }
 
 // ══════════════════════════════════════
-//  AÇÕES NAS PARADAS
+//  AÇÕES
 // ══════════════════════════════════════
-function toggleDone(i)   { stops[i].done = !stops[i].done; save(); renderList(); }
-function deleteStop(i)   { if (!confirm(`Remover ${stops[i].name}?`)) return; stops.splice(i,1); save(); renderList(); }
+function toggleDone(i)  { stops[i].done = !stops[i].done; save(); renderList(); }
+function deleteStop(i)  { if (!confirm(`Remover ${stops[i].name}?`)) return; stops.splice(i,1); save(); renderList(); }
 
 function editStop(i) {
   const s = stops[i];
-  document.getElementById('editIndex').value   = i;
-  document.getElementById('addScreenTitle').textContent = 'Editar parada'; // Gemini
+  document.getElementById('editIndex').value            = i;
+  document.getElementById('addScreenTitle').textContent = 'Editar parada';
   document.getElementById('fName').value       = s.name       || '';
   document.getElementById('fAddress').value    = s.address    || '';
   document.getElementById('fComplement').value = s.complement || '';
   document.getElementById('fNotes').value      = s.notes      || '';
   const ph = document.getElementById('fPhone');
-  ph.value = s.phone || '';
-  if (s.phone) maskPhone(ph); // Gemini: formata ao editar
+  ph.value = s.phone || ''; if (s.phone) maskPhone(ph);
   goTo('addScreen');
 }
 
-// Mantive direções do Google Maps (melhor que só ?q= do Gemini)
 function openMaps(address) {
   window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`, '_blank');
 }
-
-// Gemini: suporte a {nome} na mensagem
 function openWpp(phone, name) {
-  const msg = (cfg.wppMsg || 'Olá! Estou a caminho com sua entrega 🚀').replace('{nome}', name);
+  const msg = (cfg.wppMsg || 'Olá {nome}! Estou a caminho com sua entrega 🚀').replace('{nome}', name);
   window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-// ══════════════════════════════════════
-//  SALVAR PARADA
-// ══════════════════════════════════════
 function saveStop() {
   const name    = document.getElementById('fName').value.trim();
   const address = document.getElementById('fAddress').value.trim();
@@ -485,7 +696,7 @@ function saveStop() {
   const stop = {
     name, address,
     complement: document.getElementById('fComplement').value.trim(),
-    phone:      document.getElementById('fPhone').value.replace(/\D/g,''), // salva só dígitos
+    phone:      document.getElementById('fPhone').value.replace(/\D/g,''),
     notes:      document.getElementById('fNotes').value.trim(),
     done: idx >= 0 ? stops[idx].done : false
   };
@@ -494,34 +705,6 @@ function saveStop() {
   toast(idx >= 0 ? 'Parada atualizada!' : '✅ Parada adicionada!', 'success');
   goTo('homeScreen');
 }
-
-// ══════════════════════════════════════
-//  EXPORTAR CSV — formato Circuit correto
-// ══════════════════════════════════════
-function exportCSV() {
-  if (!stops.length) { toast('Nenhuma parada para exportar', 'error'); return; }
-
-  // Colunas exatas que o Circuit espera
-  const rows = [['Recipient name','Address','Phone','Notes','Order #']];
-
-  stops.forEach((s,i) => {
-    const fullAddr = s.address + (s.complement ? ' - ' + s.complement : '');
-    rows.push([csv(s.name), csv(fullAddr), csv(s.phone||''), csv(s.notes||''), String(i+1)]);
-  });
-
-  // Gemini: BOM UTF-8 para melhor compatibilidade + data no nome do arquivo
-  const content = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
-  const blob = new Blob([content], { type:'text/csv;charset=utf-8;' });
-  const today = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `speedboy_rota_${today}.csv`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-
-  document.getElementById('circuitModal').classList.remove('hidden');
-}
-function csv(v) { return '"' + String(v||'').replace(/"/g,'""') + '"'; }
-function closeCircuitModal() { document.getElementById('circuitModal').classList.add('hidden'); }
 
 // ══════════════════════════════════════
 //  CONFIG
@@ -540,10 +723,9 @@ function saveConfig() {
   goTo('homeScreen');
 }
 
-// Gemini: GPS para endereço de origem
 function getGPSLocation() {
   const btn = document.querySelector('.btn-location');
-  if (!navigator.geolocation) { toast('GPS não suportado neste dispositivo', 'error'); return; }
+  if (!navigator.geolocation) { toast('GPS não suportado', 'error'); return; }
   btn.textContent = '⏳ ...';
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
@@ -554,7 +736,6 @@ function getGPSLocation() {
         toast('📍 Localização capturada!', 'success');
       } catch(e) {
         document.getElementById('cfgOrigin').value = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-        toast('📍 Coordenadas capturadas', 'success');
       }
       btn.textContent = '📍 Usar GPS';
     },
@@ -567,23 +748,18 @@ function clearAll() {
   stops = []; save(); renderList(); toast('🗑️ Lista limpa', 'success');
 }
 
-// ══════════════════════════════════════
-//  UTILS
-// ══════════════════════════════════════
+// ── utils ──
 function save() { localStorage.setItem('sb_stops', JSON.stringify(stops)); }
-
 function resetForm() {
   ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('editIndex').value = '-1';
   document.getElementById('addScreenTitle').textContent = 'Nova parada';
 }
-
 function formatPhone(p) {
   const d = p.replace(/\D/g,'');
   return d.length === 11 ? `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}` : p;
 }
-
-function escAttr(s) { return (s||'').replace(/'/g,"\\'"); }
+function escAttr(s) { return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
 let toastTimer;
 function toast(msg, type='') {
@@ -593,8 +769,7 @@ function toast(msg, type='') {
   toastTimer = setTimeout(() => t.className = 'toast', 3000);
 }
 
-// ── Init ──
-checkNewDay(); // Gemini: verifica novo dia
+checkNewDay();
 renderList();
 </script>
 </body>
