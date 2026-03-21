@@ -8,410 +8,240 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
-  --bg:#0a0a0a;
-  --bg2:#111111;
-  --card:#181818;
-  --card2:#1f1f1f;
-  --border:#2a2a2a;
-  --accent:#f5c518;
-  --accent2:#ff6b00;
-  --green:#00e676;
-  --red:#ff3d3d;
-  --text:#f0f0f0;
-  --muted:#888;
-  --radius:14px;
+  --bg:#0a0a0a;--bg2:#111;--card:#181818;--card2:#1f1f1f;--border:#2a2a2a;
+  --accent:#f5c518;--accent2:#ff6b00;--green:#00e676;--red:#ff3d3d;
+  --text:#f0f0f0;--muted:#888;--radius:14px;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;overscroll-behavior:none;}
 body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height:100vh;position:relative;}
 
-/* ── HEADER ── */
-.header{
-  background:var(--bg);
-  padding:18px 20px 14px;
-  display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid var(--border);
-  position:sticky;top:0;z-index:100;
-}
+.header{background:var(--bg);padding:18px 20px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
 .logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;letter-spacing:-1px;color:var(--accent);line-height:1;}
 .logo span{color:var(--text);}
-.badge-count{
-  background:var(--accent);color:#000;
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;
-  padding:3px 10px;border-radius:20px;letter-spacing:.5px;
-}
+.badge-count{background:var(--accent);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px;letter-spacing:.5px;}
 .badge-count.full{background:var(--red);color:#fff;}
 
-/* ── SCREENS ── */
-.screen{display:none;flex:1;flex-direction:column;animation:fadeIn .2s ease;}
+.screen{display:none;flex:1;flex-direction:column;animation:fadeIn .2s ease;padding-bottom:80px;}
 .screen.active{display:flex;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── HOME SCREEN ── */
+/* HOME */
 .home-actions{display:flex;gap:10px;padding:16px 16px 8px;}
-.btn-add{
-  flex:1;background:var(--accent);color:#000;border:none;
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;
-  letter-spacing:.5px;padding:14px 20px;border-radius:var(--radius);
-  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:transform .1s,opacity .1s;
-}
+.btn-add{flex:1;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:.5px;padding:14px 20px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s;}
 .btn-add:active{transform:scale(.97);}
-.btn-cfg{
-  background:var(--card);border:1px solid var(--border);color:var(--text);
-  padding:14px 16px;border-radius:var(--radius);border:none;cursor:pointer;
-  font-size:20px;transition:background .15s;
-}
-.btn-cfg:active{background:var(--card2);}
+.btn-cfg{background:var(--card);border:none;color:var(--text);padding:14px 16px;border-radius:var(--radius);cursor:pointer;font-size:20px;}
 
 .stops-list{flex:1;overflow-y:auto;padding:8px 16px 100px;}
-.stop-card{
-  background:var(--card);border-radius:var(--radius);
-  margin-bottom:10px;overflow:hidden;
-  border:1px solid var(--border);
-  transition:border-color .2s;
-  position:relative;
-}
+.stop-card{background:var(--card);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;border:1px solid var(--border);transition:border-color .2s;}
 .stop-card.done{opacity:.5;}
-.stop-card.done .stop-status{background:var(--green);}
-.stop-header{
-  display:flex;align-items:center;gap:12px;
-  padding:14px 14px 12px;cursor:pointer;
-}
-.stop-num{
-  font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;
-  color:var(--accent);min-width:28px;line-height:1;
-}
+.stop-header{display:flex;align-items:center;gap:12px;padding:14px 14px 12px;cursor:pointer;}
+.stop-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:var(--accent);min-width:28px;line-height:1;}
 .stop-info{flex:1;min-width:0;}
 .stop-name{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .stop-addr{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
 .stop-status{width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0;}
-
-.stop-actions{
-  display:none;padding:0 14px 14px;
-  display:flex;gap:8px;flex-wrap:wrap;
-}
-.stop-card:not(.expanded) .stop-actions{display:none;}
-.stop-card.expanded .stop-actions{display:flex;}
+.stop-card.done .stop-status{background:var(--green);}
+.stop-detail{padding:0 14px 14px;font-size:13px;color:var(--muted);line-height:1.7;display:none;}
+.stop-card.expanded .stop-detail{display:block;}
 .stop-card.expanded{border-color:var(--accent);}
+.stop-actions{display:none;padding:0 14px 14px;flex-wrap:wrap;gap:8px;}
+.stop-card.expanded .stop-actions{display:flex;}
 
-.btn-action{
-  flex:1;min-width:calc(50% - 4px);
-  padding:10px 8px;border-radius:10px;border:none;
-  font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
-  transition:opacity .1s;
-}
-.btn-action:active{opacity:.75;}
+/* Gemini: feedback visual melhorado nos botões */
+.btn-action{flex:1;min-width:calc(50% - 4px);padding:10px 8px;border-radius:10px;border:none;font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .1s;}
+.btn-action:active{transform:scale(0.95);filter:brightness(1.2);}
 .btn-wpp{background:#25d366;color:#fff;}
 .btn-maps{background:#4285f4;color:#fff;}
 .btn-done{background:var(--card2);color:var(--green);border:1px solid var(--green);}
 .btn-del{background:var(--card2);color:var(--red);border:1px solid var(--red);}
 .btn-edit{background:var(--card2);color:var(--accent);border:1px solid var(--accent);}
 
-.stop-detail{padding:0 14px 14px;font-size:13px;color:var(--muted);line-height:1.7;display:none;}
-.stop-card.expanded .stop-detail{display:block;}
-.stop-detail strong{color:var(--text);font-weight:500;}
-
-/* ── EXPORT BAR ── */
-.export-bar{
-  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;
-  background:linear-gradient(to top,var(--bg) 70%,transparent);
-  padding:16px;z-index:99;
-}
-.btn-export{
-  width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));
-  color:#000;border:none;border-radius:var(--radius);
-  font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;
-  letter-spacing:.5px;padding:16px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  transition:transform .1s;box-shadow:0 4px 20px rgba(245,197,24,.25);
-}
+.export-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:linear-gradient(to top,var(--bg) 70%,transparent);padding:16px;z-index:99;}
+.btn-export{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#000;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:.5px;padding:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .1s;box-shadow:0 4px 20px rgba(245,197,24,.25);}
 .btn-export:active{transform:scale(.98);}
-.btn-export:disabled{opacity:.4;cursor:not-allowed;}
+.btn-export:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
 
-/* ── EMPTY STATE ── */
-.empty{
-  flex:1;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:40px 30px;gap:12px;text-align:center;
-}
-.empty-icon{font-size:64px;line-height:1;}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;gap:12px;text-align:center;}
+.empty-icon{font-size:64px;}
 .empty-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--muted);}
 .empty-sub{font-size:14px;color:var(--muted);opacity:.6;max-width:240px;line-height:1.5;}
 
-/* ── ADD SCREEN ── */
-.add-screen{padding:16px;}
-.screen-title{
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;
-  letter-spacing:.3px;margin-bottom:16px;color:var(--text);
-  display:flex;align-items:center;gap:10px;
-}
+/* ADD */
+.add-screen{padding:16px;overflow-y:auto;}
+.screen-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;letter-spacing:.3px;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:10px;}
 .screen-title .back{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;}
 
-.paste-area{
-  background:var(--card);border:2px dashed var(--border);
-  border-radius:var(--radius);padding:16px;
-  font-size:14px;color:var(--text);width:100%;min-height:120px;
-  resize:none;font-family:'Barlow',sans-serif;line-height:1.5;
-  transition:border-color .2s;
-  outline:none;
-}
+/* Gemini: container com botão limpar */
+.paste-container{position:relative;width:100%;}
+.paste-area{background:var(--card);border:2px dashed var(--border);border-radius:var(--radius);padding:16px;padding-right:40px;font-size:14px;color:var(--text);width:100%;min-height:110px;resize:none;font-family:'Barlow',sans-serif;line-height:1.5;transition:border-color .2s;outline:none;}
 .paste-area:focus{border-color:var(--accent);}
 .paste-area::placeholder{color:var(--muted);}
+.btn-clear-paste{position:absolute;top:10px;right:10px;background:var(--card2);border:none;color:var(--muted);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;}
 
-.btn-parse{
-  width:100%;margin-top:12px;
-  background:var(--accent);color:#000;border:none;
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;
-  padding:14px;border-radius:var(--radius);cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:transform .1s;
-}
+.btn-parse{width:100%;margin-top:12px;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s;}
 .btn-parse:active{transform:scale(.98);}
-.btn-parse:disabled{opacity:.5;cursor:not-allowed;}
+.free-badge{display:inline-block;background:#1a2a1a;border:1px solid var(--green);color:var(--green);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;}
 
-.divider{
-  display:flex;align-items:center;gap:12px;margin:20px 0 16px;
-  color:var(--muted);font-size:12px;font-weight:600;letter-spacing:1px;
-}
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0 16px;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:1px;}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
 
 .field-group{margin-bottom:14px;}
 .field-label{font-size:11px;font-weight:600;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
-.field-input{
-  width:100%;background:var(--card);border:1px solid var(--border);
-  color:var(--text);border-radius:10px;padding:12px 14px;
-  font-size:15px;font-family:'Barlow',sans-serif;outline:none;
-  transition:border-color .2s;
-}
+.field-input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 14px;font-size:15px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;}
 .field-input:focus{border-color:var(--accent);}
 .field-input::placeholder{color:var(--muted);}
-
-.btn-save{
-  width:100%;margin-top:8px;
-  background:var(--green);color:#000;border:none;
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;
-  padding:14px;border-radius:var(--radius);cursor:pointer;
-  transition:transform .1s;
-}
+.btn-save{width:100%;margin-top:8px;background:var(--green);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;}
 .btn-save:active{transform:scale(.98);}
 
-/* ── CONFIG SCREEN ── */
-.config-screen{padding:16px;overflow-y:auto;padding-bottom:80px;}
+/* CONFIG */
+.config-screen{padding:16px;overflow-y:auto;}
 .config-section{margin-bottom:24px;}
-.config-section-title{
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;
-  letter-spacing:1px;text-transform:uppercase;color:var(--accent);
-  margin-bottom:12px;
-}
-
-.api-info{
-  background:var(--card);border-radius:var(--radius);
-  padding:14px;font-size:13px;color:var(--muted);line-height:1.6;
-  border-left:3px solid var(--accent);margin-bottom:14px;
-}
+.config-section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.api-info{background:var(--card);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--muted);line-height:1.6;border-left:3px solid var(--green);margin-bottom:10px;}
+/* Gemini: aviso de segurança */
+.api-warn{border-left:3px solid var(--red);color:#e0e0e0;margin-top:0;margin-bottom:14px;}
 .api-link{color:var(--accent);text-decoration:none;}
+.btn-cfg-save{width:100%;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;margin-top:8px;}
+/* Gemini: botão GPS */
+.btn-location{background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:4px;}
 
-.btn-cfg-save{
-  width:100%;background:var(--accent);color:#000;border:none;
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;
-  padding:14px;border-radius:var(--radius);cursor:pointer;margin-top:8px;
-}
+/* MODAL */
+.circuit-modal{position:fixed;inset:0;background:rgba(10,10,10,.9);display:flex;align-items:flex-end;justify-content:center;z-index:250;backdrop-filter:blur(4px);}
+.circuit-modal.hidden{display:none;}
+.circuit-sheet{background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;animation:slideUp .3s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.circuit-sheet h2{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;color:var(--green);margin-bottom:6px;}
+.circuit-sheet p{font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+.circuit-steps{list-style:none;margin-bottom:24px;}
+.circuit-steps li{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;font-size:14px;line-height:1.5;}
+.step-num{background:var(--accent);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.btn-close-modal{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;padding:14px;border-radius:var(--radius);cursor:pointer;}
 
-/* ── LOADING ── */
-.loading-overlay{
-  position:fixed;inset:0;background:rgba(10,10,10,.85);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  z-index:200;gap:16px;backdrop-filter:blur(4px);
-}
-.loading-overlay.hidden{display:none;}
-.spinner{
-  width:44px;height:44px;border:3px solid var(--border);
-  border-top-color:var(--accent);border-radius:50%;
-  animation:spin .7s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loading-text{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;color:var(--accent);}
-
-/* ── TOAST ── */
-.toast{
-  position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);
-  background:var(--card2);border:1px solid var(--border);
-  color:var(--text);padding:10px 20px;border-radius:30px;
-  font-size:14px;font-weight:600;z-index:300;
-  opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;
-}
+/* TOAST */
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:30px;font-size:14px;font-weight:600;z-index:300;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.success{border-color:var(--green);color:var(--green);}
 .toast.error{border-color:var(--red);color:var(--red);}
-
-/* ── CIRCUIT INSTRUCTIONS ── */
-.circuit-modal{
-  position:fixed;inset:0;background:rgba(10,10,10,.9);
-  display:flex;align-items:flex-end;justify-content:center;
-  z-index:250;backdrop-filter:blur(4px);
-}
-.circuit-modal.hidden{display:none;}
-.circuit-sheet{
-  background:var(--card);border-radius:20px 20px 0 0;
-  padding:24px 20px 40px;width:100%;max-width:480px;
-  animation:slideUp .3s ease;
-}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.circuit-sheet h2{
-  font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;
-  color:var(--green);margin-bottom:6px;
-}
-.circuit-sheet p{font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
-.circuit-steps{list-style:none;margin-bottom:24px;}
-.circuit-steps li{
-  display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;
-  font-size:14px;line-height:1.5;
-}
-.step-num{
-  background:var(--accent);color:#000;
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;
-  width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;
-}
-.btn-close-modal{
-  width:100%;background:var(--card2);color:var(--text);border:1px solid var(--border);
-  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;
-  padding:14px;border-radius:var(--radius);cursor:pointer;
-}
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
-<div class="loading-overlay hidden" id="loadingOverlay">
-  <div class="spinner"></div>
-  <div class="loading-text">IA processando...</div>
-</div>
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- CIRCUIT MODAL -->
 <div class="circuit-modal hidden" id="circuitModal">
   <div class="circuit-sheet">
     <h2>✅ CSV exportado!</h2>
-    <p>Agora importe no <strong>Circuit Route Planner</strong> em 3 passos simples:</p>
+    <p>Importe no <strong>Circuit Route Planner</strong> em 3 passos:</p>
     <ul class="circuit-steps">
-      <li><span class="step-num">1</span><span>Abra o app <strong>Circuit</strong> no celular ou no navegador (circuit.so)</span></li>
+      <li><span class="step-num">1</span><span>Abra o app <strong>Circuit</strong> ou acesse circuit.so</span></li>
       <li><span class="step-num">2</span><span>Toque em <strong>"+"</strong> → <strong>"Import stops"</strong> → <strong>"CSV file"</strong></span></li>
-      <li><span class="step-num">3</span><span>Selecione o arquivo <strong>speedboy_rota.csv</strong> baixado. Pronto! 🚀</span></li>
+      <li><span class="step-num">3</span><span>Selecione o arquivo baixado. Pronto! 🚀</span></li>
     </ul>
     <button class="btn-close-modal" onclick="closeCircuitModal()">Entendido!</button>
   </div>
 </div>
 
-<!-- HEADER -->
 <div class="header">
   <div class="logo">SPEED<span>BOY</span></div>
   <div id="badgeCount" class="badge-count">0/10</div>
 </div>
 
-<!-- ═══ HOME SCREEN ═══ -->
+<!-- HOME -->
 <div class="screen active" id="homeScreen">
   <div class="home-actions">
-    <button class="btn-add" onclick="goTo('addScreen')">
-      <span style="font-size:20px">+</span> Adicionar parada
-    </button>
-    <button class="btn-cfg" onclick="goTo('configScreen')" title="Configurações">⚙️</button>
+    <button class="btn-add" onclick="goTo('addScreen')"><span style="font-size:20px">+</span> Adicionar parada</button>
+    <button class="btn-cfg" onclick="goTo('configScreen')">⚙️</button>
   </div>
-
   <div class="stops-list" id="stopsList"></div>
-
   <div class="export-bar">
-    <button class="btn-export" id="exportBtn" onclick="exportCSV()">
-      <span>📤</span> Exportar pro Circuit
-    </button>
+    <button class="btn-export" id="exportBtn" onclick="exportCSV()">📤 Exportar pro Circuit</button>
   </div>
 </div>
 
-<!-- ═══ ADD SCREEN ═══ -->
+<!-- ADD -->
 <div class="screen" id="addScreen">
-  <div class="add-screen" style="overflow-y:auto;padding-bottom:30px;">
+  <div class="add-screen">
     <div class="screen-title">
       <button class="back" onclick="goTo('homeScreen')">←</button>
-      Nova parada
+      <span id="addScreenTitle">Nova parada</span>
     </div>
-
     <div class="field-label">Cole a mensagem do WhatsApp</div>
-    <textarea class="paste-area" id="pasteArea"
-      placeholder="Ex: Cliente: João Silva, End: Rua das Flores 123, Bairro Centro - São Paulo/SP, Complemento: Apto 4, Tel: 11999990000, Obs: Entregar após 18h"></textarea>
+    <div class="paste-container">
+      <textarea class="paste-area" id="pasteArea" placeholder="Cole aqui a mensagem com os dados do cliente..."></textarea>
+      <button class="btn-clear-paste" onclick="clearPaste()" title="Limpar">✕</button>
+    </div>
     <button class="btn-parse" id="parseBtn" onclick="parseMessage()">
-      <span>🤖</span> Processar com IA
+      🤖 Processar automaticamente <span class="free-badge">GRÁTIS</span>
     </button>
-
     <div class="divider">ou preencha manualmente</div>
-
     <div class="field-group">
       <div class="field-label">Nome do cliente *</div>
       <input class="field-input" id="fName" placeholder="Ex: João Silva" />
     </div>
     <div class="field-group">
       <div class="field-label">Endereço completo *</div>
-      <input class="field-input" id="fAddress" placeholder="Ex: Rua das Flores 123, Centro, São Paulo/SP" />
+      <input class="field-input" id="fAddress" placeholder="Ex: Av. Central 1200, Morada de Laranjeiras, Serra/ES" />
     </div>
     <div class="field-group">
       <div class="field-label">Complemento / Ponto de referência</div>
-      <input class="field-input" id="fComplement" placeholder="Ex: Apto 4, portão azul" />
+      <input class="field-input" id="fComplement" placeholder="Ex: Apto 302, portão azul" />
     </div>
     <div class="field-group">
       <div class="field-label">Telefone (WhatsApp)</div>
-      <input class="field-input" id="fPhone" placeholder="Ex: 11999990000" type="tel" />
+      <!-- Gemini: máscara de telefone em tempo real -->
+      <input class="field-input" id="fPhone" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" />
     </div>
     <div class="field-group">
       <div class="field-label">Observações</div>
       <input class="field-input" id="fNotes" placeholder="Ex: Entregar após 18h" />
     </div>
-
     <input type="hidden" id="editIndex" value="-1">
     <button class="btn-save" onclick="saveStop()">✅ Salvar parada</button>
   </div>
 </div>
 
-<!-- ═══ CONFIG SCREEN ═══ -->
+<!-- CONFIG -->
 <div class="screen" id="configScreen">
   <div class="config-screen">
     <div class="screen-title">
       <button class="back" onclick="goTo('homeScreen')">←</button>
       Configurações
     </div>
-
     <div class="config-section">
-      <div class="config-section-title">🏪 Endereço de origem</div>
+      <!-- Gemini: botão GPS -->
+      <div class="config-section-title">
+        🏪 Endereço de origem
+        <button class="btn-location" onclick="getGPSLocation()">📍 Usar GPS</button>
+      </div>
       <div class="field-group">
-        <div class="field-label">Endereço da sua loja / ponto de partida</div>
+        <div class="field-label">Endereço da loja / ponto de partida</div>
         <input class="field-input" id="cfgOrigin" placeholder="Ex: Rua da Loja 500, São Paulo/SP" />
       </div>
     </div>
-
-    <div class="config-section">
-      <div class="config-section-title">🤖 API Key (Claude AI)</div>
-      <div class="api-info">
-        Para usar o processamento automático com IA, você precisa de uma chave gratuita da Anthropic.<br><br>
-        👉 <a class="api-link" href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → crie uma conta → API Keys → Create Key<br><br>
-        Cole a chave abaixo. Ela fica salva só no seu celular.
-      </div>
-      <div class="field-group">
-        <div class="field-label">Sua API Key</div>
-        <input class="field-input" id="cfgApiKey" placeholder="sk-ant-..." type="password" />
-      </div>
-    </div>
-
     <div class="config-section">
       <div class="config-section-title">💬 Mensagem padrão WhatsApp</div>
       <div class="field-group">
-        <div class="field-label">Mensagem enviada ao cliente</div>
-        <input class="field-input" id="cfgWppMsg" placeholder="Ex: Olá! Estou a caminho com sua entrega 🚀" />
+        <!-- Gemini: suporte a {nome} na mensagem -->
+        <div class="field-label">Mensagem (use {nome} para o nome do cliente)</div>
+        <input class="field-input" id="cfgWppMsg" placeholder="Olá {nome}! Estou a caminho com sua entrega 🚀" />
       </div>
     </div>
-
+    <div class="config-section">
+      <div class="config-section-title">🤖 API Key (opcional)</div>
+      <div class="api-info">
+        O app funciona <strong style="color:var(--green)">100% grátis</strong> sem API Key!<br><br>
+        A chave só é usada como reforço em mensagens muito desformatadas. <a class="api-link" href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+      </div>
+      <!-- Gemini: aviso de segurança -->
+      <div class="api-info api-warn">
+        ⚠️ Nunca compartilhe o link ou seu celular com a chave inserida aqui.
+      </div>
+      <div class="field-group">
+        <div class="field-label">API Key Anthropic (opcional)</div>
+        <input class="field-input" id="cfgApiKey" placeholder="sk-ant-... (opcional)" type="password" />
+      </div>
+    </div>
     <button class="btn-cfg-save" onclick="saveConfig()">💾 Salvar configurações</button>
-
     <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
       <div class="config-section-title" style="color:var(--red);">⚠️ Zona de perigo</div>
       <button onclick="clearAll()" style="width:100%;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:var(--radius);padding:12px;font-family:'Barlow',sans-serif;font-weight:600;font-size:14px;cursor:pointer;">
@@ -422,274 +252,349 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 </div>
 
 <script>
-// ══════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════
 let stops = JSON.parse(localStorage.getItem('sb_stops') || '[]');
-let cfg = JSON.parse(localStorage.getItem('sb_cfg') || '{}');
+let cfg   = JSON.parse(localStorage.getItem('sb_cfg')   || '{}');
 
-// ══════════════════════════════════════
-//  NAVIGATION
-// ══════════════════════════════════════
-function goTo(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  if(id==='homeScreen') renderList();
-  if(id==='configScreen') loadConfig();
-  if(id==='addScreen') resetForm();
+// ── Gemini: verifica se é um novo dia e oferece limpar a lista ──
+function checkNewDay() {
+  const lastDate = localStorage.getItem('sb_last_date');
+  const today = new Date().toLocaleDateString('pt-BR');
+  if (lastDate && lastDate !== today && stops.length > 0) {
+    if (confirm('Você tem paradas salvas de ontem. Deseja limpar a lista para começar o dia zerado?')) {
+      stops = [];
+      save();
+    }
+  }
+  localStorage.setItem('sb_last_date', today);
+}
+
+// ── Gemini: máscara de telefone ──
+function maskPhone(input) {
+  let v = input.value.replace(/\D/g,'');
+  if (v.length > 11) v = v.substring(0,11);
+  if (v.length > 7)      v = `(${v.substring(0,2)}) ${v.substring(2,7)}-${v.substring(7)}`;
+  else if (v.length > 2) v = `(${v.substring(0,2)}) ${v.substring(2)}`;
+  input.value = v;
+}
+
+function clearPaste() {
+  document.getElementById('pasteArea').value = '';
+  document.getElementById('pasteArea').focus();
 }
 
 // ══════════════════════════════════════
-//  RENDER LIST
+//  PARSER LOCAL — 100% grátis
 // ══════════════════════════════════════
-function renderList(){
-  const list = document.getElementById('stopsList');
-  const badge = document.getElementById('badgeCount');
-  const exportBtn = document.getElementById('exportBtn');
-  const total = stops.length;
+function smartParse(text) {
+  const r = { name:'', address:'', complement:'', phone:'', notes:'' };
+  const t = text;
 
-  badge.textContent = total+'/10';
-  badge.classList.toggle('full', total>=10);
-  exportBtn.disabled = total===0;
+  // TELEFONE
+  const telRx = /(?:tel(?:efone)?|fone|whatsapp|cel(?:ular)?|contato)[\s:.\-]*(\(?\d{2}\)?\s?\d{4,5}[\s\-]?\d{4})/i;
+  const telFree = /\b(\(?\d{2}\)?\s?9\d{4}[\s\-]?\d{4})\b/;
+  const tm = t.match(telRx) || t.match(telFree);
+  if (tm) r.phone = tm[1].replace(/\D/g,'');
 
-  if(total===0){
-    list.innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">📦</div>
-        <div class="empty-title">Nenhuma parada ainda</div>
-        <div class="empty-sub">Toque em "+ Adicionar parada" pra começar o dia!</div>
-      </div>`;
-    return;
+  // NOME
+  const nameRx = /(?:cliente|nome|destinat[aá]rio|para|comprador)[\s:.\-]+([A-ZÀ-Úa-zà-ú][^\n,]{2,40})/i;
+  const nm = t.match(nameRx);
+  if (nm) {
+    r.name = nm[1].trim().replace(/\s+/g,' ');
+  } else {
+    const cap = t.match(/(?:^|[\n,]\s*)([A-ZÀ-Ú][a-zà-ú]+(?: [A-ZÀ-Ú][a-zà-ú]+)+)/m);
+    if (cap) r.name = cap[1].trim();
   }
 
-  list.innerHTML = stops.map((s,i)=>{
-    const done = s.done ? 'done' : '';
-    const complement = s.complement ? `<div><strong>Compl.:</strong> ${s.complement}</div>` : '';
-    const notes = s.notes ? `<div><strong>Obs.:</strong> ${s.notes}</div>` : '';
-    const phone = s.phone ? `<div><strong>Tel.:</strong> ${formatPhone(s.phone)}</div>` : '';
-    return `
-    <div class="stop-card ${done}" id="card${i}" onclick="toggleCard(${i})">
+  // COMPLEMENTO
+  const compRx = /\b((?:apto?\.?|apartamento|bloco|sala|casa|lote|conj\.?|conjunto|andar|piso|unid(?:ade)?)[\s:.\-]*[\w\s\/]{1,30}?)(?=[,\n]|$)/i;
+  const cm = t.match(compRx);
+  if (cm) r.complement = cm[1].trim();
+
+  // OBSERVAÇÕES
+  const obsRx = /(?:obs(?:erva[çc][aã]o)?|obs\.|recado|aten[çc][aã]o|detalhe|instru[çc][aã]o)[\s:.\-]*(.+?)(?=\n|$)/i;
+  const om = t.match(obsRx);
+  if (om) r.notes = om[1].trim();
+
+  // ENDEREÇO
+  const addrRx = /((?:rua|r\.|avenida|av\.?|alameda|al\.?|estrada|estr\.?|travessa|tv\.?|pra[çc]a|pc\.?|rodovia|rod\.?|largo|viela|beco|via)\s+[^\n]{5,80})/i;
+  const am = t.match(addrRx);
+  if (am) {
+    let addr = am[1].trim();
+    const rest = t.slice(t.indexOf(am[1]) + am[1].length);
+    const extra = rest.match(/^[^\n]{0,80}/)?.[0]?.trim();
+    if (extra) addr += (addr.endsWith(',') ? ' ' : ', ') + extra.replace(/^,\s*/,'');
+    if (r.complement) addr = addr.replace(new RegExp(r.complement.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),'');
+    r.address = addr.replace(/,\s*,/g,',').replace(/\s+/g,' ').trim().replace(/,$/,'');
+  } else {
+    const lines = t.split(/\n/).map(l=>l.trim()).filter(l=>l.length>6);
+    const ln = lines.find(l => /\d{2,}/.test(l));
+    if (ln) r.address = ln;
+  }
+  return r;
+}
+
+async function parseMessage() {
+  const text = document.getElementById('pasteArea').value.trim();
+  if (!text) { toast('Cole uma mensagem primeiro', 'error'); return; }
+
+  // Gemini: feedback visual no botão durante processamento
+  const btn = document.getElementById('parseBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '⏳ Processando...';
+  btn.disabled = true;
+
+  let parsed;
+  if (cfg.apiKey) {
+    try { parsed = await parseWithAPI(text, cfg.apiKey); }
+    catch(e) { parsed = smartParse(text); toast('API indisponível, usando parser local', ''); }
+  } else {
+    parsed = smartParse(text);
+  }
+
+  document.getElementById('fName').value       = parsed.name       || '';
+  document.getElementById('fAddress').value    = parsed.address    || '';
+  document.getElementById('fComplement').value = parsed.complement || '';
+  document.getElementById('fNotes').value      = parsed.notes      || '';
+
+  // Gemini: aplica máscara no telefone ao preencher
+  const phoneInput = document.getElementById('fPhone');
+  phoneInput.value = parsed.phone || '';
+  if (parsed.phone) maskPhone(phoneInput);
+
+  const ok = [parsed.name, parsed.address].filter(Boolean).length >= 2;
+  toast(ok ? '✅ Dados extraídos! Revise e salve.' : '⚠️ Revise os campos — complete o que faltar', ok?'success':'');
+
+  btn.innerHTML = orig;
+  btn.disabled = false;
+}
+
+async function parseWithAPI(text, apiKey) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514', max_tokens:400,
+      system:'Extrai dados de mensagens de entrega. Responda APENAS JSON sem markdown: {"name":"","address":"","complement":"","phone":"","notes":""}. address deve incluir cidade e estado.',
+      messages:[{role:'user',content:`Extraia:\n\n${text}`}]
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return JSON.parse(data.content[0].text.trim());
+}
+
+// ══════════════════════════════════════
+//  NAVEGAÇÃO
+// ══════════════════════════════════════
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0); // Gemini: volta pro topo ao trocar tela
+  if (id === 'homeScreen')   renderList();
+  if (id === 'configScreen') loadConfig();
+  if (id === 'addScreen' && document.getElementById('editIndex').value === '-1') resetForm();
+}
+
+// ══════════════════════════════════════
+//  RENDER LISTA
+// ══════════════════════════════════════
+function renderList() {
+  const list  = document.getElementById('stopsList');
+  const badge = document.getElementById('badgeCount');
+  const total = stops.length;
+  // Mantive X/10 — importante mostrar o limite do Circuit
+  badge.textContent = total + '/10';
+  badge.classList.toggle('full', total >= 10);
+  document.getElementById('exportBtn').disabled = total === 0;
+
+  if (!total) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Nenhuma parada ainda</div><div class="empty-sub">Toque em "+ Adicionar parada" pra começar o dia!</div></div>`;
+    return;
+  }
+  list.innerHTML = stops.map((s,i) => `
+    <div class="stop-card ${s.done?'done':''}" id="card${i}" onclick="toggleCard(${i})">
       <div class="stop-header">
         <div class="stop-num">${i+1}</div>
         <div class="stop-info">
-          <div class="stop-name">${s.name}</div>
-          <div class="stop-addr">${s.address}</div>
+          <div class="stop-name">${s.name||'Sem nome'}</div>
+          <div class="stop-addr">${s.address||'Sem endereço'}</div>
         </div>
         <div class="stop-status"></div>
       </div>
       <div class="stop-detail">
-        ${phone}
-        ${complement}
-        ${notes}
+        ${s.phone    ? `<div><strong>Tel.:</strong> ${formatPhone(s.phone)}</div>` : ''}
+        ${s.complement ? `<div><strong>Compl.:</strong> ${s.complement}</div>` : ''}
+        ${s.notes    ? `<div><strong>Obs.:</strong> ${s.notes}</div>` : ''}
       </div>
       <div class="stop-actions" onclick="event.stopPropagation()">
-        ${s.phone ? `<button class="btn-action btn-wpp" onclick="openWhatsapp(${i})">💬 WhatsApp</button>` : ''}
-        <button class="btn-action btn-maps" onclick="openMaps(${i})">🗺️ Navegar</button>
-        <button class="btn-action btn-done" onclick="toggleDone(${i})">
-          ${s.done ? '↩️ Reabrir' : '✅ Entregue'}
-        </button>
+        ${s.phone ? `<button class="btn-action btn-wpp" onclick="openWpp('${s.phone}','${escAttr(s.name)}')">💬 WhatsApp</button>` : ''}
+        <button class="btn-action btn-maps" onclick="openMaps('${escAttr(s.address+(s.complement?' '+s.complement:''))}')">🗺️ Navegar</button>
+        <button class="btn-action btn-done" onclick="toggleDone(${i})">${s.done?'↩️ Reabrir':'✅ Entregue'}</button>
         <button class="btn-action btn-edit" onclick="editStop(${i})">✏️ Editar</button>
-        <button class="btn-action btn-del" onclick="deleteStop(${i})">🗑️ Remover</button>
+        <button class="btn-action btn-del"  onclick="deleteStop(${i})">🗑️ Remover</button>
       </div>
-    </div>`;
-  }).join('');
+    </div>`).join('');
 }
 
-function toggleCard(i){
-  const card = document.getElementById('card'+i);
-  const wasExpanded = card.classList.contains('expanded');
-  document.querySelectorAll('.stop-card').forEach(c=>c.classList.remove('expanded'));
-  if(!wasExpanded) card.classList.add('expanded');
+function toggleCard(i) {
+  const c = document.getElementById('card'+i), was = c.classList.contains('expanded');
+  document.querySelectorAll('.stop-card').forEach(x => x.classList.remove('expanded'));
+  if (!was) c.classList.add('expanded');
 }
 
 // ══════════════════════════════════════
-//  STOP ACTIONS
+//  AÇÕES NAS PARADAS
 // ══════════════════════════════════════
-function toggleDone(i){
-  stops[i].done = !stops[i].done;
-  save(); renderList();
-}
+function toggleDone(i)   { stops[i].done = !stops[i].done; save(); renderList(); }
+function deleteStop(i)   { if (!confirm(`Remover ${stops[i].name}?`)) return; stops.splice(i,1); save(); renderList(); }
 
-function deleteStop(i){
-  if(!confirm(`Remover ${stops[i].name}?`)) return;
-  stops.splice(i,1); save(); renderList();
-}
-
-function editStop(i){
+function editStop(i) {
   const s = stops[i];
-  document.getElementById('editIndex').value = i;
-  document.getElementById('fName').value = s.name||'';
-  document.getElementById('fAddress').value = s.address||'';
-  document.getElementById('fComplement').value = s.complement||'';
-  document.getElementById('fPhone').value = s.phone||'';
-  document.getElementById('fNotes').value = s.notes||'';
+  document.getElementById('editIndex').value   = i;
+  document.getElementById('addScreenTitle').textContent = 'Editar parada'; // Gemini
+  document.getElementById('fName').value       = s.name       || '';
+  document.getElementById('fAddress').value    = s.address    || '';
+  document.getElementById('fComplement').value = s.complement || '';
+  document.getElementById('fNotes').value      = s.notes      || '';
+  const ph = document.getElementById('fPhone');
+  ph.value = s.phone || '';
+  if (s.phone) maskPhone(ph); // Gemini: formata ao editar
   goTo('addScreen');
 }
 
-function openWhatsapp(i){
-  const s = stops[i];
-  const phone = s.phone.replace(/\D/g,'');
-  const msg = cfg.wppMsg || 'Olá! Estou a caminho com sua entrega 🚀';
-  const url = `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`;
-  window.open(url,'_blank');
+// Mantive direções do Google Maps (melhor que só ?q= do Gemini)
+function openMaps(address) {
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`, '_blank');
 }
 
-function openMaps(i){
-  const s = stops[i];
-  const addr = encodeURIComponent(s.address + (s.complement ? ', '+s.complement : ''));
-  window.open(`https://www.google.com/maps/dir/?api=1&destination=${addr}`,'_blank');
+// Gemini: suporte a {nome} na mensagem
+function openWpp(phone, name) {
+  const msg = (cfg.wppMsg || 'Olá! Estou a caminho com sua entrega 🚀').replace('{nome}', name);
+  window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 // ══════════════════════════════════════
-//  AI PARSE
+//  SALVAR PARADA
 // ══════════════════════════════════════
-async function parseMessage(){
-  const text = document.getElementById('pasteArea').value.trim();
-  if(!text){ toast('Cole uma mensagem primeiro','error'); return; }
-  const apiKey = cfg.apiKey;
-  if(!apiKey){ toast('Configure sua API Key primeiro ⚙️','error'); goTo('configScreen'); return; }
-
-  setLoading(true);
-  try{
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:500,
-        system:`Você extrai dados de mensagens de pedido/entrega. Responda APENAS com JSON válido, sem markdown, sem texto extra.
-Formato: {"name":"","address":"","complement":"","phone":"","notes":""}
-- name: nome completo do cliente
-- address: endereço completo com rua, número, bairro, cidade e estado (ex: Rua X 123, Centro, São Paulo/SP). INCLUA SEMPRE cidade e estado.
-- complement: apartamento, bloco, ponto de referência, etc
-- phone: apenas dígitos do número (DDD + número)
-- notes: observações de entrega`,
-        messages:[{role:'user',content:`Extraia os dados desta mensagem:\n\n${text}`}]
-      })
-    });
-    const data = await res.json();
-    if(data.error){ throw new Error(data.error.message); }
-    const raw = data.content[0].text.trim();
-    const parsed = JSON.parse(raw);
-    document.getElementById('fName').value = parsed.name||'';
-    document.getElementById('fAddress').value = parsed.address||'';
-    document.getElementById('fComplement').value = parsed.complement||'';
-    document.getElementById('fPhone').value = parsed.phone||'';
-    document.getElementById('fNotes').value = parsed.notes||'';
-    toast('✅ Dados extraídos com sucesso!','success');
-  }catch(e){
-    toast('Erro ao processar: '+e.message,'error');
-  }finally{
-    setLoading(false);
-  }
-}
-
-// ══════════════════════════════════════
-//  SAVE STOP
-// ══════════════════════════════════════
-function saveStop(){
-  const name = document.getElementById('fName').value.trim();
+function saveStop() {
+  const name    = document.getElementById('fName').value.trim();
   const address = document.getElementById('fAddress').value.trim();
-  if(!name||!address){ toast('Nome e endereço são obrigatórios','error'); return; }
-  if(stops.length>=10 && document.getElementById('editIndex').value==='-1'){
-    toast('Limite de 10 paradas atingido!','error'); return;
-  }
+  if (!name || !address) { toast('Nome e endereço são obrigatórios!', 'error'); return; }
+  const idx = parseInt(document.getElementById('editIndex').value);
+  if (stops.length >= 10 && idx < 0) { toast('Limite de 10 paradas atingido!', 'error'); return; }
   const stop = {
     name, address,
     complement: document.getElementById('fComplement').value.trim(),
-    phone: document.getElementById('fPhone').value.trim(),
-    notes: document.getElementById('fNotes').value.trim(),
-    done: false
+    phone:      document.getElementById('fPhone').value.replace(/\D/g,''), // salva só dígitos
+    notes:      document.getElementById('fNotes').value.trim(),
+    done: idx >= 0 ? stops[idx].done : false
   };
-  const idx = parseInt(document.getElementById('editIndex').value);
-  if(idx>=0){ stop.done = stops[idx].done; stops[idx]=stop; }
-  else stops.push(stop);
-  save(); toast('✅ Parada salva!','success');
-  setTimeout(()=>goTo('homeScreen'),500);
+  if (idx >= 0) stops[idx] = stop; else stops.push(stop);
+  save();
+  toast(idx >= 0 ? 'Parada atualizada!' : '✅ Parada adicionada!', 'success');
+  goTo('homeScreen');
 }
 
 // ══════════════════════════════════════
-//  EXPORT CSV (Circuit format)
+//  EXPORTAR CSV — formato Circuit correto
 // ══════════════════════════════════════
-function exportCSV(){
-  if(stops.length===0){ toast('Nenhuma parada para exportar','error'); return; }
-  // Circuit columns: Recipient name, Address, Phone, Notes, Order #
+function exportCSV() {
+  if (!stops.length) { toast('Nenhuma parada para exportar', 'error'); return; }
+
+  // Colunas exatas que o Circuit espera
   const rows = [['Recipient name','Address','Phone','Notes','Order #']];
-  stops.forEach((s,i)=>{
-    const fullAddr = s.address + (s.complement ? ' - '+s.complement : '');
-    rows.push([
-      escapeCsv(s.name),
-      escapeCsv(fullAddr),
-      escapeCsv(s.phone || ''),
-      escapeCsv(s.notes || ''),
-      String(i+1)
-    ]);
+
+  stops.forEach((s,i) => {
+    const fullAddr = s.address + (s.complement ? ' - ' + s.complement : '');
+    rows.push([csv(s.name), csv(fullAddr), csv(s.phone||''), csv(s.notes||''), String(i+1)]);
   });
-  const csv = rows.map(r=>r.join(',')).join('\n');
-  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
+
+  // Gemini: BOM UTF-8 para melhor compatibilidade + data no nome do arquivo
+  const content = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([content], { type:'text/csv;charset=utf-8;' });
+  const today = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
   const a = document.createElement('a');
-  a.href=url; a.download='speedboy_rota.csv'; a.click();
-  URL.revokeObjectURL(url);
+  a.href = URL.createObjectURL(blob);
+  a.download = `speedboy_rota_${today}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
   document.getElementById('circuitModal').classList.remove('hidden');
 }
-
-function escapeCsv(v){
-  if(!v) return '""';
-  return '"'+String(v).replace(/"/g,'""')+'"';
-}
-
-function closeCircuitModal(){
-  document.getElementById('circuitModal').classList.add('hidden');
-}
+function csv(v) { return '"' + String(v||'').replace(/"/g,'""') + '"'; }
+function closeCircuitModal() { document.getElementById('circuitModal').classList.add('hidden'); }
 
 // ══════════════════════════════════════
 //  CONFIG
 // ══════════════════════════════════════
-function loadConfig(){
-  document.getElementById('cfgOrigin').value = cfg.origin||'';
-  document.getElementById('cfgApiKey').value = cfg.apiKey||'';
-  document.getElementById('cfgWppMsg').value = cfg.wppMsg||'';
+function loadConfig() {
+  document.getElementById('cfgOrigin').value = cfg.origin || '';
+  document.getElementById('cfgWppMsg').value = cfg.wppMsg || '';
+  document.getElementById('cfgApiKey').value = cfg.apiKey || '';
 }
-function saveConfig(){
+function saveConfig() {
   cfg.origin = document.getElementById('cfgOrigin').value.trim();
-  cfg.apiKey = document.getElementById('cfgApiKey').value.trim();
   cfg.wppMsg = document.getElementById('cfgWppMsg').value.trim();
-  localStorage.setItem('sb_cfg',JSON.stringify(cfg));
-  toast('✅ Configurações salvas!','success');
-  setTimeout(()=>goTo('homeScreen'),600);
+  cfg.apiKey = document.getElementById('cfgApiKey').value.trim();
+  localStorage.setItem('sb_cfg', JSON.stringify(cfg));
+  toast('✅ Configurações salvas!', 'success');
+  goTo('homeScreen');
+}
+
+// Gemini: GPS para endereço de origem
+function getGPSLocation() {
+  const btn = document.querySelector('.btn-location');
+  if (!navigator.geolocation) { toast('GPS não suportado neste dispositivo', 'error'); return; }
+  btn.textContent = '⏳ ...';
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      try {
+        const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+        const data = await res.json();
+        document.getElementById('cfgOrigin').value = data.display_name || `${pos.coords.latitude}, ${pos.coords.longitude}`;
+        toast('📍 Localização capturada!', 'success');
+      } catch(e) {
+        document.getElementById('cfgOrigin').value = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+        toast('📍 Coordenadas capturadas', 'success');
+      }
+      btn.textContent = '📍 Usar GPS';
+    },
+    () => { btn.textContent = '📍 Usar GPS'; toast('Permita o acesso ao GPS', 'error'); }
+  );
+}
+
+function clearAll() {
+  if (!confirm('Apagar todas as paradas?')) return;
+  stops = []; save(); renderList(); toast('🗑️ Lista limpa', 'success');
 }
 
 // ══════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════
-function save(){ localStorage.setItem('sb_stops',JSON.stringify(stops)); }
-function resetForm(){
-  document.getElementById('pasteArea').value='';
-  document.getElementById('fName').value='';
-  document.getElementById('fAddress').value='';
-  document.getElementById('fComplement').value='';
-  document.getElementById('fPhone').value='';
-  document.getElementById('fNotes').value='';
-  document.getElementById('editIndex').value='-1';
-}
-function setLoading(v){ document.getElementById('loadingOverlay').classList.toggle('hidden',!v); }
-function formatPhone(p){ const d=p.replace(/\D/g,''); if(d.length===11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`; return p; }
-function clearAll(){
-  if(!confirm('Apagar todas as paradas do dia?')) return;
-  stops=[]; save(); renderList(); toast('🗑️ Lista limpa','success');
+function save() { localStorage.setItem('sb_stops', JSON.stringify(stops)); }
+
+function resetForm() {
+  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('editIndex').value = '-1';
+  document.getElementById('addScreenTitle').textContent = 'Nova parada';
 }
 
+function formatPhone(p) {
+  const d = p.replace(/\D/g,'');
+  return d.length === 11 ? `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}` : p;
+}
+
+function escAttr(s) { return (s||'').replace(/'/g,"\\'"); }
+
 let toastTimer;
-function toast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg;
-  t.className='toast show '+(type||'');
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
   clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.className='toast',2800);
+  toastTimer = setTimeout(() => t.className = 'toast', 3000);
 }
 
 // ── Init ──
+checkNewDay(); // Gemini: verifica novo dia
 renderList();
 </script>
 </body>
