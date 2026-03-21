@@ -21,20 +21,21 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .badge-count{background:var(--accent);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px;letter-spacing:.5px;}
 .badge-count.full{background:var(--red);color:#fff;}
 
-.screen{display:none;flex:1;flex-direction:column;animation:fadeIn .2s ease;padding-bottom:80px;}
+.screen{display:none;flex:1;flex-direction:column;animation:fadeIn .2s ease;padding-bottom:90px;}
 .screen.active{display:flex;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
+/* HOME */
 .home-actions{display:flex;gap:10px;padding:16px 16px 8px;}
 .btn-add{flex:1;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:.5px;padding:14px 20px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s;}
 .btn-add:active{transform:scale(.97);}
 .btn-cfg{background:var(--card);border:none;color:var(--text);padding:14px 16px;border-radius:var(--radius);cursor:pointer;font-size:20px;}
 
-/* Botão de importar lote */
 .btn-import-bulk{width:calc(100% - 32px);margin:0 16px 8px;background:var(--card);border:1px dashed var(--blue);color:var(--blue);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;padding:12px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s;}
 .btn-import-bulk:active{background:var(--card2);}
 
 .stops-list{flex:1;overflow-y:auto;padding:8px 16px 100px;}
+
 .stop-card{background:var(--card);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;border:1px solid var(--border);transition:border-color .2s;}
 .stop-card.done{opacity:.5;}
 .stop-header{display:flex;align-items:center;gap:12px;padding:14px 14px 12px;cursor:pointer;}
@@ -53,22 +54,31 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .btn-action{flex:1;min-width:calc(50% - 4px);padding:10px 8px;border-radius:10px;border:none;font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .1s;}
 .btn-action:active{transform:scale(0.95);filter:brightness(1.2);}
 .btn-wpp{background:#25d366;color:#fff;}
-.btn-maps{background:#4285f4;color:#fff;}
+.btn-maps-single{background:#4285f4;color:#fff;}
 .btn-done{background:var(--card2);color:var(--green);border:1px solid var(--green);}
 .btn-del{background:var(--card2);color:var(--red);border:1px solid var(--red);}
 .btn-edit{background:var(--card2);color:var(--accent);border:1px solid var(--accent);}
 
-.export-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:linear-gradient(to top,var(--bg) 70%,transparent);padding:16px;z-index:99;}
-.btn-export{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#000;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:.5px;padding:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .1s;box-shadow:0 4px 20px rgba(245,197,24,.25);}
-.btn-export:active{transform:scale(.98);}
-.btn-export:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
+/* BARRA DE ROTA — substitui o export bar */
+.route-bar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;
+  background:linear-gradient(to top,var(--bg) 70%,transparent);
+  padding:16px;z-index:99;
+}
+.btn-route{
+  width:100%;
+  background:linear-gradient(135deg,#1a73e8,#4285f4);
+  color:#fff;border:none;border-radius:var(--radius);
+  font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;
+  letter-spacing:.5px;padding:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:transform .1s;box-shadow:0 4px 20px rgba(66,133,244,.35);
+}
+.btn-route:active{transform:scale(.98);}
+.btn-route:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
 
-.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;gap:12px;text-align:center;}
-.empty-icon{font-size:64px;}
-.empty-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--muted);}
-.empty-sub{font-size:14px;color:var(--muted);opacity:.6;max-width:240px;line-height:1.5;}
-
-/* ADD SCREEN */
+/* ADD */
 .add-screen{padding:16px;overflow-y:auto;}
 .screen-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;letter-spacing:.3px;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:10px;}
 .screen-title .back{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;}
@@ -94,27 +104,23 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .btn-save{width:100%;margin-top:8px;background:var(--green);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;}
 .btn-save:active{transform:scale(.98);}
 
-/* BULK IMPORT SCREEN */
+/* BULK */
 .bulk-screen{padding:16px;overflow-y:auto;}
 .bulk-info{background:var(--card);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--muted);line-height:1.7;border-left:3px solid var(--blue);margin-bottom:16px;}
 .bulk-info strong{color:var(--text);}
 .bulk-info code{background:var(--card2);padding:2px 6px;border-radius:4px;font-size:12px;color:var(--accent);}
 .btn-download-template{width:100%;background:var(--blue);color:#fff;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;padding:13px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;}
 .btn-download-template:active{opacity:.8;}
-
 .upload-zone{border:2px dashed var(--blue);border-radius:var(--radius);padding:32px 20px;text-align:center;cursor:pointer;transition:background .2s;margin-bottom:16px;position:relative;}
-.upload-zone:hover,.upload-zone.drag{background:rgba(59,130,246,.08);border-color:#60a5fa;}
+.upload-zone:hover,.upload-zone.drag{background:rgba(59,130,246,.08);}
 .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
 .upload-icon{font-size:36px;margin-bottom:8px;}
 .upload-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:var(--text);margin-bottom:4px;}
 .upload-sub{font-size:13px;color:var(--muted);}
-
 .preview-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;}
 .preview-table th{background:var(--card2);color:var(--muted);padding:8px 10px;text-align:left;font-weight:600;letter-spacing:.5px;}
 .preview-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);}
 .preview-table tr:last-child td{border-bottom:none;}
-.preview-table .ok{color:var(--green);}
-.preview-table .warn{color:var(--accent);}
 .preview-count{font-size:13px;color:var(--muted);margin-bottom:12px;}
 .preview-count strong{color:var(--text);}
 .btn-confirm-bulk{width:100%;background:var(--green);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;}
@@ -129,41 +135,21 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .btn-cfg-save{width:100%;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;margin-top:8px;}
 .btn-location{background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:4px;}
 
-/* MODAL CIRCUIT */
-.circuit-modal{position:fixed;inset:0;background:rgba(10,10,10,.9);display:flex;align-items:flex-end;justify-content:center;z-index:250;backdrop-filter:blur(4px);}
-.circuit-modal.hidden{display:none;}
-.circuit-sheet{background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;animation:slideUp .3s ease;}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.circuit-sheet h2{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;color:var(--green);margin-bottom:6px;}
-.circuit-sheet p{font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
-.circuit-steps{list-style:none;margin-bottom:24px;}
-.circuit-steps li{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;font-size:14px;line-height:1.5;}
-.step-num{background:var(--accent);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.btn-close-modal{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;padding:14px;border-radius:var(--radius);cursor:pointer;}
-
 /* TOAST */
 .toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:30px;font-size:14px;font-weight:600;z-index:300;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.success{border-color:var(--green);color:var(--green);}
 .toast.error{border-color:var(--red);color:var(--red);}
+
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;gap:12px;text-align:center;}
+.empty-icon{font-size:64px;}
+.empty-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--muted);}
+.empty-sub{font-size:14px;color:var(--muted);opacity:.6;max-width:240px;line-height:1.5;}
 </style>
 </head>
 <body>
 
 <div class="toast" id="toast"></div>
-
-<div class="circuit-modal hidden" id="circuitModal">
-  <div class="circuit-sheet">
-    <h2>✅ CSV exportado!</h2>
-    <p>Importe no <strong>Circuit Route Planner</strong> em 3 passos:</p>
-    <ul class="circuit-steps">
-      <li><span class="step-num">1</span><span>Abra o app <strong>Circuit</strong> ou acesse circuit.so</span></li>
-      <li><span class="step-num">2</span><span>Toque em <strong>"+"</strong> → <strong>"Import stops"</strong> → <strong>"CSV file"</strong></span></li>
-      <li><span class="step-num">3</span><span>Selecione o arquivo baixado. Pronto! 🚀</span></li>
-    </ul>
-    <button class="btn-close-modal" onclick="closeCircuitModal()">Entendido!</button>
-  </div>
-</div>
 
 <div class="header">
   <div class="logo">SPEED<span>BOY</span></div>
@@ -178,8 +164,10 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   </div>
   <button class="btn-import-bulk" onclick="goTo('bulkScreen')">📂 Importar lista da loja</button>
   <div class="stops-list" id="stopsList"></div>
-  <div class="export-bar">
-    <button class="btn-export" id="exportBtn" onclick="exportCSV()">📤 Exportar pro Circuit</button>
+  <div class="route-bar">
+    <button class="btn-route" id="routeBtn" onclick="openFullRoute()">
+      🗺️ Abrir rota completa no Maps
+    </button>
   </div>
 </div>
 
@@ -224,33 +212,26 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   </div>
 </div>
 
-<!-- ═══ BULK IMPORT ═══ -->
+<!-- ═══ BULK ═══ -->
 <div class="screen" id="bulkScreen">
   <div class="bulk-screen">
     <div class="screen-title">
       <button class="back" onclick="goTo('homeScreen')">←</button>
       Importar lista da loja
     </div>
-
     <div class="bulk-info">
       <strong>Como funciona:</strong><br>
-      A loja preenche uma planilha CSV com os clientes do dia e te manda o arquivo. Você sobe aqui e todas as paradas são adicionadas de uma vez.<br><br>
-      <strong>Colunas obrigatórias:</strong><br>
-      <code>nome</code> · <code>endereco</code> · <code>complemento</code> · <code>telefone</code> · <code>observacao</code><br><br>
-      Baixe o modelo abaixo e mande pra loja preencher 👇
+      A loja preenche uma planilha e te manda o arquivo CSV. Você sobe aqui e todas as paradas entram de uma vez.<br><br>
+      <strong>Colunas:</strong> <code>nome</code> · <code>endereco</code> · <code>complemento</code> · <code>telefone</code> · <code>observacao</code><br><br>
+      Baixe o modelo e mande pra loja preencher 👇
     </div>
-
-    <button class="btn-download-template" onclick="downloadTemplate()">
-      ⬇️ Baixar planilha modelo (CSV)
-    </button>
-
+    <button class="btn-download-template" onclick="downloadTemplate()">⬇️ Baixar planilha modelo</button>
     <div class="upload-zone" id="uploadZone">
       <input type="file" accept=".csv" id="csvFileInput" onchange="handleFileUpload(this.files[0])" />
       <div class="upload-icon">📂</div>
       <div class="upload-title">Toque para selecionar o arquivo</div>
       <div class="upload-sub">Arquivo .csv preenchido pela loja</div>
     </div>
-
     <div id="previewArea" style="display:none;">
       <div class="preview-count" id="previewCount"></div>
       <div style="overflow-x:auto;">
@@ -270,33 +251,33 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     </div>
     <div class="config-section">
       <div class="config-section-title">
-        🏪 Endereço de origem
+        🏪 Ponto de partida
         <button class="btn-location" onclick="getGPSLocation()">📍 Usar GPS</button>
       </div>
       <div class="field-group">
-        <div class="field-label">Endereço da loja / ponto de partida</div>
-        <input class="field-input" id="cfgOrigin" placeholder="Ex: Rua da Loja 500, São Paulo/SP" />
+        <div class="field-label">Endereço da loja (início da rota)</div>
+        <input class="field-input" id="cfgOrigin" placeholder="Ex: Rua da Loja 500, Serra/ES" />
       </div>
     </div>
     <div class="config-section">
       <div class="config-section-title">💬 Mensagem padrão WhatsApp</div>
       <div class="field-group">
-        <div class="field-label">Mensagem (use {nome} para o nome do cliente)</div>
+        <div class="field-label">Use {nome} para o nome do cliente</div>
         <input class="field-input" id="cfgWppMsg" placeholder="Olá {nome}! Estou a caminho com sua entrega 🚀" />
       </div>
     </div>
     <div class="config-section">
       <div class="config-section-title">🤖 API Key (opcional)</div>
       <div class="api-info">
-        O app funciona <strong style="color:var(--green)">100% grátis</strong> sem API Key!<br><br>
-        A chave só é usada como reforço em mensagens muito desformatadas. <a class="api-link" href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+        O app funciona <strong style="color:var(--green)">100% grátis</strong> sem API Key. A chave só melhora a extração em mensagens muito desformatadas.<br><br>
+        <a class="api-link" href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
       </div>
       <div class="api-info api-warn">
         ⚠️ Nunca compartilhe o link ou seu celular com a chave inserida aqui.
       </div>
       <div class="field-group">
         <div class="field-label">API Key Anthropic (opcional)</div>
-        <input class="field-input" id="cfgApiKey" placeholder="sk-ant-... (opcional)" type="password" />
+        <input class="field-input" id="cfgApiKey" placeholder="sk-ant-..." type="password" />
       </div>
     </div>
     <button class="btn-cfg-save" onclick="saveConfig()">💾 Salvar configurações</button>
@@ -310,14 +291,14 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 </div>
 
 <script>
-let stops = JSON.parse(localStorage.getItem('sb_stops') || '[]');
-let cfg   = JSON.parse(localStorage.getItem('sb_cfg')   || '{}');
+let stops      = JSON.parse(localStorage.getItem('sb_stops') || '[]');
+let cfg        = JSON.parse(localStorage.getItem('sb_cfg')   || '{}');
 let bulkPreview = [];
 
-// ── Verifica novo dia ──
+// ── Novo dia ──
 function checkNewDay() {
   const lastDate = localStorage.getItem('sb_last_date');
-  const today = new Date().toLocaleDateString('pt-BR');
+  const today    = new Date().toLocaleDateString('pt-BR');
   if (lastDate && lastDate !== today && stops.length > 0) {
     if (confirm('Você tem paradas salvas de ontem. Deseja limpar a lista para começar o dia zerado?')) {
       stops = []; save();
@@ -326,18 +307,38 @@ function checkNewDay() {
   localStorage.setItem('sb_last_date', today);
 }
 
-// ── Máscara telefone ──
-function maskPhone(input) {
-  let v = input.value.replace(/\D/g,'');
-  if (v.length > 11) v = v.substring(0,11);
-  if (v.length > 7)      v = `(${v.substring(0,2)}) ${v.substring(2,7)}-${v.substring(7)}`;
-  else if (v.length > 2) v = `(${v.substring(0,2)}) ${v.substring(2)}`;
-  input.value = v;
-}
+// ══════════════════════════════════════
+//  ROTA COMPLETA NO GOOGLE MAPS
+// ══════════════════════════════════════
+function openFullRoute() {
+  const active = stops.filter(s => !s.done);
+  if (!active.length) { toast('Nenhuma parada pendente', 'error'); return; }
 
-function clearPaste() {
-  document.getElementById('pasteArea').value = '';
-  document.getElementById('pasteArea').focus();
+  // Google Maps aceita: origin + até 8 waypoints + destination
+  // Formato: /maps/dir/origem/parada1/parada2/.../destino
+  const origin      = cfg.origin || '';
+  const destinations = active.map(s => encodeURIComponent(s.address));
+
+  let url;
+  if (destinations.length === 1) {
+    // Rota simples: origem → destino
+    const base = origin
+      ? `https://www.google.com/maps/dir/${encodeURIComponent(origin)}/${destinations[0]}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${destinations[0]}`;
+    url = base;
+  } else {
+    // Rota com múltiplas paradas
+    // Último destino é o destination, o resto são waypoints
+    const dest      = destinations[destinations.length - 1];
+    const waypoints = destinations.slice(0, -1).join('/');
+    if (origin) {
+      url = `https://www.google.com/maps/dir/${encodeURIComponent(origin)}/${waypoints}/${dest}`;
+    } else {
+      url = `https://www.google.com/maps/dir/${waypoints}/${dest}`;
+    }
+  }
+
+  window.open(url, '_blank');
 }
 
 // ══════════════════════════════════════
@@ -347,7 +348,7 @@ function smartParse(text) {
   const r = { name:'', address:'', complement:'', phone:'', notes:'' };
   const t = text;
 
-  const telRx = /(?:tel(?:efone)?|fone|whatsapp|cel(?:ular)?|contato)[\s:.\-]*(\(?\d{2}\)?\s?\d{4,5}[\s\-]?\d{4})/i;
+  const telRx   = /(?:tel(?:efone)?|fone|whatsapp|cel(?:ular)?|contato)[\s:.\-]*(\(?\d{2}\)?\s?\d{4,5}[\s\-]?\d{4})/i;
   const telFree = /\b(\(?\d{2}\)?\s?9\d{4}[\s\-]?\d{4})\b/;
   const tm = t.match(telRx) || t.match(telFree);
   if (tm) r.phone = tm[1].replace(/\D/g,'');
@@ -376,10 +377,9 @@ function smartParse(text) {
   const am = t.match(addrRx);
   if (am) {
     let addr = am[1].trim();
-    const rest = t.slice(t.indexOf(am[1]) + am[1].length);
+    const rest  = t.slice(t.indexOf(am[1]) + am[1].length);
     const extra = rest.match(/^[^\n]{0,80}/)?.[0]?.trim();
     if (extra) addr += (addr.endsWith(',') ? ' ' : ', ') + extra.replace(/^,\s*/,'');
-    // Remove complemento do endereço
     if (r.complement) addr = addr.replace(new RegExp(r.complement.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),'');
     r.address = addr.replace(/,\s*,/g,',').replace(/\s+/g,' ').trim().replace(/,$/,'');
   } else {
@@ -393,7 +393,7 @@ function smartParse(text) {
 async function parseMessage() {
   const text = document.getElementById('pasteArea').value.trim();
   if (!text) { toast('Cole uma mensagem primeiro', 'error'); return; }
-  const btn = document.getElementById('parseBtn');
+  const btn  = document.getElementById('parseBtn');
   const orig = btn.innerHTML;
   btn.innerHTML = '⏳ Processando...'; btn.disabled = true;
 
@@ -410,8 +410,7 @@ async function parseMessage() {
   document.getElementById('fComplement').value = parsed.complement || '';
   document.getElementById('fNotes').value      = parsed.notes      || '';
   const ph = document.getElementById('fPhone');
-  ph.value = parsed.phone || '';
-  if (parsed.phone) maskPhone(ph);
+  ph.value = parsed.phone || ''; if (parsed.phone) maskPhone(ph);
 
   const ok = [parsed.name, parsed.address].filter(Boolean).length >= 2;
   toast(ok ? '✅ Dados extraídos! Revise e salve.' : '⚠️ Revise os campos manualmente', ok?'success':'');
@@ -434,17 +433,15 @@ async function parseWithAPI(text, apiKey) {
 }
 
 // ══════════════════════════════════════
-//  BULK IMPORT — planilha da loja
+//  BULK IMPORT
 // ══════════════════════════════════════
 function downloadTemplate() {
   const header = 'nome,endereco,complemento,telefone,observacao';
-  const ex1 = '"Pedro Santos","Avenida Central, 890, Morada de Laranjeiras, Serra - ES","Casa amarela com portão preto","27988887654","Cuidado com o cachorro"';
-  const ex2 = '"Maria Silva","Rua das Flores, 200, Centro, Vitória - ES","Apto 301","27977776543","Ligar antes de entregar"';
-  const content = '\uFEFF' + [header, ex1, ex2].join('\n');
-  const blob = new Blob([content], { type:'text/csv;charset=utf-8;' });
+  const ex1    = '"Pedro Santos","Avenida Central, 890, Morada de Laranjeiras, Serra - ES","Casa amarela com portão preto","27988887654","Cuidado com o cachorro"';
+  const ex2    = '"Maria Silva","Rua das Flores, 200, Centro, Vitória - ES","Apto 301","27977776543","Ligar antes de entregar"';
+  const blob   = new Blob(['\uFEFF' + [header,ex1,ex2].join('\n')], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'modelo_speedboy.csv';
+  a.href = URL.createObjectURL(blob); a.download = 'modelo_speedboy.csv';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   toast('📥 Modelo baixado!', 'success');
 }
@@ -454,108 +451,77 @@ function handleFileUpload(file) {
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
-      let text = e.target.result;
-      // Remove BOM se presente
-      text = text.replace(/^\uFEFF/, '');
-      const rows = parseCSV(text);
-      if (rows.length < 2) { toast('Arquivo vazio ou inválido', 'error'); return; }
-
-      const headers = rows[0].map(h => h.toLowerCase().trim()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // remove acentos para comparar
-        .replace(/\s+/g,''));
-
-      // Mapeia colunas flexivelmente
+      const text    = e.target.result.replace(/^\uFEFF/,'');
+      const rows    = parseCSV(text);
+      if (rows.length < 2) { toast('Arquivo vazio ou inválido','error'); return; }
+      const headers = rows[0].map(h => h.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,''));
       const col = {
-        nome:        findCol(headers, ['nome','name','cliente','destinatario']),
-        endereco:    findCol(headers, ['endereco','address','endereço','end']),
-        complemento: findCol(headers, ['complemento','comp','complement','referencia']),
-        telefone:    findCol(headers, ['telefone','tel','phone','celular','whatsapp','fone']),
-        observacao:  findCol(headers, ['observacao','obs','notes','nota','observação'])
+        nome:        findCol(headers,['nome','name','cliente']),
+        endereco:    findCol(headers,['endereco','address','endereço','end']),
+        complemento: findCol(headers,['complemento','comp','complement','referencia']),
+        telefone:    findCol(headers,['telefone','tel','phone','celular','whatsapp','fone']),
+        observacao:  findCol(headers,['observacao','obs','notes','nota'])
       };
-
-      if (col.nome < 0 || col.endereco < 0) {
-        toast('Colunas "nome" e "endereco" são obrigatórias', 'error'); return;
-      }
-
-      bulkPreview = rows.slice(1).filter(r => r.some(c=>c.trim())).map(r => ({
-        name:       (r[col.nome]       || '').trim(),
-        address:    (r[col.endereco]   || '').trim(),
-        complement: col.complemento >= 0 ? (r[col.complemento] || '').trim() : '',
-        phone:      col.telefone   >= 0 ? (r[col.telefone]   || '').replace(/\D/g,'') : '',
-        notes:      col.observacao >= 0 ? (r[col.observacao]  || '').trim() : '',
+      if (col.nome < 0 || col.endereco < 0) { toast('"nome" e "endereco" são obrigatórios','error'); return; }
+      bulkPreview = rows.slice(1).filter(r=>r.some(c=>c.trim())).map(r=>({
+        name:       (r[col.nome]||'').trim(),
+        address:    (r[col.endereco]||'').trim(),
+        complement: col.complemento>=0 ? (r[col.complemento]||'').trim() : '',
+        phone:      col.telefone>=0    ? (r[col.telefone]||'').replace(/\D/g,'') : '',
+        notes:      col.observacao>=0  ? (r[col.observacao]||'').trim() : '',
         done: false
-      })).filter(s => s.name && s.address);
-
-      if (!bulkPreview.length) { toast('Nenhuma linha válida encontrada', 'error'); return; }
+      })).filter(s=>s.name&&s.address);
+      if (!bulkPreview.length) { toast('Nenhuma linha válida','error'); return; }
       showPreview();
-    } catch(err) {
-      toast('Erro ao ler arquivo: ' + err.message, 'error');
-    }
+    } catch(err) { toast('Erro ao ler arquivo','error'); }
   };
-  reader.readAsText(file, 'UTF-8');
+  reader.readAsText(file,'UTF-8');
 }
 
 function findCol(headers, candidates) {
-  for (const c of candidates) {
-    const idx = headers.findIndex(h => h.includes(c));
-    if (idx >= 0) return idx;
-  }
+  for (const c of candidates) { const i = headers.findIndex(h=>h.includes(c)); if(i>=0) return i; }
   return -1;
 }
 
 function parseCSV(text) {
   const rows = [];
-  const lines = text.split(/\r?\n/);
-  for (const line of lines) {
+  for (const line of text.split(/\r?\n/)) {
     if (!line.trim()) continue;
-    const row = [];
-    let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') {
-        if (inQ && line[i+1] === '"') { cur += '"'; i++; }
-        else inQ = !inQ;
-      } else if (ch === ',' && !inQ) {
-        row.push(cur); cur = '';
-      } else cur += ch;
+    const row = []; let cur='', inQ=false;
+    for (let i=0;i<line.length;i++) {
+      const ch=line[i];
+      if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+      else if(ch===','&&!inQ){row.push(cur);cur='';}
+      else cur+=ch;
     }
-    row.push(cur);
-    rows.push(row);
+    row.push(cur); rows.push(row);
   }
   return rows;
 }
 
 function showPreview() {
-  const area  = document.getElementById('previewArea');
-  const table = document.getElementById('previewTable');
-  const count = document.getElementById('previewCount');
   const avail = 10 - stops.length;
   const toAdd = Math.min(bulkPreview.length, avail);
-
-  count.innerHTML = `<strong>${bulkPreview.length}</strong> clientes encontrados · <strong style="color:var(--green)">${toAdd}</strong> serão adicionados ${avail < bulkPreview.length ? `<span style="color:var(--accent)">(limite 10 paradas)</span>` : ''}`;
-
-  table.innerHTML = `
-    <tr>
-      <th>#</th><th>Nome</th><th>Endereço</th><th>Tel</th>
-    </tr>
-    ${bulkPreview.slice(0, toAdd).map((s,i) => `
+  document.getElementById('previewCount').innerHTML =
+    `<strong>${bulkPreview.length}</strong> clientes encontrados · <strong style="color:var(--green)">${toAdd}</strong> serão adicionados ${avail<bulkPreview.length?'<span style="color:var(--accent)">(limite 10)</span>':''}`;
+  document.getElementById('previewTable').innerHTML = `
+    <tr><th>#</th><th>Nome</th><th>Endereço</th><th>Tel</th></tr>
+    ${bulkPreview.slice(0,toAdd).map((s,i)=>`
       <tr>
         <td>${i+1}</td>
-        <td class="ok">${s.name}</td>
-        <td>${s.address.substring(0,30)}${s.address.length>30?'…':''}</td>
-        <td>${s.phone ? formatPhone(s.phone) : '<span style="color:var(--muted)">—</span>'}</td>
-      </tr>`).join('')}
-  `;
-  area.style.display = 'block';
+        <td style="color:var(--green)">${s.name}</td>
+        <td>${s.address.substring(0,28)}${s.address.length>28?'…':''}</td>
+        <td>${s.phone?formatPhone(s.phone):'<span style="color:var(--muted)">—</span>'}</td>
+      </tr>`).join('')}`;
+  document.getElementById('previewArea').style.display = 'block';
 }
 
 function confirmBulkImport() {
   const avail = 10 - stops.length;
   const toAdd = bulkPreview.slice(0, avail);
-  if (!toAdd.length) { toast('Lista já está cheia (10/10)', 'error'); return; }
-  stops = stops.concat(toAdd);
-  save();
-  toast(`✅ ${toAdd.length} parada(s) adicionada(s)!`, 'success');
+  if (!toAdd.length) { toast('Lista já cheia (10/10)','error'); return; }
+  stops = stops.concat(toAdd); save();
+  toast(`✅ ${toAdd.length} parada(s) adicionada(s)!`,'success');
   bulkPreview = [];
   document.getElementById('previewArea').style.display = 'none';
   document.getElementById('csvFileInput').value = '';
@@ -563,55 +529,15 @@ function confirmBulkImport() {
 }
 
 // ══════════════════════════════════════
-//  EXPORTAR CSV — formato Circuit correto
-// ══════════════════════════════════════
-function exportCSV() {
-  if (!stops.length) { toast('Nenhuma parada para exportar', 'error'); return; }
-
-  const rows = [['Recipient name', 'Address', 'Notes', 'Phone', 'Order #']];
-
-  stops.forEach((s, i) => {
-    // ① Endereço: SÓ o endereço puro, sem complemento
-    const address = s.address.trim();
-
-    // ② Notes: complemento + observação separados por " | " se ambos existirem
-    const noteParts = [];
-    if (s.complement) noteParts.push(s.complement);
-    if (s.notes)      noteParts.push(s.notes);
-    const notes = noteParts.join(' | ');
-
-    rows.push([
-      csv(s.name),
-      csv(address),
-      csv(notes),
-      csv(s.phone || ''),
-      String(i + 1)
-    ]);
-  });
-
-  const today   = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
-  const content = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
-  const blob    = new Blob([content], { type:'text/csv;charset=utf-8;' });
-  const a       = document.createElement('a');
-  a.href        = URL.createObjectURL(blob);
-  a.download    = `speedboy_rota_${today}.csv`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-
-  document.getElementById('circuitModal').classList.remove('hidden');
-}
-function csv(v) { return '"' + String(v||'').replace(/"/g,'""') + '"'; }
-function closeCircuitModal() { document.getElementById('circuitModal').classList.add('hidden'); }
-
-// ══════════════════════════════════════
 //  NAVEGAÇÃO
 // ══════════════════════════════════════
 function goTo(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  window.scrollTo(0, 0);
-  if (id === 'homeScreen')   renderList();
-  if (id === 'configScreen') loadConfig();
-  if (id === 'addScreen' && document.getElementById('editIndex').value === '-1') resetForm();
+  window.scrollTo(0,0);
+  if(id==='homeScreen')   renderList();
+  if(id==='configScreen') loadConfig();
+  if(id==='addScreen' && document.getElementById('editIndex').value==='-1') resetForm();
 }
 
 // ══════════════════════════════════════
@@ -621,15 +547,15 @@ function renderList() {
   const list  = document.getElementById('stopsList');
   const badge = document.getElementById('badgeCount');
   const total = stops.length;
-  badge.textContent = total + '/10';
-  badge.classList.toggle('full', total >= 10);
-  document.getElementById('exportBtn').disabled = total === 0;
+  badge.textContent = total+'/10';
+  badge.classList.toggle('full', total>=10);
+  document.getElementById('routeBtn').disabled = total===0;
 
   if (!total) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Nenhuma parada ainda</div><div class="empty-sub">Adicione clientes manualmente ou importe a lista da loja</div></div>`;
+    list.innerHTML=`<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Nenhuma parada ainda</div><div class="empty-sub">Adicione clientes ou importe a lista da loja</div></div>`;
     return;
   }
-  list.innerHTML = stops.map((s,i) => `
+  list.innerHTML = stops.map((s,i)=>`
     <div class="stop-card ${s.done?'done':''}" id="card${i}" onclick="toggleCard(${i})">
       <div class="stop-header">
         <div class="stop-num">${i+1}</div>
@@ -640,13 +566,13 @@ function renderList() {
         <div class="stop-status"></div>
       </div>
       <div class="stop-detail">
-        ${s.phone      ? `<div><strong>Tel.:</strong> ${formatPhone(s.phone)}</div>` : ''}
-        ${s.complement ? `<div><strong>Ref.:</strong> ${s.complement}</div>` : ''}
-        ${s.notes      ? `<div><strong>Obs.:</strong> ${s.notes}</div>` : ''}
+        ${s.phone      ?`<div><strong>Tel.:</strong> ${formatPhone(s.phone)}</div>`:''}
+        ${s.complement ?`<div><strong>Ref.:</strong> ${s.complement}</div>`:''}
+        ${s.notes      ?`<div><strong>Obs.:</strong> ${s.notes}</div>`:''}
       </div>
       <div class="stop-actions" onclick="event.stopPropagation()">
-        ${s.phone ? `<button class="btn-action btn-wpp" onclick="openWpp('${s.phone}','${escAttr(s.name)}')">💬 WhatsApp</button>` : ''}
-        <button class="btn-action btn-maps" onclick="openMaps('${escAttr(s.address)}')">🗺️ Navegar</button>
+        ${s.phone?`<button class="btn-action btn-wpp" onclick="openWpp('${s.phone}','${escAttr(s.name)}')">💬 WhatsApp</button>`:''}
+        <button class="btn-action btn-maps-single" onclick="openMapsSingle('${escAttr(s.address)}')">🗺️ Só este</button>
         <button class="btn-action btn-done" onclick="toggleDone(${i})">${s.done?'↩️ Reabrir':'✅ Entregue'}</button>
         <button class="btn-action btn-edit" onclick="editStop(${i})">✏️ Editar</button>
         <button class="btn-action btn-del"  onclick="deleteStop(${i})">🗑️ Remover</button>
@@ -655,54 +581,48 @@ function renderList() {
 }
 
 function toggleCard(i) {
-  const c = document.getElementById('card'+i), was = c.classList.contains('expanded');
-  document.querySelectorAll('.stop-card').forEach(x => x.classList.remove('expanded'));
-  if (!was) c.classList.add('expanded');
+  const c=document.getElementById('card'+i), was=c.classList.contains('expanded');
+  document.querySelectorAll('.stop-card').forEach(x=>x.classList.remove('expanded'));
+  if(!was) c.classList.add('expanded');
 }
 
 // ══════════════════════════════════════
 //  AÇÕES
 // ══════════════════════════════════════
-function toggleDone(i)  { stops[i].done = !stops[i].done; save(); renderList(); }
-function deleteStop(i)  { if (!confirm(`Remover ${stops[i].name}?`)) return; stops.splice(i,1); save(); renderList(); }
+function toggleDone(i)  { stops[i].done=!stops[i].done; save(); renderList(); }
+function deleteStop(i)  { if(!confirm(`Remover ${stops[i].name}?`))return; stops.splice(i,1); save(); renderList(); }
 
 function editStop(i) {
-  const s = stops[i];
-  document.getElementById('editIndex').value            = i;
-  document.getElementById('addScreenTitle').textContent = 'Editar parada';
-  document.getElementById('fName').value       = s.name       || '';
-  document.getElementById('fAddress').value    = s.address    || '';
-  document.getElementById('fComplement').value = s.complement || '';
-  document.getElementById('fNotes').value      = s.notes      || '';
-  const ph = document.getElementById('fPhone');
-  ph.value = s.phone || ''; if (s.phone) maskPhone(ph);
+  const s=stops[i];
+  document.getElementById('editIndex').value=''+i;
+  document.getElementById('addScreenTitle').textContent='Editar parada';
+  document.getElementById('fName').value=s.name||'';
+  document.getElementById('fAddress').value=s.address||'';
+  document.getElementById('fComplement').value=s.complement||'';
+  document.getElementById('fNotes').value=s.notes||'';
+  const ph=document.getElementById('fPhone'); ph.value=s.phone||''; if(s.phone) maskPhone(ph);
   goTo('addScreen');
 }
 
-function openMaps(address) {
-  window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`, '_blank');
+// Navega apenas neste destino
+function openMapsSingle(address) {
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`,'_blank');
 }
+
 function openWpp(phone, name) {
-  const msg = (cfg.wppMsg || 'Olá {nome}! Estou a caminho com sua entrega 🚀').replace('{nome}', name);
-  window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  const msg=(cfg.wppMsg||'Olá {nome}! Estou a caminho com sua entrega 🚀').replace('{nome}',name);
+  window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`,'_blank');
 }
 
 function saveStop() {
-  const name    = document.getElementById('fName').value.trim();
-  const address = document.getElementById('fAddress').value.trim();
-  if (!name || !address) { toast('Nome e endereço são obrigatórios!', 'error'); return; }
-  const idx = parseInt(document.getElementById('editIndex').value);
-  if (stops.length >= 10 && idx < 0) { toast('Limite de 10 paradas atingido!', 'error'); return; }
-  const stop = {
-    name, address,
-    complement: document.getElementById('fComplement').value.trim(),
-    phone:      document.getElementById('fPhone').value.replace(/\D/g,''),
-    notes:      document.getElementById('fNotes').value.trim(),
-    done: idx >= 0 ? stops[idx].done : false
-  };
-  if (idx >= 0) stops[idx] = stop; else stops.push(stop);
-  save();
-  toast(idx >= 0 ? 'Parada atualizada!' : '✅ Parada adicionada!', 'success');
+  const name=document.getElementById('fName').value.trim();
+  const address=document.getElementById('fAddress').value.trim();
+  if(!name||!address){toast('Nome e endereço são obrigatórios!','error');return;}
+  const idx=parseInt(document.getElementById('editIndex').value);
+  if(stops.length>=10&&idx<0){toast('Limite de 10 paradas atingido!','error');return;}
+  const stop={name,address,complement:document.getElementById('fComplement').value.trim(),phone:document.getElementById('fPhone').value.replace(/\D/g,''),notes:document.getElementById('fNotes').value.trim(),done:idx>=0?stops[idx].done:false};
+  if(idx>=0) stops[idx]=stop; else stops.push(stop);
+  save(); toast(idx>=0?'Parada atualizada!':'✅ Parada adicionada!','success');
   goTo('homeScreen');
 }
 
@@ -710,63 +630,62 @@ function saveStop() {
 //  CONFIG
 // ══════════════════════════════════════
 function loadConfig() {
-  document.getElementById('cfgOrigin').value = cfg.origin || '';
-  document.getElementById('cfgWppMsg').value = cfg.wppMsg || '';
-  document.getElementById('cfgApiKey').value = cfg.apiKey || '';
+  document.getElementById('cfgOrigin').value=cfg.origin||'';
+  document.getElementById('cfgWppMsg').value=cfg.wppMsg||'';
+  document.getElementById('cfgApiKey').value=cfg.apiKey||'';
 }
 function saveConfig() {
-  cfg.origin = document.getElementById('cfgOrigin').value.trim();
-  cfg.wppMsg = document.getElementById('cfgWppMsg').value.trim();
-  cfg.apiKey = document.getElementById('cfgApiKey').value.trim();
-  localStorage.setItem('sb_cfg', JSON.stringify(cfg));
-  toast('✅ Configurações salvas!', 'success');
+  cfg.origin=document.getElementById('cfgOrigin').value.trim();
+  cfg.wppMsg=document.getElementById('cfgWppMsg').value.trim();
+  cfg.apiKey=document.getElementById('cfgApiKey').value.trim();
+  localStorage.setItem('sb_cfg',JSON.stringify(cfg));
+  toast('✅ Configurações salvas!','success');
   goTo('homeScreen');
 }
 
 function getGPSLocation() {
-  const btn = document.querySelector('.btn-location');
-  if (!navigator.geolocation) { toast('GPS não suportado', 'error'); return; }
-  btn.textContent = '⏳ ...';
+  const btn=document.querySelector('.btn-location');
+  if(!navigator.geolocation){toast('GPS não suportado','error');return;}
+  btn.textContent='⏳ ...';
   navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      try {
-        const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
-        const data = await res.json();
-        document.getElementById('cfgOrigin').value = data.display_name || `${pos.coords.latitude}, ${pos.coords.longitude}`;
-        toast('📍 Localização capturada!', 'success');
-      } catch(e) {
-        document.getElementById('cfgOrigin').value = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-      }
-      btn.textContent = '📍 Usar GPS';
+    async(pos)=>{
+      try{
+        const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+        const data=await res.json();
+        document.getElementById('cfgOrigin').value=data.display_name||`${pos.coords.latitude}, ${pos.coords.longitude}`;
+        toast('📍 Localização capturada!','success');
+      }catch(e){document.getElementById('cfgOrigin').value=`${pos.coords.latitude}, ${pos.coords.longitude}`;}
+      btn.textContent='📍 Usar GPS';
     },
-    () => { btn.textContent = '📍 Usar GPS'; toast('Permita o acesso ao GPS', 'error'); }
+    ()=>{btn.textContent='📍 Usar GPS';toast('Permita o acesso ao GPS','error');}
   );
 }
 
-function clearAll() {
-  if (!confirm('Apagar todas as paradas?')) return;
-  stops = []; save(); renderList(); toast('🗑️ Lista limpa', 'success');
-}
+function clearAll(){if(!confirm('Apagar todas as paradas?'))return;stops=[];save();renderList();toast('🗑️ Lista limpa','success');}
 
 // ── utils ──
-function save() { localStorage.setItem('sb_stops', JSON.stringify(stops)); }
-function resetForm() {
-  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('editIndex').value = '-1';
-  document.getElementById('addScreenTitle').textContent = 'Nova parada';
+function save(){localStorage.setItem('sb_stops',JSON.stringify(stops));}
+function resetForm(){
+  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('editIndex').value='-1';
+  document.getElementById('addScreenTitle').textContent='Nova parada';
 }
-function formatPhone(p) {
-  const d = p.replace(/\D/g,'');
-  return d.length === 11 ? `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}` : p;
+function maskPhone(input){
+  let v=input.value.replace(/\D/g,'');
+  if(v.length>11)v=v.substring(0,11);
+  if(v.length>7) v=`(${v.substring(0,2)}) ${v.substring(2,7)}-${v.substring(7)}`;
+  else if(v.length>2) v=`(${v.substring(0,2)}) ${v.substring(2)}`;
+  input.value=v;
 }
-function escAttr(s) { return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+function formatPhone(p){const d=p.replace(/\D/g,'');return d.length===11?`(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`:p;}
+function escAttr(s){return(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+function clearPaste(){document.getElementById('pasteArea').value='';document.getElementById('pasteArea').focus();}
 
 let toastTimer;
-function toast(msg, type='') {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast show ' + type;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.className = 'toast', 3000);
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+type;
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.className='toast',3000);
 }
 
 checkNewDay();
