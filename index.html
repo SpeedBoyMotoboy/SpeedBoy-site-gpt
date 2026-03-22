@@ -8,211 +8,435 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
-  --bg:#0a0a0a;--bg2:#111;--card:#181818;--card2:#1f1f1f;--border:#2a2a2a;
-  --accent:#f5c518;--accent2:#ff6b00;--green:#00e676;--red:#ff3d3d;--blue:#3b82f6;
-  --text:#f0f0f0;--muted:#888;--radius:14px;
+  --bg:#0a0a0a;--card:#181818;--card2:#1f1f1f;--border:#2a2a2a;
+  --accent:#f5c518;--accent2:#ff6b00;--green:#00e676;--red:#ff3d3d;--blue:#3b82f6;--purple:#a855f7;
+  --text:#f0f0f0;--muted:#777;--radius:14px;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;overscroll-behavior:none;}
 body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height:100vh;position:relative;}
 
-.header{background:var(--bg);padding:18px 20px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
-.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;letter-spacing:-1px;color:var(--accent);line-height:1;}
+/* ── HEADER ── */
+.header{background:var(--bg);padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;letter-spacing:-1px;color:var(--accent);line-height:1;}
 .logo span{color:var(--text);}
-.badge-count{background:var(--accent);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px;letter-spacing:.5px;}
+.header-right{display:flex;align-items:center;gap:8px;}
+.badge-count{background:var(--accent);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;padding:3px 9px;border-radius:20px;}
 .badge-count.full{background:var(--red);color:#fff;}
 
-.screen{display:none;flex:1;flex-direction:column;animation:fadeIn .2s ease;padding-bottom:90px;}
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:100;}
+.nav-btn{flex:1;padding:10px 4px 8px;background:none;border:none;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'Barlow',sans-serif;font-size:10px;font-weight:600;letter-spacing:.3px;transition:color .15s;}
+.nav-btn.active{color:var(--accent);}
+.nav-btn span.icon{font-size:20px;line-height:1;}
+
+/* ── SCREENS ── */
+.screen{display:none;flex:1;flex-direction:column;overflow-y:auto;padding-bottom:70px;}
 .screen.active{display:flex;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.screen.active{animation:fadeIn .18s ease;}
 
-/* HOME */
-.home-actions{display:flex;gap:10px;padding:16px 16px 8px;}
-.btn-add{flex:1;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:.5px;padding:14px 20px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s;}
+/* ── HOME ── */
+.home-top{display:flex;gap:10px;padding:14px 14px 6px;}
+.btn-add{flex:1;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;padding:13px 16px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:transform .1s;}
 .btn-add:active{transform:scale(.97);}
-.btn-cfg{background:var(--card);border:none;color:var(--text);padding:14px 16px;border-radius:var(--radius);cursor:pointer;font-size:20px;}
+.btn-cfg-icon{background:var(--card);border:none;color:var(--text);padding:13px 14px;border-radius:var(--radius);cursor:pointer;font-size:18px;}
 
-.btn-import-bulk{width:calc(100% - 32px);margin:0 16px 8px;background:var(--card);border:1px dashed var(--blue);color:var(--blue);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;padding:12px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s;}
-.btn-import-bulk:active{background:var(--card2);}
+.btn-import-bulk{width:calc(100% - 28px);margin:0 14px 6px;background:var(--card);border:1px dashed var(--blue);color:var(--blue);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;padding:11px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;}
+.btn-import-bulk:active{opacity:.7;}
 
-.stops-list{flex:1;overflow-y:auto;padding:8px 16px 100px;}
-
-.stop-card{background:var(--card);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;border:1px solid var(--border);transition:border-color .2s;}
-.stop-card.done{opacity:.5;}
-.stop-header{display:flex;align-items:center;gap:12px;padding:14px 14px 12px;cursor:pointer;}
-.stop-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:var(--accent);min-width:28px;line-height:1;}
-.stop-info{flex:1;min-width:0;}
-.stop-name{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.stop-addr{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
-.stop-status{width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0;}
-.stop-card.done .stop-status{background:var(--green);}
-.stop-detail{padding:0 14px 14px;font-size:13px;color:var(--muted);line-height:1.7;display:none;}
-.stop-card.expanded .stop-detail{display:block;}
-.stop-card.expanded{border-color:var(--accent);}
-.stop-actions{display:none;padding:0 14px 14px;flex-wrap:wrap;gap:8px;}
-.stop-card.expanded .stop-actions{display:flex;}
-
-.btn-action{flex:1;min-width:calc(50% - 4px);padding:10px 8px;border-radius:10px;border:none;font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .1s;}
-.btn-action:active{transform:scale(0.95);filter:brightness(1.2);}
-.btn-wpp{background:#25d366;color:#fff;}
-.btn-maps-single{background:#4285f4;color:#fff;}
-.btn-done{background:var(--card2);color:var(--green);border:1px solid var(--green);}
-.btn-del{background:var(--card2);color:var(--red);border:1px solid var(--red);}
-.btn-edit{background:var(--card2);color:var(--accent);border:1px solid var(--accent);}
-
-/* BARRA DE ROTA — substitui o export bar */
-.route-bar{
-  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;
-  background:linear-gradient(to top,var(--bg) 70%,transparent);
-  padding:16px;z-index:99;
-}
-.btn-route{
-  width:100%;
-  background:linear-gradient(135deg,#1a73e8,#4285f4);
-  color:#fff;border:none;border-radius:var(--radius);
-  font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;
-  letter-spacing:.5px;padding:16px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  transition:transform .1s;box-shadow:0 4px 20px rgba(66,133,244,.35);
-}
+/* Rota button floating above nav */
+.route-bar{position:fixed;bottom:58px;left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:8px 14px;z-index:99;pointer-events:none;}
+.btn-route{width:100%;pointer-events:all;background:linear-gradient(135deg,#1a73e8,#4285f4);color:#fff;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18px;padding:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 18px rgba(66,133,244,.4);transition:transform .1s;}
 .btn-route:active{transform:scale(.98);}
 .btn-route:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
 
-/* ADD */
-.add-screen{padding:16px;overflow-y:auto;}
-.screen-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;letter-spacing:.3px;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:10px;}
-.screen-title .back{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;}
+.stops-list{flex:1;padding:6px 14px 140px;}
+
+/* ── STOP CARD ── */
+.store-label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:6px 14px 2px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.store-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.stop-card{background:var(--card);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;border:1px solid var(--border);transition:border-color .2s;}
+.stop-card.done{opacity:.45;}
+.stop-card.expanded{border-color:var(--accent);}
+.stop-header{display:flex;align-items:center;gap:10px;padding:12px 12px 10px;cursor:pointer;}
+.stop-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;color:var(--accent);min-width:24px;line-height:1;}
+.stop-info{flex:1;min-width:0;}
+.stop-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stop-addr{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.stop-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.stop-value{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:var(--green);}
+.stop-value.unpaid{color:var(--accent);}
+.stop-status{width:8px;height:8px;border-radius:50%;background:var(--border);}
+.stop-card.done .stop-status{background:var(--green);}
+
+.stop-detail{padding:0 12px 12px;font-size:12px;color:var(--muted);line-height:1.8;display:none;}
+.stop-card.expanded .stop-detail{display:block;}
+.stop-detail strong{color:var(--text);font-size:11px;}
+.paid-badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.5px;}
+.paid-badge.yes{background:rgba(0,230,118,.15);color:var(--green);border:1px solid var(--green);}
+.paid-badge.no{background:rgba(245,197,24,.1);color:var(--accent);border:1px solid var(--accent);}
+
+.stop-actions{display:none;padding:0 12px 12px;flex-wrap:wrap;gap:7px;}
+.stop-card.expanded .stop-actions{display:flex;}
+.btn-action{flex:1;min-width:calc(50% - 4px);padding:9px 6px;border-radius:9px;border:none;font-family:'Barlow',sans-serif;font-weight:600;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .1s;}
+.btn-action:active{transform:scale(.95);filter:brightness(1.15);}
+.btn-wpp{background:#25d366;color:#fff;}
+.btn-maps-s{background:#4285f4;color:#fff;}
+.btn-done{background:var(--card2);color:var(--green);border:1px solid var(--green);}
+.btn-paid{background:var(--card2);color:var(--accent);border:1px solid var(--accent);}
+.btn-paid.is-paid{color:var(--green);border-color:var(--green);}
+.btn-del{background:var(--card2);color:var(--red);border:1px solid var(--red);}
+.btn-edit{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
+
+/* ── FORM SCREEN ── */
+.form-screen{padding:14px;overflow-y:auto;padding-bottom:30px;}
+.screen-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:21px;margin-bottom:14px;color:var(--text);display:flex;align-items:center;gap:10px;}
+.screen-title .back{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;}
 
 .paste-container{position:relative;width:100%;}
-.paste-area{background:var(--card);border:2px dashed var(--border);border-radius:var(--radius);padding:16px;padding-right:40px;font-size:14px;color:var(--text);width:100%;min-height:110px;resize:none;font-family:'Barlow',sans-serif;line-height:1.5;transition:border-color .2s;outline:none;}
+.paste-area{background:var(--card);border:2px dashed var(--border);border-radius:var(--radius);padding:14px;padding-right:38px;font-size:13px;color:var(--text);width:100%;min-height:90px;resize:none;font-family:'Barlow',sans-serif;line-height:1.5;outline:none;transition:border-color .2s;}
 .paste-area:focus{border-color:var(--accent);}
 .paste-area::placeholder{color:var(--muted);}
-.btn-clear-paste{position:absolute;top:10px;right:10px;background:var(--card2);border:none;color:var(--muted);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;}
+.btn-clear-paste{position:absolute;top:9px;right:9px;background:var(--card2);border:none;color:var(--muted);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;}
 
-.btn-parse{width:100%;margin-top:12px;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s;}
-.btn-parse:active{transform:scale(.98);}
-.free-badge{display:inline-block;background:#1a2a1a;border:1px solid var(--green);color:var(--green);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;}
+.btn-parse{width:100%;margin-top:10px;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;padding:13px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;}
+.btn-parse:active{opacity:.85;}
+.free-badge{display:inline-block;background:#1a2a1a;border:1px solid var(--green);color:var(--green);font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:5px;}
 
-.divider{display:flex;align-items:center;gap:12px;margin:20px 0 16px;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:1px;}
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0 14px;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:1px;}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
 
-.field-group{margin-bottom:14px;}
-.field-label{font-size:11px;font-weight:600;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
-.field-input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 14px;font-size:15px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;}
+.field-group{margin-bottom:12px;}
+.field-label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
+.field-input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 13px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;}
 .field-input:focus{border-color:var(--accent);}
 .field-input::placeholder{color:var(--muted);}
-.btn-save{width:100%;margin-top:8px;background:var(--green);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;}
-.btn-save:active{transform:scale(.98);}
 
-/* BULK */
-.bulk-screen{padding:16px;overflow-y:auto;}
-.bulk-info{background:var(--card);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--muted);line-height:1.7;border-left:3px solid var(--blue);margin-bottom:16px;}
+/* Row para valor + pago */
+.field-row{display:flex;gap:10px;}
+.field-row .field-group{flex:1;}
+
+/* Select de loja */
+.field-select{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 13px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;appearance:none;cursor:pointer;}
+.field-select:focus{border-color:var(--accent);}
+
+.toggle-paid{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 13px;cursor:pointer;}
+.toggle-paid input{display:none;}
+.toggle-track{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;transition:background .2s;flex-shrink:0;}
+.toggle-track::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .2s;}
+.toggle-paid input:checked + .toggle-track{background:var(--green);}
+.toggle-paid input:checked + .toggle-track::after{transform:translateX(16px);}
+.toggle-label{font-size:13px;color:var(--muted);}
+
+.btn-save{width:100%;margin-top:10px;background:var(--green);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;padding:13px;border-radius:var(--radius);cursor:pointer;}
+.btn-save:active{opacity:.85;}
+
+/* ── FINANCEIRO ── */
+.finance-screen{padding:14px;overflow-y:auto;padding-bottom:80px;}
+.finance-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:var(--text);margin-bottom:14px;}
+
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.summary-card{background:var(--card);border-radius:var(--radius);padding:14px;border:1px solid var(--border);}
+.summary-card.accent{border-color:var(--accent);}
+.summary-card.green{border-color:var(--green);}
+.summary-label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.summary-value{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;color:var(--text);line-height:1;}
+.summary-value.green{color:var(--green);}
+.summary-value.accent{color:var(--accent);}
+.summary-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+
+.chart-box{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:16px;border:1px solid var(--border);}
+.chart-title{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+canvas{width:100%;display:block;}
+
+.store-breakdown{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:16px;border:1px solid var(--border);}
+.breakdown-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.breakdown-row:last-child{border-bottom:none;}
+.breakdown-store{font-weight:600;font-size:13px;}
+.breakdown-vals{text-align:right;}
+.breakdown-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:var(--green);}
+.breakdown-cnt{font-size:11px;color:var(--muted);}
+
+.meta-row{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;border:1px solid var(--border);}
+.meta-label{font-size:12px;color:var(--muted);flex:1;}
+.meta-input{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:14px;font-family:'Barlow Condensed',sans-serif;font-weight:700;width:90px;outline:none;text-align:right;}
+.meta-bar-wrap{height:8px;background:var(--card2);border-radius:4px;margin-top:6px;overflow:hidden;}
+.meta-bar{height:100%;border-radius:4px;background:var(--green);transition:width .4s ease;}
+
+/* ── HISTÓRICO ── */
+.history-screen{padding:14px;overflow-y:auto;padding-bottom:80px;}
+.history-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:var(--text);margin-bottom:14px;}
+.history-day{background:var(--card);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;border:1px solid var(--border);}
+.history-day-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;}
+.history-day-date{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;}
+.history-day-info{text-align:right;}
+.history-day-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;color:var(--green);}
+.history-day-cnt{font-size:11px;color:var(--muted);}
+.history-day-list{display:none;border-top:1px solid var(--border);}
+.history-day.open .history-day-list{display:block;}
+.history-stop-row{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);font-size:13px;}
+.history-stop-row:last-child{border-bottom:none;}
+.history-stop-name{font-weight:600;}
+.history-stop-addr{font-size:11px;color:var(--muted);margin-top:1px;}
+.history-stop-val{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--green);white-space:nowrap;margin-left:10px;}
+
+.empty-history{text-align:center;padding:50px 20px;color:var(--muted);font-size:14px;}
+
+/* ── BULK ── */
+.bulk-screen{padding:14px;overflow-y:auto;padding-bottom:30px;}
+.bulk-info{background:var(--card);border-radius:var(--radius);padding:13px;font-size:12px;color:var(--muted);line-height:1.7;border-left:3px solid var(--blue);margin-bottom:14px;}
 .bulk-info strong{color:var(--text);}
-.bulk-info code{background:var(--card2);padding:2px 6px;border-radius:4px;font-size:12px;color:var(--accent);}
-.btn-download-template{width:100%;background:var(--blue);color:#fff;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;padding:13px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;}
-.btn-download-template:active{opacity:.8;}
-.upload-zone{border:2px dashed var(--blue);border-radius:var(--radius);padding:32px 20px;text-align:center;cursor:pointer;transition:background .2s;margin-bottom:16px;position:relative;}
-.upload-zone:hover,.upload-zone.drag{background:rgba(59,130,246,.08);}
+.bulk-info code{background:var(--card2);padding:1px 5px;border-radius:3px;font-size:11px;color:var(--accent);}
+.btn-download-template{width:100%;background:var(--blue);color:#fff;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;padding:12px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:14px;}
+.upload-zone{border:2px dashed var(--blue);border-radius:var(--radius);padding:28px 20px;text-align:center;margin-bottom:14px;position:relative;cursor:pointer;}
 .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-.upload-icon{font-size:36px;margin-bottom:8px;}
-.upload-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:var(--text);margin-bottom:4px;}
-.upload-sub{font-size:13px;color:var(--muted);}
-.preview-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;}
-.preview-table th{background:var(--card2);color:var(--muted);padding:8px 10px;text-align:left;font-weight:600;letter-spacing:.5px;}
-.preview-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);}
-.preview-table tr:last-child td{border-bottom:none;}
-.preview-count{font-size:13px;color:var(--muted);margin-bottom:12px;}
-.preview-count strong{color:var(--text);}
-.btn-confirm-bulk{width:100%;background:var(--green);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;}
+.upload-icon{font-size:32px;margin-bottom:6px;}
+.upload-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:var(--text);margin-bottom:3px;}
+.upload-sub{font-size:12px;color:var(--muted);}
+.preview-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px;}
+.preview-table th{background:var(--card2);color:var(--muted);padding:7px 9px;text-align:left;font-weight:600;}
+.preview-table td{padding:7px 9px;border-bottom:1px solid var(--border);color:var(--text);}
+.preview-count{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.btn-confirm-bulk{width:100%;background:var(--green);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;padding:13px;border-radius:var(--radius);cursor:pointer;}
 
-/* CONFIG */
-.config-screen{padding:16px;overflow-y:auto;}
-.config-section{margin-bottom:24px;}
-.config-section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
-.api-info{background:var(--card);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--muted);line-height:1.6;border-left:3px solid var(--green);margin-bottom:10px;}
-.api-warn{border-left:3px solid var(--red);color:#e0e0e0;margin-top:0;margin-bottom:14px;}
+/* ── CONFIG ── */
+.config-screen{padding:14px;overflow-y:auto;padding-bottom:80px;}
+.config-section{margin-bottom:22px;}
+.config-section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.api-info{background:var(--card);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--muted);line-height:1.6;border-left:3px solid var(--green);margin-bottom:8px;}
+.api-warn{border-left:3px solid var(--red);color:#e0e0e0;margin-top:0;margin-bottom:12px;}
 .api-link{color:var(--accent);text-decoration:none;}
-.btn-cfg-save{width:100%;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px;border-radius:var(--radius);cursor:pointer;margin-top:8px;}
-.btn-location{background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:4px;}
+.btn-cfg-save{width:100%;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;padding:13px;border-radius:var(--radius);cursor:pointer;margin-top:8px;}
+.btn-location{background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 9px;border-radius:6px;cursor:pointer;}
 
-/* TOAST */
-.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:30px;font-size:14px;font-weight:600;z-index:300;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
+/* lojas manager */
+.stores-list{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;}
+.store-chip{background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:13px;display:flex;align-items:center;gap:6px;}
+.store-chip-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;line-height:1;}
+.store-add-row{display:flex;gap:8px;}
+.store-add-row .field-input{flex:1;}
+.btn-store-add{background:var(--accent);color:#000;border:none;border-radius:10px;padding:11px 14px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:9px 18px;border-radius:30px;font-size:13px;font-weight:600;z-index:400;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.success{border-color:var(--green);color:var(--green);}
 .toast.error{border-color:var(--red);color:var(--red);}
 
-.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;gap:12px;text-align:center;}
-.empty-icon{font-size:64px;}
-.empty-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--muted);}
-.empty-sub{font-size:14px;color:var(--muted);opacity:.6;max-width:240px;line-height:1.5;}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;gap:10px;text-align:center;}
+.empty-icon{font-size:56px;}
+.empty-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;color:var(--muted);}
+.empty-sub{font-size:13px;color:var(--muted);opacity:.6;max-width:230px;line-height:1.5;}
+
+/* ── SORT BAR ── */
+.sort-bar{display:flex;gap:7px;padding:0 14px 8px;align-items:center;}
+.sort-bar-label{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;}
+.btn-sort{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'Barlow',sans-serif;font-weight:600;font-size:12px;padding:8px 10px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;}
+.btn-sort:active{background:var(--card2);}
+.btn-sort.active-sort{border-color:var(--accent);color:var(--accent);}
+
+/* ── WHATSAPP QUICK MESSAGES MODAL ── */
+.wpp-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:flex-end;justify-content:center;z-index:300;backdrop-filter:blur(4px);}
+.wpp-modal.hidden{display:none;}
+.wpp-sheet{background:var(--card);border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;max-width:480px;animation:slideUp .25s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.wpp-sheet-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.wpp-sheet-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:19px;color:var(--green);}
+.wpp-sheet-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;}
+.wpp-sheet-sub{font-size:12px;color:var(--muted);margin-bottom:16px;}
+.wpp-msg-btn{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);text-align:left;padding:13px 14px;border-radius:11px;margin-bottom:8px;cursor:pointer;font-family:'Barlow',sans-serif;font-size:13px;line-height:1.4;transition:border-color .15s;}
+.wpp-msg-btn:active{border-color:var(--green);}
+.wpp-msg-btn .msg-tag{display:block;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.wpp-custom-row{display:flex;gap:8px;margin-top:4px;}
+.wpp-custom-input{flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 12px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;}
+.wpp-custom-input:focus{border-color:var(--green);}
+.btn-wpp-send{background:#25d366;color:#fff;border:none;border-radius:10px;padding:11px 16px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
 </style>
 </head>
 <body>
 
 <div class="toast" id="toast"></div>
 
+<!-- ═══ WHATSAPP QUICK MESSAGES ═══ -->
+<div class="wpp-modal hidden" id="wppModal">
+  <div class="wpp-sheet">
+    <div class="wpp-sheet-header">
+      <div class="wpp-sheet-name" id="wppModalName">💬 WhatsApp</div>
+      <button class="wpp-sheet-close" onclick="closeWppModal()">✕</button>
+    </div>
+    <div class="wpp-sheet-sub" id="wppModalPhone"></div>
+    <button class="wpp-msg-btn" onclick="sendQuick('caminho')">
+      <span class="msg-tag">🚀 a caminho</span>
+      Olá! Estou a caminho com sua entrega. Já já chego! 😊
+    </button>
+    <button class="wpp-msg-btn" onclick="sendQuick('chegando')">
+      <span class="msg-tag">📍 chegando agora</span>
+      Oi! Estou chegando, já estou pertinho. Pode ficar de olho! 👀
+    </button>
+    <button class="wpp-msg-btn" onclick="sendQuick('confirmar')">
+      <span class="msg-tag">✅ confirmar endereço</span>
+      Olá! Pode confirmar seu endereço e ponto de referência? Quero garantir que vou no lugar certo! 📍
+    </button>
+    <button class="wpp-msg-btn" onclick="sendQuick('ausente')">
+      <span class="msg-tag">🚪 ninguém em casa</span>
+      Oi! Passei aí mas não encontrei ninguém. Pode me avisar quando estiver disponível para eu tentar novamente? 🙏
+    </button>
+    <button class="wpp-msg-btn" onclick="sendQuick('atraso')">
+      <span class="msg-tag">⏰ vou atrasar</span>
+      Olá! Quero te avisar que estou com um pequeno atraso, mas sua entrega está a caminho. Obrigado pela compreensão! 🙌
+    </button>
+    <button class="wpp-msg-btn" onclick="sendQuick('entregue')">
+      <span class="msg-tag">✅ entregue com sucesso</span>
+      Entrega realizada! Qualquer dúvida estou à disposição. Obrigado! 🎉
+    </button>
+    <div class="wpp-custom-row">
+      <input class="wpp-custom-input" id="wppCustomMsg" placeholder="Ou escreva uma mensagem..." />
+      <button class="btn-wpp-send" onclick="sendCustom()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
 <div class="header">
   <div class="logo">SPEED<span>BOY</span></div>
-  <div id="badgeCount" class="badge-count">0/10</div>
+  <div class="header-right">
+    <div id="badgeCount" class="badge-count">0/10</div>
+  </div>
 </div>
 
-<!-- ═══ HOME ═══ -->
+<!-- ═══════════════════════════════════
+     HOME
+════════════════════════════════════ -->
 <div class="screen active" id="homeScreen">
-  <div class="home-actions">
-    <button class="btn-add" onclick="goTo('addScreen')"><span style="font-size:20px">+</span> Adicionar parada</button>
-    <button class="btn-cfg" onclick="goTo('configScreen')">⚙️</button>
+  <div class="home-top">
+    <button class="btn-add" onclick="goTo('addScreen')"><span style="font-size:18px">+</span> Adicionar parada</button>
+    <button class="btn-cfg-icon" onclick="goTo('configScreen')">⚙️</button>
   </div>
   <button class="btn-import-bulk" onclick="goTo('bulkScreen')">📂 Importar lista da loja</button>
+  <div class="sort-bar" id="sortBar" style="display:none">
+    <span class="sort-bar-label">Ordenar:</span>
+    <button class="btn-sort" id="sortManual" onclick="setSort('manual')">✋ Manual</button>
+    <button class="btn-sort" id="sortRegion" onclick="setSort('region')">🗺️ Por região</button>
+    <button class="btn-sort" id="sortStore"  onclick="setSort('store')">🏪 Por loja</button>
+  </div>
   <div class="stops-list" id="stopsList"></div>
   <div class="route-bar">
-    <button class="btn-route" id="routeBtn" onclick="openFullRoute()">
-      🗺️ Abrir rota completa no Maps
-    </button>
+    <button class="btn-route" id="routeBtn" onclick="openFullRoute()">🗺️ Abrir rota completa no Maps</button>
   </div>
 </div>
 
-<!-- ═══ ADD ═══ -->
+<!-- ═══════════════════════════════════
+     ADD / EDIT
+════════════════════════════════════ -->
 <div class="screen" id="addScreen">
-  <div class="add-screen">
+  <div class="form-screen">
     <div class="screen-title">
       <button class="back" onclick="goTo('homeScreen')">←</button>
       <span id="addScreenTitle">Nova parada</span>
     </div>
+
     <div class="field-label">Cole a mensagem do WhatsApp</div>
     <div class="paste-container">
       <textarea class="paste-area" id="pasteArea" placeholder="Cole aqui a mensagem com os dados do cliente..."></textarea>
-      <button class="btn-clear-paste" onclick="clearPaste()" title="Limpar">✕</button>
+      <button class="btn-clear-paste" onclick="clearPaste()">✕</button>
     </div>
     <button class="btn-parse" id="parseBtn" onclick="parseMessage()">
       🤖 Processar automaticamente <span class="free-badge">GRÁTIS</span>
     </button>
-    <div class="divider">ou preencha manualmente</div>
+
+    <div class="divider">dados da entrega</div>
+
+    <div class="field-group">
+      <div class="field-label">🏪 Loja de origem</div>
+      <select class="field-select" id="fStore">
+        <option value="">— Sem loja específica —</option>
+      </select>
+    </div>
+
     <div class="field-group">
       <div class="field-label">Nome do cliente *</div>
-      <input class="field-input" id="fName" placeholder="Ex: João Silva" />
+      <input class="field-input" id="fName" placeholder="Ex: Pedro Santos" />
     </div>
     <div class="field-group">
       <div class="field-label">Endereço completo *</div>
-      <input class="field-input" id="fAddress" placeholder="Ex: Av. Central 1200, Morada de Laranjeiras, Serra/ES" />
+      <input class="field-input" id="fAddress" placeholder="Ex: Av. Central 890, Morada de Laranjeiras, Serra/ES" />
     </div>
     <div class="field-group">
-      <div class="field-label">Complemento / Ponto de referência</div>
+      <div class="field-label">Complemento / Referência</div>
       <input class="field-input" id="fComplement" placeholder="Ex: Casa amarela, portão preto" />
     </div>
     <div class="field-group">
       <div class="field-label">Telefone (WhatsApp)</div>
       <input class="field-input" id="fPhone" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" />
     </div>
+
+    <div class="field-row">
+      <div class="field-group">
+        <div class="field-label">💰 Valor (R$)</div>
+        <input class="field-input" id="fValue" placeholder="0,00" type="number" step="0.01" min="0" inputmode="decimal" />
+      </div>
+      <div class="field-group">
+        <div class="field-label">Pagamento</div>
+        <label class="toggle-paid">
+          <input type="checkbox" id="fPaid" />
+          <div class="toggle-track"></div>
+          <span class="toggle-label" id="paidLabel">A receber</span>
+        </label>
+      </div>
+    </div>
+
     <div class="field-group">
       <div class="field-label">Observações</div>
       <input class="field-input" id="fNotes" placeholder="Ex: Cuidado com o cachorro" />
     </div>
+
     <input type="hidden" id="editIndex" value="-1">
     <button class="btn-save" onclick="saveStop()">✅ Salvar parada</button>
   </div>
 </div>
 
-<!-- ═══ BULK ═══ -->
+<!-- ═══════════════════════════════════
+     FINANCEIRO
+════════════════════════════════════ -->
+<div class="screen" id="financeScreen">
+  <div class="finance-screen">
+    <div class="finance-title">💰 Financeiro</div>
+
+    <div class="meta-row">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;">META DO DIA (R$)</div>
+        <input class="meta-input" id="metaInput" type="number" placeholder="0" oninput="updateMeta()" />
+      </div>
+    </div>
+    <div class="meta-bar-wrap" id="metaBarWrap" style="margin:-10px 0 16px;">
+      <div class="meta-bar" id="metaBar" style="width:0%"></div>
+    </div>
+
+    <div class="summary-grid" id="summaryGrid"></div>
+
+    <div class="chart-box">
+      <div class="chart-title">Ganhos — últimos 7 dias</div>
+      <canvas id="earningsChart" height="140"></canvas>
+    </div>
+
+    <div class="store-breakdown" id="storeBreakdown"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     HISTÓRICO
+════════════════════════════════════ -->
+<div class="screen" id="historyScreen">
+  <div class="history-screen">
+    <div class="history-title">📋 Histórico</div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     BULK
+════════════════════════════════════ -->
 <div class="screen" id="bulkScreen">
   <div class="bulk-screen">
     <div class="screen-title">
@@ -220,453 +444,745 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       Importar lista da loja
     </div>
     <div class="bulk-info">
-      <strong>Como funciona:</strong><br>
-      A loja preenche uma planilha e te manda o arquivo CSV. Você sobe aqui e todas as paradas entram de uma vez.<br><br>
-      <strong>Colunas:</strong> <code>nome</code> · <code>endereco</code> · <code>complemento</code> · <code>telefone</code> · <code>observacao</code><br><br>
-      Baixe o modelo e mande pra loja preencher 👇
+      <strong>Como funciona:</strong> a loja preenche a planilha e te manda. Você sobe aqui e as paradas entram de uma vez.<br><br>
+      <strong>Colunas:</strong> <code>nome</code> · <code>endereco</code> · <code>complemento</code> · <code>telefone</code> · <code>valor</code> · <code>observacao</code>
     </div>
     <button class="btn-download-template" onclick="downloadTemplate()">⬇️ Baixar planilha modelo</button>
-    <div class="upload-zone" id="uploadZone">
+    <div class="upload-zone">
       <input type="file" accept=".csv" id="csvFileInput" onchange="handleFileUpload(this.files[0])" />
       <div class="upload-icon">📂</div>
-      <div class="upload-title">Toque para selecionar o arquivo</div>
-      <div class="upload-sub">Arquivo .csv preenchido pela loja</div>
+      <div class="upload-title">Toque para selecionar</div>
+      <div class="upload-sub">Arquivo .csv da loja</div>
     </div>
-    <div id="previewArea" style="display:none;">
+    <div id="previewArea" style="display:none">
       <div class="preview-count" id="previewCount"></div>
-      <div style="overflow-x:auto;">
-        <table class="preview-table" id="previewTable"></table>
-      </div>
+      <div style="overflow-x:auto"><table class="preview-table" id="previewTable"></table></div>
       <button class="btn-confirm-bulk" onclick="confirmBulkImport()">✅ Adicionar todas as paradas</button>
     </div>
   </div>
 </div>
 
-<!-- ═══ CONFIG ═══ -->
+<!-- ═══════════════════════════════════
+     CONFIG
+════════════════════════════════════ -->
 <div class="screen" id="configScreen">
   <div class="config-screen">
     <div class="screen-title">
       <button class="back" onclick="goTo('homeScreen')">←</button>
       Configurações
     </div>
+
     <div class="config-section">
       <div class="config-section-title">
         🏪 Ponto de partida
-        <button class="btn-location" onclick="getGPSLocation()">📍 Usar GPS</button>
+        <button class="btn-location" onclick="getGPSLocation()">📍 GPS</button>
       </div>
       <div class="field-group">
-        <div class="field-label">Endereço da loja (início da rota)</div>
+        <div class="field-label">Endereço da loja / início da rota</div>
         <input class="field-input" id="cfgOrigin" placeholder="Ex: Rua da Loja 500, Serra/ES" />
       </div>
     </div>
+
     <div class="config-section">
-      <div class="config-section-title">💬 Mensagem padrão WhatsApp</div>
-      <div class="field-group">
-        <div class="field-label">Use {nome} para o nome do cliente</div>
-        <input class="field-input" id="cfgWppMsg" placeholder="Olá {nome}! Estou a caminho com sua entrega 🚀" />
+      <div class="config-section-title">🏬 Minhas lojas</div>
+      <div class="stores-list" id="storesList"></div>
+      <div class="store-add-row">
+        <input class="field-input" id="newStoreName" placeholder="Nome da loja (ex: KS)" maxlength="30" />
+        <button class="btn-store-add" onclick="addStore()">+ Adicionar</button>
       </div>
     </div>
+
+    <div class="config-section">
+      <div class="config-section-title">💬 Mensagem WhatsApp</div>
+      <div class="field-group">
+        <div class="field-label">Use {nome} para o nome do cliente</div>
+        <input class="field-input" id="cfgWppMsg" placeholder="Olá {nome}! Estou a caminho 🚀" />
+      </div>
+    </div>
+
     <div class="config-section">
       <div class="config-section-title">🤖 API Key (opcional)</div>
-      <div class="api-info">
-        O app funciona <strong style="color:var(--green)">100% grátis</strong> sem API Key. A chave só melhora a extração em mensagens muito desformatadas.<br><br>
-        <a class="api-link" href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
-      </div>
-      <div class="api-info api-warn">
-        ⚠️ Nunca compartilhe o link ou seu celular com a chave inserida aqui.
-      </div>
+      <div class="api-info">Funciona <strong style="color:var(--green)">100% grátis</strong> sem API Key. A chave melhora extração em textos bagunçados.<br><a class="api-link" href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></div>
+      <div class="api-info api-warn">⚠️ Nunca compartilhe o celular com a chave inserida.</div>
       <div class="field-group">
-        <div class="field-label">API Key Anthropic (opcional)</div>
         <input class="field-input" id="cfgApiKey" placeholder="sk-ant-..." type="password" />
       </div>
     </div>
+
     <button class="btn-cfg-save" onclick="saveConfig()">💾 Salvar configurações</button>
-    <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+
+    <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
       <div class="config-section-title" style="color:var(--red);">⚠️ Zona de perigo</div>
-      <button onclick="clearAll()" style="width:100%;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:var(--radius);padding:12px;font-family:'Barlow',sans-serif;font-weight:600;font-size:14px;cursor:pointer;">
-        🗑️ Limpar todas as paradas do dia
+      <button onclick="clearAll()" style="width:100%;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:var(--radius);padding:11px;font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px;">
+        🗑️ Limpar paradas do dia
+      </button>
+      <button onclick="clearHistory()" style="width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:var(--radius);padding:11px;font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;">
+        🗑️ Apagar todo o histórico
       </button>
     </div>
   </div>
 </div>
 
+<!-- ═══════════════════════════════════
+     BOTTOM NAV
+════════════════════════════════════ -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-home" onclick="navTo('homeScreen','nav-home')">
+    <span class="icon">📦</span>Entregas
+  </button>
+  <button class="nav-btn" id="nav-finance" onclick="navTo('financeScreen','nav-finance')">
+    <span class="icon">💰</span>Ganhos
+  </button>
+  <button class="nav-btn" id="nav-history" onclick="navTo('historyScreen','nav-history')">
+    <span class="icon">📋</span>Histórico
+  </button>
+</nav>
+
 <script>
-let stops      = JSON.parse(localStorage.getItem('sb_stops') || '[]');
-let cfg        = JSON.parse(localStorage.getItem('sb_cfg')   || '{}');
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+let stops   = JSON.parse(localStorage.getItem('sb_stops')   || '[]');
+let cfg     = JSON.parse(localStorage.getItem('sb_cfg')     || '{"stores":[],"origin":"","wppMsg":"","apiKey":"","meta":0}');
+let history = JSON.parse(localStorage.getItem('sb_history') || '[]');
+if (!cfg.stores) cfg.stores = [];
+
 let bulkPreview = [];
 
-// ── Novo dia ──
+// ── Toggle pagamento label ──
+document.getElementById('fPaid').addEventListener('change', function(){
+  document.getElementById('paidLabel').textContent = this.checked ? 'Recebido ✓' : 'A receber';
+});
+
+// ══════════════════════════════════════
+//  NOVO DIA
+// ══════════════════════════════════════
 function checkNewDay() {
   const lastDate = localStorage.getItem('sb_last_date');
   const today    = new Date().toLocaleDateString('pt-BR');
   if (lastDate && lastDate !== today && stops.length > 0) {
-    if (confirm('Você tem paradas salvas de ontem. Deseja limpar a lista para começar o dia zerado?')) {
+    // Salva automaticamente no histórico antes de perguntar
+    saveToHistory(lastDate);
+    if (confirm(`Bom dia! 🌅 Você tem ${stops.length} parada(s) de ${lastDate} salvas. Deseja limpar para começar o dia zerado?`)) {
       stops = []; save();
     }
   }
   localStorage.setItem('sb_last_date', today);
 }
 
+function saveToHistory(date) {
+  if (!stops.length) return;
+  const existing = history.findIndex(d => d.date === date);
+  const entry = { date, stops: JSON.parse(JSON.stringify(stops)) };
+  if (existing >= 0) history[existing] = entry;
+  else history.unshift(entry);
+  // Mantém só 60 dias
+  if (history.length > 60) history = history.slice(0, 60);
+  localStorage.setItem('sb_history', JSON.stringify(history));
+}
+
 // ══════════════════════════════════════
-//  ROTA COMPLETA NO GOOGLE MAPS
+//  NAVEGAÇÃO
+// ══════════════════════════════════════
+let currentScreen = 'homeScreen';
+
+function navTo(screenId, navId) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(navId).classList.add('active');
+  showScreen(screenId);
+  if (screenId === 'financeScreen') renderFinance();
+  if (screenId === 'historyScreen') renderHistory();
+}
+
+function goTo(id) {
+  showScreen(id);
+  window.scrollTo(0,0);
+  if (id === 'homeScreen')   renderList();
+  if (id === 'configScreen') loadConfig();
+  if (id === 'addScreen' && document.getElementById('editIndex').value === '-1') resetForm();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  currentScreen = id;
+}
+
+// ══════════════════════════════════════
+//  RENDER HOME
+// ══════════════════════════════════════
+function renderList() {
+  ensureOrder();
+  const list  = document.getElementById('stopsList');
+  const badge = document.getElementById('badgeCount');
+  const total = stops.length;
+  badge.textContent = total + '/10';
+  badge.classList.toggle('full', total >= 10);
+  document.getElementById('routeBtn').disabled = total === 0;
+  document.getElementById('sortBar').style.display = total > 1 ? 'flex' : 'none';
+
+  if (!total) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Nenhuma parada ainda</div><div class="empty-sub">Adicione clientes ou importe a lista da loja</div></div>`;
+    return;
+  }
+
+  // Agrupa por loja
+  const groups = {};
+  stops.forEach((s, i) => {
+    const key = s.store || '__none__';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push({ s, i });
+  });
+
+  let html = '';
+  Object.entries(groups).forEach(([key, items]) => {
+    if (key !== '__none__') {
+      html += `<div class="store-label">🏪 ${key}</div>`;
+    }
+    items.forEach(({ s, i }) => {
+      const val    = parseFloat(s.value) || 0;
+      const valStr = val > 0 ? `R$ ${val.toFixed(2).replace('.',',')}` : '';
+      html += `
+      <div class="stop-card ${s.done?'done':''}" id="card${i}" onclick="toggleCard(${i})">
+        <div class="stop-header">
+          <div class="stop-num">${i+1}</div>
+          <div class="stop-info">
+            <div class="stop-name">${s.name||'Sem nome'}</div>
+            <div class="stop-addr">${s.address||'Sem endereço'}</div>
+          </div>
+          <div class="stop-right">
+            ${valStr ? `<div class="stop-value ${s.paid?'':'unpaid'}">${valStr}</div>` : ''}
+            <div class="stop-status"></div>
+          </div>
+        </div>
+        <div class="stop-detail">
+          ${s.phone      ? `<div><strong>TEL</strong> ${formatPhone(s.phone)}</div>` : ''}
+          ${s.complement ? `<div><strong>REF</strong> ${s.complement}</div>` : ''}
+          ${s.notes      ? `<div><strong>OBS</strong> ${s.notes}</div>` : ''}
+          ${valStr       ? `<div><strong>PAGTO</strong> <span class="paid-badge ${s.paid?'yes':'no'}">${s.paid?'✓ Recebido':'⏳ A receber'}</span></div>` : ''}
+        </div>
+        <div class="stop-actions" onclick="event.stopPropagation()">
+          ${s.phone ? `<button class="btn-action btn-wpp" onclick="openWppModal(${i})">💬 WhatsApp</button>` : ''}
+          <button class="btn-action btn-maps-s" onclick="openMapsSingle('${escAttr(s.address)}')">🗺️ Navegar</button>
+          <button class="btn-action btn-done" onclick="toggleDone(${i})">${s.done?'↩️ Reabrir':'✅ Entregue'}</button>
+          ${parseFloat(s.value)>0 ? `<button class="btn-action btn-paid ${s.paid?'is-paid':''}" onclick="togglePaid(${i})">${s.paid?'💸 Recebido':'💰 Marcar pago'}</button>` : ''}
+          <button class="btn-action btn-edit" onclick="editStop(${i})">✏️ Editar</button>
+          <button class="btn-action btn-del"  onclick="deleteStop(${i})">🗑️ Remover</button>
+        </div>
+      </div>`;
+    });
+  });
+
+  list.innerHTML = html;
+}
+
+function toggleCard(i) {
+  const c = document.getElementById('card'+i), was = c.classList.contains('expanded');
+  document.querySelectorAll('.stop-card').forEach(x => x.classList.remove('expanded'));
+  if (!was) c.classList.add('expanded');
+}
+
+// ══════════════════════════════════════
+//  AÇÕES
+// ══════════════════════════════════════
+function toggleDone(i)  { stops[i].done = !stops[i].done; save(); renderList(); }
+function togglePaid(i)  { stops[i].paid = !stops[i].paid; save(); renderList(); }
+function deleteStop(i)  { if (!confirm(`Remover ${stops[i].name}?`)) return; stops.splice(i,1); save(); renderList(); }
+
+function editStop(i) {
+  const s = stops[i];
+  document.getElementById('editIndex').value            = i;
+  document.getElementById('addScreenTitle').textContent = 'Editar parada';
+  document.getElementById('fStore').value       = s.store      || '';
+  document.getElementById('fName').value        = s.name       || '';
+  document.getElementById('fAddress').value     = s.address    || '';
+  document.getElementById('fComplement').value  = s.complement || '';
+  document.getElementById('fNotes').value       = s.notes      || '';
+  document.getElementById('fValue').value       = s.value      || '';
+  document.getElementById('fPaid').checked      = !!s.paid;
+  document.getElementById('paidLabel').textContent = s.paid ? 'Recebido ✓' : 'A receber';
+  const ph = document.getElementById('fPhone'); ph.value = s.phone||''; if(s.phone) maskPhone(ph);
+  showScreen('addScreen'); window.scrollTo(0,0);
+}
+
+function openMapsSingle(address) {
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`, '_blank');
+}
+function openWpp(phone, name) {
+  const msg = (cfg.wppMsg||'Olá {nome}! Estou a caminho com sua entrega 🚀').replace('{nome}', name);
+  window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function saveStop() {
+  const name    = document.getElementById('fName').value.trim();
+  const address = document.getElementById('fAddress').value.trim();
+  if (!name || !address) { toast('Nome e endereço são obrigatórios!', 'error'); return; }
+  const idx = parseInt(document.getElementById('editIndex').value);
+  if (stops.length >= 10 && idx < 0) { toast('Limite de 10 paradas atingido!', 'error'); return; }
+  const stop = {
+    name, address,
+    store:      document.getElementById('fStore').value,
+    complement: document.getElementById('fComplement').value.trim(),
+    phone:      document.getElementById('fPhone').value.replace(/\D/g,''),
+    value:      parseFloat(document.getElementById('fValue').value) || 0,
+    paid:       document.getElementById('fPaid').checked,
+    notes:      document.getElementById('fNotes').value.trim(),
+    done:       idx >= 0 ? stops[idx].done : false
+  };
+  if (idx >= 0) { stops[idx] = stop; } else { stop._order = stops.length; stops.push(stop); }
+  save(); toast(idx >= 0 ? 'Parada atualizada!' : '✅ Parada adicionada!', 'success');
+  navTo('homeScreen', 'nav-home');
+}
+
+// ══════════════════════════════════════
+//  ROTA COMPLETA
 // ══════════════════════════════════════
 function openFullRoute() {
   const active = stops.filter(s => !s.done);
   if (!active.length) { toast('Nenhuma parada pendente', 'error'); return; }
-
-  // Google Maps aceita: origin + até 8 waypoints + destination
-  // Formato: /maps/dir/origem/parada1/parada2/.../destino
-  const origin      = cfg.origin || '';
-  const destinations = active.map(s => encodeURIComponent(s.address));
-
+  const dests = active.map(s => encodeURIComponent(s.address));
   let url;
-  if (destinations.length === 1) {
-    // Rota simples: origem → destino
-    const base = origin
-      ? `https://www.google.com/maps/dir/${encodeURIComponent(origin)}/${destinations[0]}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${destinations[0]}`;
-    url = base;
+  if (dests.length === 1) {
+    url = cfg.origin
+      ? `https://www.google.com/maps/dir/${encodeURIComponent(cfg.origin)}/${dests[0]}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${dests[0]}`;
   } else {
-    // Rota com múltiplas paradas
-    // Último destino é o destination, o resto são waypoints
-    const dest      = destinations[destinations.length - 1];
-    const waypoints = destinations.slice(0, -1).join('/');
-    if (origin) {
-      url = `https://www.google.com/maps/dir/${encodeURIComponent(origin)}/${waypoints}/${dest}`;
-    } else {
-      url = `https://www.google.com/maps/dir/${waypoints}/${dest}`;
-    }
+    const dest = dests[dests.length - 1];
+    const wpts = dests.slice(0, -1).join('/');
+    url = cfg.origin
+      ? `https://www.google.com/maps/dir/${encodeURIComponent(cfg.origin)}/${wpts}/${dest}`
+      : `https://www.google.com/maps/dir/${wpts}/${dest}`;
   }
-
   window.open(url, '_blank');
 }
 
 // ══════════════════════════════════════
-//  PARSER LOCAL
+//  FINANCEIRO
+// ══════════════════════════════════════
+function renderFinance() {
+  const today     = new Date().toLocaleDateString('pt-BR');
+  const todayStop = stops;
+
+  // Junta hoje + histórico para calcular semana e mês
+  const allDays = [{ date: today, stops: todayStop }, ...history];
+
+  const now   = new Date();
+  const weekAgo  = new Date(now); weekAgo.setDate(now.getDate() - 6);
+  const monthAgo = new Date(now); monthAgo.setDate(1);
+
+  function parseDate(str) {
+    const [d,m,y] = str.split('/'); return new Date(`${y}-${m}-${d}`);
+  }
+  function sumDay(dayStops) {
+    return dayStops.reduce((a,s) => a + (parseFloat(s.value)||0), 0);
+  }
+  function sumPaidDay(dayStops) {
+    return dayStops.filter(s=>s.paid).reduce((a,s) => a + (parseFloat(s.value)||0), 0);
+  }
+
+  const todayTotal  = sumDay(todayStop);
+  const todayPaid   = sumPaidDay(todayStop);
+  const todayPend   = todayTotal - todayPaid;
+  const todayCount  = todayStop.filter(s=>s.done).length;
+
+  let weekTotal = 0, monthTotal = 0;
+  allDays.forEach(d => {
+    const dt = parseDate(d.date);
+    const v  = sumDay(d.stops);
+    if (dt >= weekAgo)  weekTotal  += v;
+    if (dt >= monthAgo) monthTotal += v;
+  });
+
+  // Summary cards
+  document.getElementById('summaryGrid').innerHTML = `
+    <div class="summary-card accent">
+      <div class="summary-label">Hoje — Total</div>
+      <div class="summary-value accent">R$ ${todayTotal.toFixed(2).replace('.',',')}</div>
+      <div class="summary-sub">${todayCount} entrega(s) concluída(s)</div>
+    </div>
+    <div class="summary-card green">
+      <div class="summary-label">Hoje — Recebido</div>
+      <div class="summary-value green">R$ ${todayPaid.toFixed(2).replace('.',',')}</div>
+      <div class="summary-sub">A receber: R$ ${todayPend.toFixed(2).replace('.',',')}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Semana</div>
+      <div class="summary-value">R$ ${weekTotal.toFixed(2).replace('.',',')}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Mês atual</div>
+      <div class="summary-value">R$ ${monthTotal.toFixed(2).replace('.',',')}</div>
+    </div>`;
+
+  // Meta
+  const meta = parseFloat(cfg.meta) || 0;
+  document.getElementById('metaInput').value = meta || '';
+  if (meta > 0) {
+    const pct = Math.min((todayTotal / meta) * 100, 100);
+    document.getElementById('metaBar').style.width = pct + '%';
+    document.getElementById('metaBar').style.background = pct >= 100 ? 'var(--green)' : 'var(--accent)';
+  } else {
+    document.getElementById('metaBar').style.width = '0%';
+  }
+
+  // Gráfico 7 dias
+  drawChart(allDays, parseDate);
+
+  // Breakdown por loja (hoje)
+  const storeMap = {};
+  todayStop.forEach(s => {
+    const k = s.store || 'Sem loja';
+    if (!storeMap[k]) storeMap[k] = { total: 0, count: 0 };
+    storeMap[k].total += parseFloat(s.value)||0;
+    storeMap[k].count++;
+  });
+  const storeRows = Object.entries(storeMap).map(([name,v]) =>
+    `<div class="breakdown-row">
+      <div class="breakdown-store">🏪 ${name}</div>
+      <div class="breakdown-vals">
+        <div class="breakdown-val">R$ ${v.total.toFixed(2).replace('.',',')}</div>
+        <div class="breakdown-cnt">${v.count} parada(s)</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('storeBreakdown').innerHTML =
+    `<div class="chart-title" style="margin-bottom:10px">Por loja — hoje</div>` +
+    (storeRows || '<div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhuma parada hoje</div>');
+}
+
+function updateMeta() {
+  cfg.meta = parseFloat(document.getElementById('metaInput').value) || 0;
+  localStorage.setItem('sb_cfg', JSON.stringify(cfg));
+  renderFinance();
+}
+
+function drawChart(allDays, parseDate) {
+  const canvas = document.getElementById('earningsChart');
+  const ctx    = canvas.getContext('2d');
+  const dpr    = window.devicePixelRatio || 1;
+  const W      = canvas.parentElement.clientWidth - 28;
+  const H      = 140;
+  canvas.width  = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+
+  // Últimos 7 dias
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const label = d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    const found = allDays.find(x => x.date === d.toLocaleDateString('pt-BR'));
+    const val   = found ? found.stops.reduce((a,s)=>a+(parseFloat(s.value)||0),0) : 0;
+    days.push({ label, val });
+  }
+
+  const maxVal = Math.max(...days.map(d=>d.val), 1);
+  const padL=6, padR=6, padT=10, padB=28;
+  const barW  = Math.floor((W - padL - padR) / 7) - 4;
+  const barArea = H - padT - padB;
+
+  ctx.clearRect(0, 0, W, H);
+
+  days.forEach((d, i) => {
+    const x   = padL + i * ((W - padL - padR) / 7) + 2;
+    const barH = Math.max(2, (d.val / maxVal) * barArea);
+    const y   = padT + barArea - barH;
+    const isToday = i === 6;
+
+    // Barra
+    ctx.fillStyle = isToday ? 'rgba(245,197,24,.9)' : 'rgba(245,197,24,.3)';
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, barH, 4);
+    ctx.fill();
+
+    // Valor acima
+    if (d.val > 0) {
+      ctx.fillStyle = isToday ? '#f5c518' : '#666';
+      ctx.font = `${isToday?'600':'500'} 10px Barlow`;
+      ctx.textAlign = 'center';
+      ctx.fillText('R$' + d.val.toFixed(0), x + barW/2, y - 3);
+    }
+
+    // Label data
+    ctx.fillStyle = isToday ? '#f0f0f0' : '#555';
+    ctx.font = `${isToday?'700':'500'} 10px Barlow`;
+    ctx.textAlign = 'center';
+    ctx.fillText(d.label, x + barW/2, H - 6);
+  });
+}
+
+// ══════════════════════════════════════
+//  HISTÓRICO
+// ══════════════════════════════════════
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!history.length) {
+    list.innerHTML = '<div class="empty-history">Nenhum histórico ainda.<br>Os dias anteriores aparecem aqui automaticamente.</div>';
+    return;
+  }
+  list.innerHTML = history.map((day, di) => {
+    const total = day.stops.reduce((a,s)=>a+(parseFloat(s.value)||0), 0);
+    const count = day.stops.length;
+    const rows  = day.stops.map(s => {
+      const val = parseFloat(s.value)||0;
+      return `<div class="history-stop-row">
+        <div>
+          <div class="history-stop-name">${s.name||'—'}</div>
+          <div class="history-stop-addr">${(s.address||'').substring(0,34)}</div>
+        </div>
+        ${val>0?`<div class="history-stop-val">R$ ${val.toFixed(2).replace('.',',')}</div>`:''}
+      </div>`;
+    }).join('');
+    return `
+    <div class="history-day" id="hday${di}">
+      <div class="history-day-header" onclick="toggleHistory(${di})">
+        <div class="history-day-date">${day.date}</div>
+        <div class="history-day-info">
+          <div class="history-day-val">R$ ${total.toFixed(2).replace('.',',')}</div>
+          <div class="history-day-cnt">${count} entrega(s)</div>
+        </div>
+      </div>
+      <div class="history-day-list">${rows}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleHistory(i) {
+  document.getElementById('hday'+i).classList.toggle('open');
+}
+
+// ══════════════════════════════════════
+//  PARSER
 // ══════════════════════════════════════
 function smartParse(text) {
   const r = { name:'', address:'', complement:'', phone:'', notes:'' };
   const t = text;
-
   const telRx   = /(?:tel(?:efone)?|fone|whatsapp|cel(?:ular)?|contato)[\s:.\-]*(\(?\d{2}\)?\s?\d{4,5}[\s\-]?\d{4})/i;
   const telFree = /\b(\(?\d{2}\)?\s?9\d{4}[\s\-]?\d{4})\b/;
   const tm = t.match(telRx) || t.match(telFree);
   if (tm) r.phone = tm[1].replace(/\D/g,'');
-
   const nameRx = /(?:cliente|nome|destinat[aá]rio|para|comprador)[\s:.\-]+([A-ZÀ-Úa-zà-ú][^\n,]{2,40})/i;
   const nm = t.match(nameRx);
-  if (nm) { r.name = nm[1].trim().replace(/\s+/g,' '); }
-  else {
-    const cap = t.match(/(?:^|[\n,]\s*)([A-ZÀ-Ú][a-zà-ú]+(?: [A-ZÀ-Ú][a-zà-ú]+)+)/m);
-    if (cap) r.name = cap[1].trim();
-  }
-
+  if (nm) r.name = nm[1].trim().replace(/\s+/g,' ');
+  else { const cap=t.match(/(?:^|[\n,]\s*)([A-ZÀ-Ú][a-zà-ú]+(?: [A-ZÀ-Ú][a-zà-ú]+)+)/m); if(cap) r.name=cap[1].trim(); }
   const compRx = /(?:complemento|comp\.?)[\s:.\-]*([^\n,]{2,60})/i;
   const cm = t.match(compRx);
-  if (cm) { r.complement = cm[1].trim(); }
-  else {
-    const cm2 = t.match(/\b((?:apto?\.?|apartamento|bloco|sala|casa|lote|conj\.?|andar|piso|unid(?:ade)?)[\s:.\-]*[\w\s\/]{1,30}?)(?=[,\n]|$)/i);
-    if (cm2) r.complement = cm2[1].trim();
-  }
-
-  const obsRx = /(?:obs(?:erva[çc][aã]o)?|obs\.|recado|aten[çc][aã]o|detalhe)[\s:.\-]*(.+?)(?=\n|$)/i;
-  const om = t.match(obsRx);
-  if (om) r.notes = om[1].trim();
-
+  if (cm) r.complement=cm[1].trim();
+  else { const cm2=t.match(/\b((?:apto?\.?|apartamento|bloco|sala|casa|lote|conj\.?|andar|piso)[\s:.\-]*[\w\s\/]{1,30}?)(?=[,\n]|$)/i); if(cm2) r.complement=cm2[1].trim(); }
+  const obsRx = /(?:obs(?:erva[çc][aã]o)?|obs\.|recado|aten[çc][aã]o)[\s:.\-]*(.+?)(?=\n|$)/i;
+  const om = t.match(obsRx); if(om) r.notes=om[1].trim();
   const addrRx = /((?:rua|r\.|avenida|av\.?|alameda|al\.?|estrada|estr\.?|travessa|tv\.?|pra[çc]a|pc\.?|rodovia|rod\.?|largo|viela|beco|via)\s+[^\n]{5,80})/i;
   const am = t.match(addrRx);
   if (am) {
-    let addr = am[1].trim();
-    const rest  = t.slice(t.indexOf(am[1]) + am[1].length);
-    const extra = rest.match(/^[^\n]{0,80}/)?.[0]?.trim();
-    if (extra) addr += (addr.endsWith(',') ? ' ' : ', ') + extra.replace(/^,\s*/,'');
-    if (r.complement) addr = addr.replace(new RegExp(r.complement.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),'');
-    r.address = addr.replace(/,\s*,/g,',').replace(/\s+/g,' ').trim().replace(/,$/,'');
-  } else {
-    const lines = t.split(/\n/).map(l=>l.trim()).filter(l=>l.length>6);
-    const ln = lines.find(l => /\d{2,}/.test(l));
-    if (ln) r.address = ln;
-  }
+    let addr=am[1].trim();
+    const rest=t.slice(t.indexOf(am[1])+am[1].length);
+    const extra=rest.match(/^[^\n]{0,80}/)?.[0]?.trim();
+    if(extra) addr+=(addr.endsWith(',')?' ':', ')+extra.replace(/^,\s*/,'');
+    if(r.complement) addr=addr.replace(new RegExp(r.complement.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),'');
+    r.address=addr.replace(/,\s*,/g,',').replace(/\s+/g,' ').trim().replace(/,$/,'');
+  } else { const ln=t.split(/\n/).map(l=>l.trim()).filter(l=>l.length>6).find(l=>/\d{2,}/.test(l)); if(ln) r.address=ln; }
   return r;
 }
 
 async function parseMessage() {
   const text = document.getElementById('pasteArea').value.trim();
   if (!text) { toast('Cole uma mensagem primeiro', 'error'); return; }
-  const btn  = document.getElementById('parseBtn');
-  const orig = btn.innerHTML;
-  btn.innerHTML = '⏳ Processando...'; btn.disabled = true;
-
+  const btn=document.getElementById('parseBtn'), orig=btn.innerHTML;
+  btn.innerHTML='⏳ Processando...'; btn.disabled=true;
   let parsed;
-  if (cfg.apiKey) {
-    try { parsed = await parseWithAPI(text, cfg.apiKey); }
-    catch(e) { parsed = smartParse(text); }
-  } else {
-    parsed = smartParse(text);
-  }
-
-  document.getElementById('fName').value       = parsed.name       || '';
-  document.getElementById('fAddress').value    = parsed.address    || '';
-  document.getElementById('fComplement').value = parsed.complement || '';
-  document.getElementById('fNotes').value      = parsed.notes      || '';
-  const ph = document.getElementById('fPhone');
-  ph.value = parsed.phone || ''; if (parsed.phone) maskPhone(ph);
-
-  const ok = [parsed.name, parsed.address].filter(Boolean).length >= 2;
-  toast(ok ? '✅ Dados extraídos! Revise e salve.' : '⚠️ Revise os campos manualmente', ok?'success':'');
-  btn.innerHTML = orig; btn.disabled = false;
+  if (cfg.apiKey) { try { parsed=await parseWithAPI(text,cfg.apiKey); } catch(e) { parsed=smartParse(text); } }
+  else parsed=smartParse(text);
+  document.getElementById('fName').value=parsed.name||'';
+  document.getElementById('fAddress').value=parsed.address||'';
+  document.getElementById('fComplement').value=parsed.complement||'';
+  document.getElementById('fNotes').value=parsed.notes||'';
+  const ph=document.getElementById('fPhone'); ph.value=parsed.phone||''; if(parsed.phone) maskPhone(ph);
+  const ok=[parsed.name,parsed.address].filter(Boolean).length>=2;
+  toast(ok?'✅ Dados extraídos! Revise e salve.':'⚠️ Revise os campos manualmente',ok?'success':'');
+  btn.innerHTML=orig; btn.disabled=false;
 }
 
 async function parseWithAPI(text, apiKey) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body: JSON.stringify({
-      model:'claude-sonnet-4-20250514', max_tokens:400,
-      system:'Extrai dados de mensagens de entrega. Responda APENAS JSON sem markdown: {"name":"","address":"","complement":"","phone":"","notes":""}. address deve incluir cidade e estado. NÃO inclua complemento no address.',
-      messages:[{role:'user',content:`Extraia:\n\n${text}`}]
-    })
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,
+      system:'Extrai dados de mensagens de entrega. Responda APENAS JSON sem markdown: {"name":"","address":"","complement":"","phone":"","notes":""}. address deve incluir cidade e estado.',
+      messages:[{role:'user',content:`Extraia:\n\n${text}`}]})
   });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
+  const data=await res.json(); if(data.error) throw new Error(data.error.message);
   return JSON.parse(data.content[0].text.trim());
 }
 
 // ══════════════════════════════════════
-//  BULK IMPORT
+//  LOJAS
 // ══════════════════════════════════════
-function downloadTemplate() {
-  const header = 'nome,endereco,complemento,telefone,observacao';
-  const ex1    = '"Pedro Santos","Avenida Central, 890, Morada de Laranjeiras, Serra - ES","Casa amarela com portão preto","27988887654","Cuidado com o cachorro"';
-  const ex2    = '"Maria Silva","Rua das Flores, 200, Centro, Vitória - ES","Apto 301","27977776543","Ligar antes de entregar"';
-  const blob   = new Blob(['\uFEFF' + [header,ex1,ex2].join('\n')], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = 'modelo_speedboy.csv';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  toast('📥 Modelo baixado!', 'success');
+function renderStores() {
+  const list = document.getElementById('storesList');
+  if (!cfg.stores.length) { list.innerHTML='<div style="font-size:12px;color:var(--muted)">Nenhuma loja cadastrada ainda.</div>'; return; }
+  list.innerHTML = cfg.stores.map((s,i) =>
+    `<div class="store-chip">${s}<button class="store-chip-del" onclick="removeStore(${i})">×</button></div>`
+  ).join('');
 }
 
-function handleFileUpload(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const text    = e.target.result.replace(/^\uFEFF/,'');
-      const rows    = parseCSV(text);
-      if (rows.length < 2) { toast('Arquivo vazio ou inválido','error'); return; }
-      const headers = rows[0].map(h => h.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,''));
-      const col = {
-        nome:        findCol(headers,['nome','name','cliente']),
-        endereco:    findCol(headers,['endereco','address','endereço','end']),
-        complemento: findCol(headers,['complemento','comp','complement','referencia']),
-        telefone:    findCol(headers,['telefone','tel','phone','celular','whatsapp','fone']),
-        observacao:  findCol(headers,['observacao','obs','notes','nota'])
-      };
-      if (col.nome < 0 || col.endereco < 0) { toast('"nome" e "endereco" são obrigatórios','error'); return; }
-      bulkPreview = rows.slice(1).filter(r=>r.some(c=>c.trim())).map(r=>({
-        name:       (r[col.nome]||'').trim(),
-        address:    (r[col.endereco]||'').trim(),
-        complement: col.complemento>=0 ? (r[col.complemento]||'').trim() : '',
-        phone:      col.telefone>=0    ? (r[col.telefone]||'').replace(/\D/g,'') : '',
-        notes:      col.observacao>=0  ? (r[col.observacao]||'').trim() : '',
-        done: false
-      })).filter(s=>s.name&&s.address);
-      if (!bulkPreview.length) { toast('Nenhuma linha válida','error'); return; }
-      showPreview();
-    } catch(err) { toast('Erro ao ler arquivo','error'); }
-  };
-  reader.readAsText(file,'UTF-8');
+function addStore() {
+  const name = document.getElementById('newStoreName').value.trim();
+  if (!name) return;
+  if (cfg.stores.includes(name)) { toast('Loja já cadastrada','error'); return; }
+  cfg.stores.push(name);
+  document.getElementById('newStoreName').value='';
+  localStorage.setItem('sb_cfg', JSON.stringify(cfg));
+  renderStores(); updateStoreSelect();
+  toast(`🏪 "${name}" adicionada!`,'success');
 }
 
-function findCol(headers, candidates) {
-  for (const c of candidates) { const i = headers.findIndex(h=>h.includes(c)); if(i>=0) return i; }
-  return -1;
+function removeStore(i) {
+  cfg.stores.splice(i,1);
+  localStorage.setItem('sb_cfg',JSON.stringify(cfg));
+  renderStores(); updateStoreSelect();
 }
 
-function parseCSV(text) {
-  const rows = [];
-  for (const line of text.split(/\r?\n/)) {
-    if (!line.trim()) continue;
-    const row = []; let cur='', inQ=false;
-    for (let i=0;i<line.length;i++) {
-      const ch=line[i];
-      if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
-      else if(ch===','&&!inQ){row.push(cur);cur='';}
-      else cur+=ch;
-    }
-    row.push(cur); rows.push(row);
-  }
-  return rows;
-}
-
-function showPreview() {
-  const avail = 10 - stops.length;
-  const toAdd = Math.min(bulkPreview.length, avail);
-  document.getElementById('previewCount').innerHTML =
-    `<strong>${bulkPreview.length}</strong> clientes encontrados · <strong style="color:var(--green)">${toAdd}</strong> serão adicionados ${avail<bulkPreview.length?'<span style="color:var(--accent)">(limite 10)</span>':''}`;
-  document.getElementById('previewTable').innerHTML = `
-    <tr><th>#</th><th>Nome</th><th>Endereço</th><th>Tel</th></tr>
-    ${bulkPreview.slice(0,toAdd).map((s,i)=>`
-      <tr>
-        <td>${i+1}</td>
-        <td style="color:var(--green)">${s.name}</td>
-        <td>${s.address.substring(0,28)}${s.address.length>28?'…':''}</td>
-        <td>${s.phone?formatPhone(s.phone):'<span style="color:var(--muted)">—</span>'}</td>
-      </tr>`).join('')}`;
-  document.getElementById('previewArea').style.display = 'block';
-}
-
-function confirmBulkImport() {
-  const avail = 10 - stops.length;
-  const toAdd = bulkPreview.slice(0, avail);
-  if (!toAdd.length) { toast('Lista já cheia (10/10)','error'); return; }
-  stops = stops.concat(toAdd); save();
-  toast(`✅ ${toAdd.length} parada(s) adicionada(s)!`,'success');
-  bulkPreview = [];
-  document.getElementById('previewArea').style.display = 'none';
-  document.getElementById('csvFileInput').value = '';
-  setTimeout(() => goTo('homeScreen'), 600);
-}
-
-// ══════════════════════════════════════
-//  NAVEGAÇÃO
-// ══════════════════════════════════════
-function goTo(id) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0,0);
-  if(id==='homeScreen')   renderList();
-  if(id==='configScreen') loadConfig();
-  if(id==='addScreen' && document.getElementById('editIndex').value==='-1') resetForm();
-}
-
-// ══════════════════════════════════════
-//  RENDER
-// ══════════════════════════════════════
-function renderList() {
-  const list  = document.getElementById('stopsList');
-  const badge = document.getElementById('badgeCount');
-  const total = stops.length;
-  badge.textContent = total+'/10';
-  badge.classList.toggle('full', total>=10);
-  document.getElementById('routeBtn').disabled = total===0;
-
-  if (!total) {
-    list.innerHTML=`<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Nenhuma parada ainda</div><div class="empty-sub">Adicione clientes ou importe a lista da loja</div></div>`;
-    return;
-  }
-  list.innerHTML = stops.map((s,i)=>`
-    <div class="stop-card ${s.done?'done':''}" id="card${i}" onclick="toggleCard(${i})">
-      <div class="stop-header">
-        <div class="stop-num">${i+1}</div>
-        <div class="stop-info">
-          <div class="stop-name">${s.name||'Sem nome'}</div>
-          <div class="stop-addr">${s.address||'Sem endereço'}</div>
-        </div>
-        <div class="stop-status"></div>
-      </div>
-      <div class="stop-detail">
-        ${s.phone      ?`<div><strong>Tel.:</strong> ${formatPhone(s.phone)}</div>`:''}
-        ${s.complement ?`<div><strong>Ref.:</strong> ${s.complement}</div>`:''}
-        ${s.notes      ?`<div><strong>Obs.:</strong> ${s.notes}</div>`:''}
-      </div>
-      <div class="stop-actions" onclick="event.stopPropagation()">
-        ${s.phone?`<button class="btn-action btn-wpp" onclick="openWpp('${s.phone}','${escAttr(s.name)}')">💬 WhatsApp</button>`:''}
-        <button class="btn-action btn-maps-single" onclick="openMapsSingle('${escAttr(s.address)}')">🗺️ Só este</button>
-        <button class="btn-action btn-done" onclick="toggleDone(${i})">${s.done?'↩️ Reabrir':'✅ Entregue'}</button>
-        <button class="btn-action btn-edit" onclick="editStop(${i})">✏️ Editar</button>
-        <button class="btn-action btn-del"  onclick="deleteStop(${i})">🗑️ Remover</button>
-      </div>
-    </div>`).join('');
-}
-
-function toggleCard(i) {
-  const c=document.getElementById('card'+i), was=c.classList.contains('expanded');
-  document.querySelectorAll('.stop-card').forEach(x=>x.classList.remove('expanded'));
-  if(!was) c.classList.add('expanded');
-}
-
-// ══════════════════════════════════════
-//  AÇÕES
-// ══════════════════════════════════════
-function toggleDone(i)  { stops[i].done=!stops[i].done; save(); renderList(); }
-function deleteStop(i)  { if(!confirm(`Remover ${stops[i].name}?`))return; stops.splice(i,1); save(); renderList(); }
-
-function editStop(i) {
-  const s=stops[i];
-  document.getElementById('editIndex').value=''+i;
-  document.getElementById('addScreenTitle').textContent='Editar parada';
-  document.getElementById('fName').value=s.name||'';
-  document.getElementById('fAddress').value=s.address||'';
-  document.getElementById('fComplement').value=s.complement||'';
-  document.getElementById('fNotes').value=s.notes||'';
-  const ph=document.getElementById('fPhone'); ph.value=s.phone||''; if(s.phone) maskPhone(ph);
-  goTo('addScreen');
-}
-
-// Navega apenas neste destino
-function openMapsSingle(address) {
-  window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`,'_blank');
-}
-
-function openWpp(phone, name) {
-  const msg=(cfg.wppMsg||'Olá {nome}! Estou a caminho com sua entrega 🚀').replace('{nome}',name);
-  window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`,'_blank');
-}
-
-function saveStop() {
-  const name=document.getElementById('fName').value.trim();
-  const address=document.getElementById('fAddress').value.trim();
-  if(!name||!address){toast('Nome e endereço são obrigatórios!','error');return;}
-  const idx=parseInt(document.getElementById('editIndex').value);
-  if(stops.length>=10&&idx<0){toast('Limite de 10 paradas atingido!','error');return;}
-  const stop={name,address,complement:document.getElementById('fComplement').value.trim(),phone:document.getElementById('fPhone').value.replace(/\D/g,''),notes:document.getElementById('fNotes').value.trim(),done:idx>=0?stops[idx].done:false};
-  if(idx>=0) stops[idx]=stop; else stops.push(stop);
-  save(); toast(idx>=0?'Parada atualizada!':'✅ Parada adicionada!','success');
-  goTo('homeScreen');
+function updateStoreSelect() {
+  const sel = document.getElementById('fStore');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Sem loja específica —</option>' +
+    cfg.stores.map(s=>`<option value="${s}">${s}</option>`).join('');
+  sel.value = cur;
 }
 
 // ══════════════════════════════════════
 //  CONFIG
 // ══════════════════════════════════════
 function loadConfig() {
-  document.getElementById('cfgOrigin').value=cfg.origin||'';
-  document.getElementById('cfgWppMsg').value=cfg.wppMsg||'';
-  document.getElementById('cfgApiKey').value=cfg.apiKey||'';
+  document.getElementById('cfgOrigin').value = cfg.origin||'';
+  document.getElementById('cfgWppMsg').value = cfg.wppMsg||'';
+  document.getElementById('cfgApiKey').value = cfg.apiKey||'';
+  renderStores();
 }
+
 function saveConfig() {
-  cfg.origin=document.getElementById('cfgOrigin').value.trim();
-  cfg.wppMsg=document.getElementById('cfgWppMsg').value.trim();
-  cfg.apiKey=document.getElementById('cfgApiKey').value.trim();
+  cfg.origin = document.getElementById('cfgOrigin').value.trim();
+  cfg.wppMsg = document.getElementById('cfgWppMsg').value.trim();
+  cfg.apiKey = document.getElementById('cfgApiKey').value.trim();
   localStorage.setItem('sb_cfg',JSON.stringify(cfg));
   toast('✅ Configurações salvas!','success');
-  goTo('homeScreen');
+  navTo('homeScreen','nav-home');
 }
 
 function getGPSLocation() {
   const btn=document.querySelector('.btn-location');
   if(!navigator.geolocation){toast('GPS não suportado','error');return;}
-  btn.textContent='⏳ ...';
-  navigator.geolocation.getCurrentPosition(
-    async(pos)=>{
-      try{
-        const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
-        const data=await res.json();
-        document.getElementById('cfgOrigin').value=data.display_name||`${pos.coords.latitude}, ${pos.coords.longitude}`;
-        toast('📍 Localização capturada!','success');
-      }catch(e){document.getElementById('cfgOrigin').value=`${pos.coords.latitude}, ${pos.coords.longitude}`;}
-      btn.textContent='📍 Usar GPS';
-    },
-    ()=>{btn.textContent='📍 Usar GPS';toast('Permita o acesso ao GPS','error');}
-  );
+  btn.textContent='⏳...';
+  navigator.geolocation.getCurrentPosition(async(pos)=>{
+    try{
+      const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+      const data=await res.json();
+      document.getElementById('cfgOrigin').value=data.display_name||`${pos.coords.latitude}, ${pos.coords.longitude}`;
+      toast('📍 Capturado!','success');
+    }catch(e){document.getElementById('cfgOrigin').value=`${pos.coords.latitude}, ${pos.coords.longitude}`;}
+    btn.textContent='📍 GPS';
+  },()=>{btn.textContent='📍 GPS';toast('Permita acesso ao GPS','error');});
 }
 
-function clearAll(){if(!confirm('Apagar todas as paradas?'))return;stops=[];save();renderList();toast('🗑️ Lista limpa','success');}
+function clearAll(){
+  if(!confirm('Apagar todas as paradas de hoje?')) return;
+  saveToHistory(new Date().toLocaleDateString('pt-BR'));
+  stops=[];save();renderList();toast('🗑️ Lista limpa','success');
+}
+function clearHistory(){
+  if(!confirm('Apagar TODO o histórico? Isso não pode ser desfeito.')) return;
+  history=[];localStorage.setItem('sb_history','[]');
+  toast('Histórico apagado','success');
+}
 
-// ── utils ──
+// ══════════════════════════════════════
+//  BULK
+// ══════════════════════════════════════
+function downloadTemplate() {
+  const h = 'nome,endereco,complemento,telefone,valor,observacao';
+  const e1='"Pedro Santos","Avenida Central, 890, Morada de Laranjeiras, Serra - ES","Casa amarela portão preto","27988887654","15.00","Cuidado com o cachorro"';
+  const e2='"Maria Silva","Rua das Flores, 200, Centro, Vitória - ES","Apto 301","27977776543","20.00","Ligar antes"';
+  const blob=new Blob(['\uFEFF'+[h,e1,e2].join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='modelo_speedboy.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('📥 Modelo baixado!','success');
+}
+function handleFileUpload(file) {
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    try{
+      const text=e.target.result.replace(/^\uFEFF/,'');
+      const rows=parseCSV(text); if(rows.length<2){toast('Arquivo inválido','error');return;}
+      const headers=rows[0].map(h=>h.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,''));
+      const col={
+        nome:findCol(headers,['nome','name','cliente']),
+        endereco:findCol(headers,['endereco','address','endereço','end']),
+        complemento:findCol(headers,['complemento','comp','complement']),
+        telefone:findCol(headers,['telefone','tel','phone','celular','whatsapp']),
+        valor:findCol(headers,['valor','value','preco','price']),
+        observacao:findCol(headers,['observacao','obs','notes','nota'])
+      };
+      if(col.nome<0||col.endereco<0){toast('"nome" e "endereco" são obrigatórios','error');return;}
+      bulkPreview=rows.slice(1).filter(r=>r.some(c=>c.trim())).map(r=>({
+        name:(r[col.nome]||'').trim(),
+        address:(r[col.endereco]||'').trim(),
+        complement:col.complemento>=0?(r[col.complemento]||'').trim():'',
+        phone:col.telefone>=0?(r[col.telefone]||'').replace(/\D/g,''):'',
+        value:col.valor>=0?parseFloat((r[col.valor]||'').replace(',','.'))||0:0,
+        notes:col.observacao>=0?(r[col.observacao]||'').trim():'',
+        paid:false,done:false,store:''
+      })).filter(s=>s.name&&s.address);
+      if(!bulkPreview.length){toast('Nenhuma linha válida','error');return;}
+      showPreview();
+    }catch(e){toast('Erro ao ler arquivo','error');}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+function findCol(h,c){for(const x of c){const i=h.findIndex(v=>v.includes(x));if(i>=0)return i;}return -1;}
+function parseCSV(text){
+  const rows=[];
+  for(const line of text.split(/\r?\n/)){
+    if(!line.trim())continue;
+    const row=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+      else if(ch===','&&!inQ){row.push(cur);cur='';}
+      else cur+=ch;
+    }
+    row.push(cur);rows.push(row);
+  }
+  return rows;
+}
+function showPreview(){
+  const avail=10-stops.length, toAdd=Math.min(bulkPreview.length,avail);
+  document.getElementById('previewCount').innerHTML=`<strong>${bulkPreview.length}</strong> clientes · <strong style="color:var(--green)">${toAdd}</strong> serão adicionados`;
+  document.getElementById('previewTable').innerHTML=`<tr><th>#</th><th>Nome</th><th>Endereço</th><th>Valor</th></tr>`+
+    bulkPreview.slice(0,toAdd).map((s,i)=>`<tr><td>${i+1}</td><td style="color:var(--green)">${s.name}</td><td>${s.address.substring(0,24)}…</td><td>${s.value>0?'R$'+s.value.toFixed(2).replace('.',','):'—'}</td></tr>`).join('');
+  document.getElementById('previewArea').style.display='block';
+}
+function confirmBulkImport(){
+  const avail=10-stops.length, toAdd=bulkPreview.slice(0,avail);
+  if(!toAdd.length){toast('Lista já cheia','error');return;}
+  const startOrder = stops.length;
+  toAdd.forEach((s,i) => { s._order = startOrder + i; });
+  stops=stops.concat(toAdd);save();
+  toast(`✅ ${toAdd.length} parada(s) adicionada(s)!`,'success');
+  bulkPreview=[];
+  document.getElementById('previewArea').style.display='none';
+  document.getElementById('csvFileInput').value='';
+  setTimeout(()=>navTo('homeScreen','nav-home'),600);
+}
+
+// ══════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════
 function save(){localStorage.setItem('sb_stops',JSON.stringify(stops));}
 function resetForm(){
-  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes'].forEach(id=>document.getElementById(id).value='');
+  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes','fValue'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fStore').value='';
+  document.getElementById('fPaid').checked=false;
+  document.getElementById('paidLabel').textContent='A receber';
   document.getElementById('editIndex').value='-1';
   document.getElementById('addScreenTitle').textContent='Nova parada';
 }
@@ -688,7 +1204,110 @@ function toast(msg,type=''){
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.className='toast',3000);
 }
 
+
+// ══════════════════════════════════════
+//  WHATSAPP QUICK MESSAGES
+// ══════════════════════════════════════
+let wppModalStop = null;
+
+function openWppModal(i) {
+  wppModalStop = stops[i];
+  document.getElementById('wppModalName').textContent = '💬 ' + (wppModalStop.name || 'Cliente');
+  document.getElementById('wppModalPhone').textContent = formatPhone(wppModalStop.phone);
+  document.getElementById('wppCustomMsg').value = '';
+  document.getElementById('wppModal').classList.remove('hidden');
+}
+
+function closeWppModal() {
+  document.getElementById('wppModal').classList.add('hidden');
+  wppModalStop = null;
+}
+
+// Fecha ao tocar fora do sheet
+document.getElementById('wppModal').addEventListener('click', function(e) {
+  if (e.target === this) closeWppModal();
+});
+
+const quickMessages = {
+  caminho:   'Olá {nome}! Estou a caminho com sua entrega. Já já chego! 😊',
+  chegando:  'Oi {nome}! Estou chegando, já estou pertinho. Pode ficar de olho! 👀',
+  confirmar: 'Olá {nome}! Pode confirmar seu endereço e ponto de referência? Quero garantir que vou no lugar certo! 📍',
+  ausente:   'Oi {nome}! Passei aí mas não encontrei ninguém. Pode me avisar quando estiver disponível para eu tentar novamente? 🙏',
+  atraso:    'Olá {nome}! Quero te avisar que estou com um pequeno atraso, mas sua entrega está a caminho. Obrigado pela compreensão! 🙌',
+  entregue:  'Entrega realizada! Qualquer dúvida estou à disposição. Obrigado {nome}! 🎉'
+};
+
+function sendQuick(type) {
+  if (!wppModalStop) return;
+  const msg = quickMessages[type].replace(/{nome}/g, wppModalStop.name || '');
+  const phone = wppModalStop.phone.replace(/\D/g,'');
+  window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  closeWppModal();
+}
+
+function sendCustom() {
+  if (!wppModalStop) return;
+  const msg = document.getElementById('wppCustomMsg').value.trim();
+  if (!msg) { toast('Digite uma mensagem', 'error'); return; }
+  const phone = wppModalStop.phone.replace(/\D/g,'');
+  window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  closeWppModal();
+}
+
+// ══════════════════════════════════════
+//  ORDENAÇÃO INTELIGENTE
+// ══════════════════════════════════════
+let currentSort = 'manual';
+
+function setSort(type) {
+  currentSort = type;
+  document.querySelectorAll('.btn-sort').forEach(b => b.classList.remove('active-sort'));
+  document.getElementById('sort' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active-sort');
+
+  if (type === 'manual') {
+    // Restaura ordem original (por índice de inserção)
+    stops.sort((a, b) => (a._order||0) - (b._order||0));
+  } else if (type === 'region') {
+    // Agrupa por região: extrai cidade/bairro do endereço
+    stops.sort((a, b) => {
+      const ra = extractRegion(a.address);
+      const rb = extractRegion(b.address);
+      return ra.localeCompare(rb, 'pt-BR');
+    });
+    toast('🗺️ Ordenado por região!', 'success');
+  } else if (type === 'store') {
+    // Agrupa por loja, depois por região dentro de cada loja
+    stops.sort((a, b) => {
+      const sa = a.store || 'zzz';
+      const sb = b.store || 'zzz';
+      if (sa !== sb) return sa.localeCompare(sb, 'pt-BR');
+      return extractRegion(a.address).localeCompare(extractRegion(b.address), 'pt-BR');
+    });
+    toast('🏪 Ordenado por loja!', 'success');
+  }
+
+  save();
+  renderList();
+}
+
+function extractRegion(address) {
+  if (!address) return 'zzz';
+  // Tenta pegar bairro/cidade: parte após o número
+  const parts = address.split(',').map(p => p.trim());
+  // Geralmente: Rua X, Número, Bairro, Cidade
+  if (parts.length >= 3) return parts[2] + (parts[3]||'');
+  if (parts.length >= 2) return parts[1];
+  return address.substring(0, 20);
+}
+
+// Garante que cada stop tem ordem de inserção gravada
+function ensureOrder() {
+  stops.forEach((s, i) => { if (s._order === undefined) s._order = i; });
+}
+
+// ── INIT ──
 checkNewDay();
+updateStoreSelect();
 renderList();
 </script>
 </body>
