@@ -229,6 +229,24 @@ canvas{width:100%;display:block;}
 .empty-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;color:var(--muted);}
 .empty-sub{font-size:13px;color:var(--muted);opacity:.6;max-width:230px;line-height:1.5;}
 
+
+/* ── SYNC INDICATOR ── */
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .3s;}
+.sync-dot.synced{background:var(--green);}
+.sync-dot.syncing{background:var(--accent);animation:pulse .8s infinite;}
+.sync-dot.error{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-label{font-size:10px;font-weight:600;color:var(--muted);}
+
+/* ── FIREBASE CONFIG SECTION ── */
+.fb-config-box{background:var(--card);border-radius:var(--radius);padding:14px;border:1px solid var(--border);margin-bottom:12px;}
+.fb-config-box textarea{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:10px 12px;font-size:12px;font-family:'Barlow',sans-serif;line-height:1.6;outline:none;resize:none;min-height:130px;}
+.fb-config-box textarea:focus{border-color:var(--accent);}
+.room-code-box{background:var(--card2);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:10px;}
+.room-code-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;letter-spacing:3px;color:var(--accent);}
+.btn-copy-code{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;}
+.fb-status-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+
 /* ── SORT BAR ── */
 .sort-bar{display:flex;gap:7px;padding:0 14px 8px;align-items:center;}
 .sort-bar-label{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;}
@@ -253,6 +271,16 @@ canvas{width:100%;display:block;}
 .wpp-custom-input:focus{border-color:var(--green);}
 .btn-wpp-send{background:#25d366;color:#fff;border:none;border-radius:10px;padding:11px 16px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
 </style>
+
+<!-- Firebase SDK -->
+<script type="module" id="fbModule"></script>
+<script>
+// Firebase loader — só ativa quando o usuário configurar
+window._fbApp = null;
+window._fbDb  = null;
+window._fbRef = null;
+window._fbListener = null;
+</script>
 </head>
 <body>
 
@@ -301,6 +329,10 @@ canvas{width:100%;display:block;}
 <div class="header">
   <div class="logo">SPEED<span>BOY</span></div>
   <div class="header-right">
+    <div id="syncRow" style="display:none;align-items:center;gap:5px;">
+      <div class="sync-dot" id="syncDot"></div>
+      <span class="sync-label" id="syncLabel">sync</span>
+    </div>
     <div id="badgeCount" class="badge-count">0/10</div>
   </div>
 </div>
@@ -374,7 +406,7 @@ canvas{width:100%;display:block;}
     <div class="field-row">
       <div class="field-group">
         <div class="field-label">💰 Valor (R$)</div>
-        <input class="field-input" id="fValue" placeholder="0,00" type="number" step="0.01" min="0" inputmode="decimal" />
+        <input class="field-input" id="fValue" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" />
       </div>
       <div class="field-group">
         <div class="field-label">Pagamento</div>
@@ -511,7 +543,59 @@ canvas{width:100%;display:block;}
 
     <button class="btn-cfg-save" onclick="saveConfig()">💾 Salvar configurações</button>
 
-    <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
+    <div class="config-section">
+      <div class="config-section-title">🔥 Sincronização Firebase</div>
+      <div class="api-info" style="border-color:var(--accent)">
+        Cole aqui o objeto <strong style="color:var(--accent)">firebaseConfig</strong> copiado do console do Firebase.<br>
+        Exemplo: <code style="font-size:10px;color:var(--accent)">{ apiKey: "...", databaseURL: "...", ... }</code>
+      </div>
+      <div class="fb-config-box">
+        <textarea id="cfgFirebase" placeholder='Cole aqui o firebaseConfig:
+{
+  "apiKey": "...",
+  "authDomain": "...",
+  "databaseURL": "...",
+  "projectId": "...",
+  "storageBucket": "...",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+        <div class="room-code-box">
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--muted);margin-bottom:4px;">CÓDIGO DA SALA</div>
+            <div class="room-code-val" id="roomCodeDisplay">——</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">Compartilhe com sua esposa</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+            <button class="btn-copy-code" onclick="copyRoomCode()">📋 Copiar</button>
+            <button class="btn-copy-code" onclick="generateNewCode()" style="font-size:11px;">🔄 Novo código</button>
+          </div>
+        </div>
+        <div class="fb-status-row" id="fbStatusRow">
+          <div class="sync-dot" id="cfgSyncDot"></div>
+          <span style="font-size:12px;color:var(--muted)" id="cfgSyncLabel">Firebase não configurado</span>
+        </div>
+        <div style="margin-top:10px;">
+          <div class="field-label">Código da sala (para entrar na sala da esposa)</div>
+          <div style="display:flex;gap:8px;margin-top:6px;">
+            <input class="field-input" id="cfgRoomCode" placeholder="Ex: SPEEDBOY-1234" style="flex:1;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2px;" />
+            <button onclick="joinRoom()" style="background:var(--accent);color:#000;border:none;border-radius:10px;padding:11px 14px;font-weight:700;font-size:13px;cursor:pointer;">Entrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+        <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
+      <div class="config-section-title">💾 Backup</div>
+      <div style="display:flex;gap:8px;margin-bottom:20px;">
+        <button onclick="exportBackup()" style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:11px;font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;">
+          ⬇️ Exportar backup
+        </button>
+        <label style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:11px;font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          ⬆️ Importar backup
+          <input type="file" accept=".json" onchange="importBackup(this.files[0])" style="display:none" />
+        </label>
+      </div>
       <div class="config-section-title" style="color:var(--red);">⚠️ Zona de perigo</div>
       <button onclick="clearAll()" style="width:100%;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:var(--radius);padding:11px;font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px;">
         🗑️ Limpar paradas do dia
@@ -640,7 +724,7 @@ function renderList() {
       html += `<div class="store-label">🏪 ${key}</div>`;
     }
     items.forEach(({ s, i }) => {
-      const val    = parseFloat(s.value) || 0;
+      const val    = parseMoney(s.value) || 0;
       const valStr = val > 0 ? `R$ ${val.toFixed(2).replace('.',',')}` : '';
       html += `
       <div class="stop-card ${s.done?'done':''}" id="card${i}" onclick="toggleCard(${i})">
@@ -665,7 +749,7 @@ function renderList() {
           ${s.phone ? `<button class="btn-action btn-wpp" onclick="openWppModal(${i})">💬 WhatsApp</button>` : ''}
           <button class="btn-action btn-maps-s" onclick="openMapsSingle('${escAttr(s.address)}')">🗺️ Navegar</button>
           <button class="btn-action btn-done" onclick="toggleDone(${i})">${s.done?'↩️ Reabrir':'✅ Entregue'}</button>
-          ${parseFloat(s.value)>0 ? `<button class="btn-action btn-paid ${s.paid?'is-paid':''}" onclick="togglePaid(${i})">${s.paid?'💸 Recebido':'💰 Marcar pago'}</button>` : ''}
+          ${parseMoney(s.value)>0 ? `<button class="btn-action btn-paid ${s.paid?'is-paid':''}" onclick="togglePaid(${i})">${s.paid?'💸 Recebido':'💰 Marcar pago'}</button>` : ''}
           <button class="btn-action btn-edit" onclick="editStop(${i})">✏️ Editar</button>
           <button class="btn-action btn-del"  onclick="deleteStop(${i})">🗑️ Remover</button>
         </div>
@@ -698,7 +782,7 @@ function editStop(i) {
   document.getElementById('fAddress').value     = s.address    || '';
   document.getElementById('fComplement').value  = s.complement || '';
   document.getElementById('fNotes').value       = s.notes      || '';
-  document.getElementById('fValue').value       = s.value      || '';
+  document.getElementById('fValue').value       = s.value ? String(s.value).replace('.',',') : '';
   document.getElementById('fPaid').checked      = !!s.paid;
   document.getElementById('paidLabel').textContent = s.paid ? 'Recebido ✓' : 'A receber';
   const ph = document.getElementById('fPhone'); ph.value = s.phone||''; if(s.phone) maskPhone(ph);
@@ -724,7 +808,7 @@ function saveStop() {
     store:      document.getElementById('fStore').value,
     complement: document.getElementById('fComplement').value.trim(),
     phone:      document.getElementById('fPhone').value.replace(/\D/g,''),
-    value:      parseFloat(document.getElementById('fValue').value) || 0,
+    value:      parseMoney(document.getElementById('fValue').value),
     paid:       document.getElementById('fPaid').checked,
     notes:      document.getElementById('fNotes').value.trim(),
     done:       idx >= 0 ? stops[idx].done : false
@@ -774,10 +858,10 @@ function renderFinance() {
     const [d,m,y] = str.split('/'); return new Date(`${y}-${m}-${d}`);
   }
   function sumDay(dayStops) {
-    return dayStops.reduce((a,s) => a + (parseFloat(s.value)||0), 0);
+    return dayStops.reduce((a,s) => a + (parseMoney(s.value)||0), 0);
   }
   function sumPaidDay(dayStops) {
-    return dayStops.filter(s=>s.paid).reduce((a,s) => a + (parseFloat(s.value)||0), 0);
+    return dayStops.filter(s=>s.paid).reduce((a,s) => a + (parseMoney(s.value)||0), 0);
   }
 
   const todayTotal  = sumDay(todayStop);
@@ -833,7 +917,7 @@ function renderFinance() {
   todayStop.forEach(s => {
     const k = s.store || 'Sem loja';
     if (!storeMap[k]) storeMap[k] = { total: 0, count: 0 };
-    storeMap[k].total += parseFloat(s.value)||0;
+    storeMap[k].total += parseMoney(s.value)||0;
     storeMap[k].count++;
   });
   const storeRows = Object.entries(storeMap).map(([name,v]) =>
@@ -871,7 +955,7 @@ function drawChart(allDays, parseDate) {
     const d = new Date(); d.setDate(d.getDate() - i);
     const label = d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
     const found = allDays.find(x => x.date === d.toLocaleDateString('pt-BR'));
-    const val   = found ? found.stops.reduce((a,s)=>a+(parseFloat(s.value)||0),0) : 0;
+    const val   = found ? found.stops.reduce((a,s)=>a+(parseMoney(s.value)||0),0) : 0;
     days.push({ label, val });
   }
 
@@ -920,10 +1004,10 @@ function renderHistory() {
     return;
   }
   list.innerHTML = history.map((day, di) => {
-    const total = day.stops.reduce((a,s)=>a+(parseFloat(s.value)||0), 0);
+    const total = day.stops.reduce((a,s)=>a+(parseMoney(s.value)||0), 0);
     const count = day.stops.length;
     const rows  = day.stops.map(s => {
-      const val = parseFloat(s.value)||0;
+      const val = parseMoney(s.value)||0;
       return `<div class="history-stop-row">
         <div>
           <div class="history-stop-name">${s.name||'—'}</div>
@@ -1057,13 +1141,25 @@ function loadConfig() {
   document.getElementById('cfgWppMsg').value = cfg.wppMsg||'';
   document.getElementById('cfgApiKey').value = cfg.apiKey||'';
   renderStores();
+  loadFirebaseConfig();
 }
 
-function saveConfig() {
+async function saveConfig() {
   cfg.origin = document.getElementById('cfgOrigin').value.trim();
   cfg.wppMsg = document.getElementById('cfgWppMsg').value.trim();
   cfg.apiKey = document.getElementById('cfgApiKey').value.trim();
   localStorage.setItem('sb_cfg',JSON.stringify(cfg));
+
+  // Tenta iniciar Firebase se tiver config
+  const fbStr = document.getElementById('cfgFirebase').value.trim();
+  if (fbStr) {
+    const ok = await initFirebase(fbStr);
+    if (ok) {
+      const room = document.getElementById('cfgRoomCode').value.trim().toUpperCase() || fbRoomCode;
+      if (room) startSync(room);
+    }
+  }
+
   toast('✅ Configurações salvas!','success');
   navTo('homeScreen','nav-home');
 }
@@ -1186,6 +1282,25 @@ function resetForm(){
   document.getElementById('editIndex').value='-1';
   document.getElementById('addScreenTitle').textContent='Nova parada';
 }
+function maskMoney(input) {
+  // Permite apenas dígitos e vírgula/ponto
+  let v = input.value.replace(/[^0-9,.]/g, '');
+  // Troca ponto por vírgula para exibição BR
+  v = v.replace('.', ',');
+  // Garante só uma vírgula
+  const parts = v.split(',');
+  if (parts.length > 2) v = parts[0] + ',' + parts.slice(1).join('');
+  // Limita 2 casas decimais
+  if (parts[1] && parts[1].length > 2) v = parts[0] + ',' + parts[1].substring(0, 2);
+  input.value = v;
+}
+
+function parseMoney(str) {
+  if (!str) return 0;
+  // Converte "15,90" → 15.90
+  return parseFloat(String(str).replace(',', '.')) || 0;
+}
+
 function maskPhone(input){
   let v=input.value.replace(/\D/g,'');
   if(v.length>11)v=v.substring(0,11);
@@ -1292,12 +1407,11 @@ function setSort(type) {
 
 function extractRegion(address) {
   if (!address) return 'zzz';
-  // Tenta pegar bairro/cidade: parte após o número
-  const parts = address.split(',').map(p => p.trim());
-  // Geralmente: Rua X, Número, Bairro, Cidade
-  if (parts.length >= 3) return parts[2] + (parts[3]||'');
-  if (parts.length >= 2) return parts[1];
-  return address.substring(0, 20);
+  const parts = address.split(',').map(p => p.trim()).filter(Boolean);
+  if (parts.length >= 3) return (parts[2] + (parts[3]||'')).toLowerCase();
+  if (parts.length >= 2) return parts[1].toLowerCase();
+  // sem vírgulas — usa primeiros 15 chars como chave de agrupamento
+  return address.substring(0, 15).toLowerCase();
 }
 
 // Garante que cada stop tem ordem de inserção gravada
@@ -1305,8 +1419,244 @@ function ensureOrder() {
   stops.forEach((s, i) => { if (s._order === undefined) s._order = i; });
 }
 
+
+
+// ══════════════════════════════════════
+//  FIREBASE SYNC
+// ══════════════════════════════════════
+let fbDatabase = null;
+let fbRoomCode = localStorage.getItem('sb_room_code') || '';
+let fbConfig   = null;
+let isSyncing  = false;
+let fbUnsubscribe = null;
+
+function setSyncStatus(status, label) {
+  // status: 'off' | 'syncing' | 'synced' | 'error'
+  const dots  = [document.getElementById('syncDot'), document.getElementById('cfgSyncDot')];
+  const labels = [document.getElementById('syncLabel'), document.getElementById('cfgSyncLabel')];
+  const row = document.getElementById('syncRow');
+
+  dots.forEach(d => { if(d) { d.className = 'sync-dot ' + (status === 'off' ? '' : status === 'syncing' ? 'syncing' : status === 'synced' ? 'synced' : 'error'); } });
+  labels.forEach(l => { if(l) l.textContent = label; });
+  if (row) row.style.display = status === 'off' ? 'none' : 'flex';
+}
+
+async function initFirebase(configStr) {
+  try {
+    setSyncStatus('syncing', 'conectando...');
+
+    // Parse config — aceita tanto o objeto JS quanto JSON
+    let cfg;
+    try {
+      // tenta JSON puro
+      cfg = JSON.parse(configStr);
+    } catch(e) {
+      // tenta extrair do formato objeto JS: { apiKey: "...", ... }
+      const json = configStr
+        .replace(/\/\/.*$/gm, '')         // remove comments
+        .replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":') // quote keys
+        .replace(/'/g, '"');               // single to double quotes
+      cfg = JSON.parse(json);
+    }
+
+    if (!cfg.apiKey || !cfg.databaseURL) {
+      setSyncStatus('error', 'config inválida — verifique apiKey e databaseURL');
+      return false;
+    }
+
+    // Importa Firebase dinamicamente
+    const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const { getDatabase, ref, onValue, set, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+
+    // Evita re-inicializar
+    const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+    fbDatabase = getDatabase(app);
+    fbConfig   = cfg;
+
+    localStorage.setItem('sb_firebase_cfg', JSON.stringify(cfg));
+    setSyncStatus('synced', 'Firebase conectado ✓');
+    return true;
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    setSyncStatus('error', 'erro: ' + e.message.substring(0, 40));
+    return false;
+  }
+}
+
+async function startSync(roomCode) {
+  if (!fbDatabase) { toast('Configure o Firebase primeiro', 'error'); return; }
+  if (!roomCode) { toast('Informe um código de sala', 'error'); return; }
+
+  // Remove listener anterior
+  if (fbUnsubscribe) { fbUnsubscribe(); fbUnsubscribe = null; }
+
+  fbRoomCode = roomCode.toUpperCase().trim();
+  localStorage.setItem('sb_room_code', fbRoomCode);
+
+  const { ref, onValue, set } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+  const stopsRef = ref(fbDatabase, 'rooms/' + fbRoomCode + '/stops');
+
+  setSyncStatus('syncing', 'sincronizando...');
+
+  // Escuta mudanças em tempo real
+  fbUnsubscribe = onValue(stopsRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data && !isSyncing) {
+      const remoteStops = JSON.parse(data);
+      // Só atualiza se diferente do local
+      if (JSON.stringify(remoteStops) !== JSON.stringify(stops)) {
+        stops = remoteStops;
+        save();
+        renderList();
+        setSyncStatus('synced', '🟢 ' + fbRoomCode);
+        toast('🔄 Lista atualizada!', 'success');
+      }
+    } else if (!data) {
+      // Sala vazia — envia dados locais
+      pushToFirebase();
+    }
+    setSyncStatus('synced', '🟢 ' + fbRoomCode);
+  }, (error) => {
+    setSyncStatus('error', 'erro de conexão');
+  });
+
+  toast('🔥 Sincronização ativa: ' + fbRoomCode, 'success');
+}
+
+async function pushToFirebase() {
+  if (!fbDatabase || !fbRoomCode || isSyncing) return;
+  isSyncing = true;
+  try {
+    const { ref, set } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    const stopsRef = ref(fbDatabase, 'rooms/' + fbRoomCode + '/stops');
+    await set(stopsRef, JSON.stringify(stops));
+    setSyncStatus('synced', '🟢 ' + fbRoomCode);
+  } catch(e) {
+    setSyncStatus('error', 'falha ao sincronizar');
+  } finally {
+    isSyncing = false;
+  }
+}
+
+function generateRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'SB-';
+  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+function generateNewCode() {
+  const code = generateRoomCode();
+  fbRoomCode = code;
+  localStorage.setItem('sb_room_code', code);
+  document.getElementById('roomCodeDisplay').textContent = code;
+  document.getElementById('cfgRoomCode').value = code;
+  if (fbDatabase) startSync(code);
+}
+
+function copyRoomCode() {
+  const code = document.getElementById('roomCodeDisplay').textContent;
+  if (code === '——') { toast('Gere um código primeiro', 'error'); return; }
+  navigator.clipboard?.writeText(code).then(() => toast('📋 Código copiado: ' + code, 'success'))
+    .catch(() => toast('Código: ' + code, 'success'));
+}
+
+function joinRoom() {
+  const code = document.getElementById('cfgRoomCode').value.trim().toUpperCase();
+  if (!code) { toast('Digite o código da sala', 'error'); return; }
+  fbRoomCode = code;
+  localStorage.setItem('sb_room_code', code);
+  document.getElementById('roomCodeDisplay').textContent = code;
+  startSync(code);
+  toast('🔥 Entrando na sala ' + code, 'success');
+}
+
+// Sobrescreve a função save() para também sincronizar
+const _origSave = save;
+function save() {
+  _origSave();
+  if (fbDatabase && fbRoomCode) pushToFirebase();
+}
+
+// Inicializa Firebase se já tiver config salva
+async function initFirebaseFromStorage() {
+  const saved = localStorage.getItem('sb_firebase_cfg');
+  const room  = localStorage.getItem('sb_room_code');
+  if (saved) {
+    const ok = await initFirebase(saved);
+    if (ok && room) {
+      fbRoomCode = room;
+      startSync(room);
+    }
+  }
+}
+
+// Atualiza UI da config
+function loadFirebaseConfig() {
+  const saved = localStorage.getItem('sb_firebase_cfg');
+  if (saved) {
+    try {
+      document.getElementById('cfgFirebase').value = JSON.stringify(JSON.parse(saved), null, 2);
+    } catch(e) {}
+  }
+  const room = localStorage.getItem('sb_room_code') || generateRoomCode();
+  localStorage.setItem('sb_room_code', room);
+  fbRoomCode = room;
+  document.getElementById('roomCodeDisplay').textContent = room;
+  document.getElementById('cfgRoomCode').value = room;
+}
+
+
+// ══════════════════════════════════════
+//  BACKUP EXPORT / IMPORT
+// ══════════════════════════════════════
+function exportBackup() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    stops,
+    history,
+    cfg
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const today = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `speedboy_backup_${today}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('💾 Backup exportado!', 'success');
+}
+
+function importBackup(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version || !Array.isArray(data.stops)) {
+        toast('Arquivo de backup inválido', 'error'); return;
+      }
+      if (!confirm(`Importar backup de ${data.exportedAt ? new Date(data.exportedAt).toLocaleDateString('pt-BR') : '?'}?\nIsso vai substituir suas paradas e histórico atuais.`)) return;
+      stops   = data.stops   || [];
+      history = data.history || [];
+      if (data.cfg) {
+        cfg = { ...cfg, ...data.cfg };
+        localStorage.setItem('sb_cfg', JSON.stringify(cfg));
+      }
+      save();
+      localStorage.setItem('sb_history', JSON.stringify(history));
+      toast('✅ Backup importado com sucesso!', 'success');
+      navTo('homeScreen', 'nav-home');
+    } catch(e) {
+      toast('Erro ao ler backup', 'error');
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
 // ── INIT ──
 checkNewDay();
+initFirebaseFromStorage();
 updateStoreSelect();
 renderList();
 </script>
