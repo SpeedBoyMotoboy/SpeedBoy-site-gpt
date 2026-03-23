@@ -247,6 +247,58 @@ canvas{width:100%;display:block;}
 .btn-copy-code{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;}
 .fb-status-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
 
+
+/* ── PEDIDOS PENDENTES ── */
+.pending-section{padding:0 14px 6px;}
+.pending-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.pending-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:6px;}
+.pending-badge{background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;}
+.pending-card{background:var(--card);border:1px solid var(--accent);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.pending-card-info{flex:1;min-width:0;}
+.pending-card-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pending-card-addr{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.pending-card-store{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.5px;text-transform:uppercase;margin-top:3px;}
+.btn-confirm-pending{background:var(--green);color:#000;border:none;border-radius:9px;padding:9px 14px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.btn-reject-pending{background:var(--card2);color:var(--red);border:1px solid var(--red);border-radius:9px;padding:9px 10px;font-size:13px;cursor:pointer;flex-shrink:0;margin-right:6px;}
+
+
+/* ── GERADOR DE LINKS ── */
+.linkgen-screen{padding:14px;overflow-y:auto;padding-bottom:80px;}
+.linkgen-card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:12px;border:1px solid var(--border);}
+.linkgen-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.linkgen-store-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;}
+.linkgen-link{font-size:11px;color:var(--blue);word-break:break-all;margin:8px 0;background:var(--card2);padding:8px 10px;border-radius:8px;line-height:1.5;}
+.linkgen-actions{display:flex;gap:8px;margin-top:8px;}
+.btn-copy-link{flex:1;background:var(--blue);color:#fff;border:none;border-radius:9px;padding:9px;font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
+.btn-wpp-link{flex:1;background:#25d366;color:#fff;border:none;border-radius:9px;padding:9px;font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
+.btn-del-link{background:var(--card2);color:var(--red);border:1px solid var(--red);border-radius:9px;padding:9px 12px;font-size:13px;cursor:pointer;}
+.btn-gen-new{width:100%;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;padding:13px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;}
+.linkgen-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;line-height:1.6;}
+
+
+/* ── RELATÓRIO PDF ── */
+.report-screen{padding:14px;overflow-y:auto;padding-bottom:80px;}
+.report-period-tabs{display:flex;gap:8px;margin-bottom:16px;}
+.report-tab{flex:1;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:15px;color:var(--muted);cursor:pointer;text-align:center;transition:all .15s;}
+.report-tab.active{background:var(--accent);color:#000;border-color:var(--accent);}
+.report-preview{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px;border:1px solid var(--border);}
+.report-preview-title{font-family:"Barlow Condensed",sans-serif;font-weight:900;font-size:20px;color:var(--accent);margin-bottom:4px;}
+.report-preview-sub{font-size:12px;color:var(--muted);margin-bottom:14px;}
+.report-stat-row{display:flex;gap:8px;margin-bottom:10px;}
+.report-stat{flex:1;background:var(--card2);border-radius:10px;padding:10px 12px;}
+.report-stat-label{font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
+.report-stat-val{font-family:"Barlow Condensed",sans-serif;font-weight:900;font-size:20px;color:var(--text);}
+.report-stat-val.green{color:var(--green);}
+.report-stat-val.accent{color:var(--accent);}
+.report-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+.report-table th{background:var(--card2);color:var(--muted);padding:7px 8px;text-align:left;font-weight:700;letter-spacing:.5px;font-size:10px;text-transform:uppercase;}
+.report-table td{padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text);}
+.report-table tr:last-child td{border-bottom:none;}
+.btn-gen-pdf{width:100%;background:linear-gradient(135deg,var(--red),#ff6b35);color:#fff;border:none;border-radius:var(--radius);font-family:"Barlow Condensed",sans-serif;font-weight:900;font-size:20px;padding:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 16px rgba(255,61,61,.3);transition:transform .1s;margin-bottom:8px;}
+.btn-gen-pdf:active{transform:scale(.98);}
+.btn-share-report{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:16px;padding:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+.no-data-report{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;line-height:1.6;}
+
 /* ── SORT BAR ── */
 .sort-bar{display:flex;gap:7px;padding:0 14px 8px;align-items:center;}
 .sort-bar-label{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;}
@@ -346,6 +398,14 @@ window._fbListener = null;
     <button class="btn-cfg-icon" onclick="goTo('configScreen')">⚙️</button>
   </div>
   <button class="btn-import-bulk" onclick="goTo('bulkScreen')">📂 Importar lista da loja</button>
+  <!-- Pedidos pendentes da loja -->
+  <div class="pending-section" id="pendingSection" style="display:none">
+    <div class="pending-header">
+      <div class="pending-title">🔔 Pedidos da loja <span class="pending-badge" id="pendingBadge">0</span></div>
+      <button onclick="rejectAllPending()" style="background:none;border:none;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;">Recusar todos</button>
+    </div>
+    <div id="pendingList"></div>
+  </div>
   <div class="sort-bar" id="sortBar" style="display:none">
     <span class="sort-bar-label">Ordenar:</span>
     <button class="btn-sort" id="sortManual" onclick="setSort('manual')">✋ Manual</button>
@@ -495,6 +555,42 @@ window._fbListener = null;
 </div>
 
 <!-- ═══════════════════════════════════
+     RELATÓRIO
+════════════════════════════════════ -->
+<div class="screen" id="reportScreen">
+  <div class="report-screen">
+    <div class="screen-title">
+      <button class="back" onclick="navTo('homeScreen','nav-home')">←</button>
+      Relatórios
+    </div>
+    <div class="report-period-tabs">
+      <button class="report-tab active" id="tabWeek"  onclick="setReportPeriod('week')">📅 Semana</button>
+      <button class="report-tab"        id="tabMonth" onclick="setReportPeriod('month')">📆 Mês</button>
+    </div>
+    <div id="reportPreview"></div>
+    <button class="btn-gen-pdf"    id="btnGenPdf"   onclick="generatePDF()">📄 Baixar PDF</button>
+    <button class="btn-share-report" id="btnShareReport" onclick="shareReport()">💬 Compartilhar no WhatsApp</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     GERADOR DE LINKS
+════════════════════════════════════ -->
+<div class="screen" id="linkgenScreen">
+  <div class="linkgen-screen">
+    <div class="screen-title">
+      <button class="back" onclick="navTo('homeScreen','nav-home')">←</button>
+      Links das Lojas
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+      Gere um link por loja e mande pelo WhatsApp. Elas abrem e já fazem pedidos — sem configurar nada! 🔗
+    </div>
+    <div id="linkgenList"></div>
+    <button class="btn-gen-new" onclick="genNewLink()">🔗 Gerar link para nova loja</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
      CONFIG
 ════════════════════════════════════ -->
 <div class="screen" id="configScreen">
@@ -620,6 +716,12 @@ window._fbListener = null;
   <button class="nav-btn" id="nav-history" onclick="navTo('historyScreen','nav-history')">
     <span class="icon">📋</span>Histórico
   </button>
+  <button class="nav-btn" id="nav-report" onclick="navTo('reportScreen','nav-report')">
+    <span class="icon">📄</span>Relatório
+  </button>
+  <button class="nav-btn" id="nav-links" onclick="navTo('linkgenScreen','nav-links')">
+    <span class="icon">🔗</span>Links
+  </button>
 </nav>
 
 <script>
@@ -672,10 +774,13 @@ let currentScreen = 'homeScreen';
 
 function navTo(screenId, navId) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(navId).classList.add('active');
+  const navEl = document.getElementById(navId);
+  if (navEl) navEl.classList.add('active');
   showScreen(screenId);
   if (screenId === 'financeScreen') renderFinance();
   if (screenId === 'historyScreen') renderHistory();
+  if (screenId === 'linkgenScreen') renderLinkgen();
+  if (screenId === 'reportScreen')  renderReportPreview();
 }
 
 function goTo(id) {
@@ -1510,6 +1615,8 @@ function startRoomSync(roomCode) {
   });
 
   toast('🔥 Sala ' + code + ' ativa!', 'success');
+  // Escuta pedidos pendentes da loja
+  setTimeout(listenPendingOrders, 500);
 }
 
 async function pushToFirebase() {
@@ -1569,7 +1676,7 @@ async function initFirebaseFromStorage() {
   const savedRoom = localStorage.getItem('sb_room_code');
   if(!savedCfg) return;
   const ok = await initFirebase(savedCfg);
-  if(ok && savedRoom) startRoomSync(savedRoom);
+  if(ok && savedRoom) { startRoomSync(savedRoom); setTimeout(listenPendingOrders, 1000); }
 }
 
 function loadFirebaseConfig() {
@@ -1582,6 +1689,521 @@ function loadFirebaseConfig() {
   localStorage.setItem('sb_room_code', room);
   document.getElementById('roomCodeDisplay').textContent = room;
   document.getElementById('cfgRoomCode').value = room;
+}
+
+
+
+
+// ══════════════════════════════════════
+//  RELATÓRIOS PDF
+// ══════════════════════════════════════
+let reportPeriod = 'week';
+
+function setReportPeriod(p) {
+  reportPeriod = p;
+  document.getElementById('tabWeek').classList.toggle('active',  p==='week');
+  document.getElementById('tabMonth').classList.toggle('active', p==='month');
+  renderReportPreview();
+}
+
+function getReportData(period) {
+  const today    = new Date();
+  const todayStr = today.toLocaleDateString('pt-BR');
+  const allDays  = [{ date: todayStr, stops: stops }, ...history];
+
+  function parseDate(str) {
+    const [d,m,y] = str.split('/'); return new Date(`${y}-${m}-${d}`);
+  }
+
+  let cutoff;
+  if (period === 'week') {
+    cutoff = new Date(today); cutoff.setDate(today.getDate() - 6);
+  } else {
+    cutoff = new Date(today.getFullYear(), today.getMonth(), 1);
+  }
+
+  const days = allDays.filter(d => parseDate(d.date) >= cutoff);
+
+  let total = 0, received = 0, pending = 0, deliveries = 0;
+  const allStops = [];
+  const storeMap = {};
+
+  days.forEach(day => {
+    day.stops.forEach(s => {
+      const val = parseMoney(s.value);
+      total     += val;
+      if (s.paid) received += val; else pending += val;
+      if (s.done) deliveries++;
+      allStops.push({ ...s, _date: day.date });
+      const sk = s.store || 'Sem loja';
+      if (!storeMap[sk]) storeMap[sk] = { total:0, count:0, received:0 };
+      storeMap[sk].total    += val;
+      storeMap[sk].count++;
+      if (s.paid) storeMap[sk].received += val;
+    });
+  });
+
+  return { total, received, pending, deliveries, allStops, storeMap, days,
+    periodLabel: period === 'week' ? 'Últimos 7 dias' : 'Mês atual',
+    dateRange: days.length
+      ? days[days.length-1].date + ' — ' + days[0].date
+      : 'Sem dados' };
+}
+
+function fmtMoney(v) {
+  return 'R$ ' + (v||0).toFixed(2).replace('.',',');
+}
+
+function renderReportPreview() {
+  const d   = getReportData(reportPeriod);
+  const div = document.getElementById('reportPreview');
+  const hasPdf = typeof window.jspdf !== 'undefined' || typeof window.jsPDF !== 'undefined';
+
+  if (!d.allStops.length) {
+    div.innerHTML = `<div class="no-data-report">📭 Sem dados para o período selecionado.<br>Complete algumas entregas primeiro!</div>`;
+    document.getElementById('btnGenPdf').disabled    = true;
+    document.getElementById('btnShareReport').disabled = true;
+    return;
+  }
+  document.getElementById('btnGenPdf').disabled    = false;
+  document.getElementById('btnShareReport').disabled = false;
+
+  // Store breakdown rows
+  const storeRows = Object.entries(d.storeMap).map(([name, v]) =>
+    `<tr>
+      <td>🏪 ${name}</td>
+      <td>${v.count}</td>
+      <td>${fmtMoney(v.total)}</td>
+      <td style="color:var(--green)">${fmtMoney(v.received)}</td>
+    </tr>`).join('');
+
+  // Last 5 deliveries
+  const recent = d.allStops.slice(0,8).map(s =>
+    `<tr>
+      <td>${s._date}</td>
+      <td>${s.name||'—'}</td>
+      <td>${(s.store||'—')}</td>
+      <td style="color:${s.paid?'var(--green)':'var(--accent)'}">${fmtMoney(parseMoney(s.value))}</td>
+    </tr>`).join('');
+
+  div.innerHTML = `
+    <div class="report-preview">
+      <div class="report-preview-title">🛵 SPEEDBOY — ${d.periodLabel}</div>
+      <div class="report-preview-sub">${d.dateRange}</div>
+      <div class="report-stat-row">
+        <div class="report-stat">
+          <div class="report-stat-label">Total</div>
+          <div class="report-stat-val accent">${fmtMoney(d.total)}</div>
+        </div>
+        <div class="report-stat">
+          <div class="report-stat-label">Recebido</div>
+          <div class="report-stat-val green">${fmtMoney(d.received)}</div>
+        </div>
+      </div>
+      <div class="report-stat-row">
+        <div class="report-stat">
+          <div class="report-stat-label">A receber</div>
+          <div class="report-stat-val">${fmtMoney(d.pending)}</div>
+        </div>
+        <div class="report-stat">
+          <div class="report-stat-label">Entregas</div>
+          <div class="report-stat-val">${d.deliveries}</div>
+        </div>
+      </div>
+
+      ${Object.keys(d.storeMap).length > 1 ? `
+      <div style="font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin:12px 0 6px">Por loja</div>
+      <div style="overflow-x:auto">
+        <table class="report-table">
+          <tr><th>Loja</th><th>Pedidos</th><th>Total</th><th>Recebido</th></tr>
+          ${storeRows}
+        </table>
+      </div>` : ''}
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin:12px 0 6px">Últimas entregas</div>
+      <div style="overflow-x:auto">
+        <table class="report-table">
+          <tr><th>Data</th><th>Cliente</th><th>Loja</th><th>Valor</th></tr>
+          ${recent}
+        </table>
+      </div>
+    </div>`;
+}
+
+async function generatePDF() {
+  const d = getReportData(reportPeriod);
+  if (!d.allStops.length) { toast('Sem dados para gerar PDF', 'error'); return; }
+
+  const btn = document.getElementById('btnGenPdf');
+  btn.innerHTML = '⏳ Gerando...'; btn.disabled = true;
+
+  try {
+    // Carrega jsPDF dinamicamente
+    if (!window.jsPDF) {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const W   = doc.internal.pageSize.getWidth();
+    let y     = 18;
+
+    // ── Header ──
+    doc.setFillColor(10,10,10);
+    doc.rect(0, 0, W, 28, 'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(22);
+    doc.setTextColor(245,197,24);
+    doc.text('SPEEDBOY', 14, 17);
+    doc.setFontSize(10);
+    doc.setTextColor(150,150,150);
+    doc.text('Relatório de Entregas', 14, 24);
+    doc.setFontSize(10);
+    doc.setTextColor(150,150,150);
+    doc.text(d.periodLabel + '  |  ' + d.dateRange, W-14, 24, { align:'right' });
+    y = 38;
+
+    // ── Summary boxes ──
+    const boxes = [
+      { label:'TOTAL',     val: fmtMoney(d.total),      color:[245,197,24] },
+      { label:'RECEBIDO',  val: fmtMoney(d.received),   color:[0,230,118] },
+      { label:'A RECEBER', val: fmtMoney(d.pending),    color:[200,200,200] },
+      { label:'ENTREGAS',  val: String(d.deliveries),   color:[255,107,0] },
+    ];
+    const bw = (W - 28 - 9) / 4;
+    boxes.forEach((b, i) => {
+      const x = 14 + i*(bw+3);
+      doc.setFillColor(24,24,24);
+      doc.roundedRect(x, y, bw, 22, 3, 3, 'F');
+      doc.setFontSize(7);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(120,120,120);
+      doc.text(b.label, x+bw/2, y+8, { align:'center' });
+      doc.setFontSize(13);
+      doc.setTextColor(...b.color);
+      doc.text(b.val, x+bw/2, y+17, { align:'center' });
+    });
+    y += 30;
+
+    // ── Por loja ──
+    if (Object.keys(d.storeMap).length > 0) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(245,197,24);
+      doc.text('POR LOJA', 14, y); y += 5;
+
+      doc.autoTable({
+        startY: y,
+        head: [['Loja','Entregas','Total','Recebido','A Receber']],
+        body: Object.entries(d.storeMap).map(([name,v]) => [
+          name, v.count, fmtMoney(v.total), fmtMoney(v.received), fmtMoney(v.total-v.received)
+        ]),
+        styles:     { fontSize:9, cellPadding:3, textColor:[220,220,220], fillColor:[24,24,24] },
+        headStyles: { fillColor:[30,30,30], textColor:[150,150,150], fontStyle:'bold', fontSize:8 },
+        alternateRowStyles: { fillColor:[20,20,20] },
+        margin: { left:14, right:14 },
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
+
+    // ── Entregas detalhadas ──
+    doc.setFontSize(9);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(245,197,24);
+    doc.text('ENTREGAS DO PERÍODO', 14, y); y += 5;
+
+    doc.autoTable({
+      startY: y,
+      head: [['Data','Cliente','Endereço','Loja','Valor','Pago']],
+      body: d.allStops.map(s => [
+        s._date,
+        s.name||'—',
+        (s.address||'').substring(0,30),
+        s.store||'—',
+        fmtMoney(parseMoney(s.value)),
+        s.paid ? 'Sim' : 'Não'
+      ]),
+      styles:     { fontSize:8, cellPadding:2.5, textColor:[220,220,220], fillColor:[24,24,24] },
+      headStyles: { fillColor:[30,30,30], textColor:[150,150,150], fontStyle:'bold', fontSize:7.5 },
+      alternateRowStyles: { fillColor:[20,20,20] },
+      columnStyles: { 5: { halign:'center' } },
+      margin: { left:14, right:14 },
+    });
+
+    // ── Footer ──
+    const pages = doc.internal.getNumberOfPages();
+    for (let i=1; i<=pages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(7);
+      doc.setTextColor(80,80,80);
+      doc.text(`SPEEDBOY — Gerado em ${new Date().toLocaleString('pt-BR')}`, 14, 292);
+      doc.text(`Página ${i}/${pages}`, W-14, 292, { align:'right' });
+    }
+
+    // Download
+    const today = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+    doc.save(`speedboy_relatorio_${reportPeriod === 'week' ? 'semana' : 'mes'}_${today}.pdf`);
+    toast('✅ PDF gerado!', 'success');
+
+  } catch(e) {
+    console.error(e);
+    toast('Erro ao gerar PDF: ' + e.message, 'error');
+  } finally {
+    btn.innerHTML = '📄 Baixar PDF'; btn.disabled = false;
+  }
+}
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) { res(); return; }
+    const s  = document.createElement('script');
+    s.src    = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+function shareReport() {
+  const d = getReportData(reportPeriod);
+  if (!d.allStops.length) { toast('Sem dados para compartilhar', 'error'); return; }
+
+  const storeLines = Object.entries(d.storeMap)
+    .map(([name, v]) => `  🏪 ${name}: ${fmtMoney(v.total)} (${v.count} entregas)`)
+    .join('
+');
+
+  const msg =
+`🛵 *SPEEDBOY — ${d.periodLabel}*
+📅 ${d.dateRange}
+
+💰 Total: *${fmtMoney(d.total)}*
+✅ Recebido: *${fmtMoney(d.received)}*
+⏳ A receber: *${fmtMoney(d.pending)}*
+📦 Entregas: *${d.deliveries}*
+
+${storeLines ? '*Por loja:*
+' + storeLines : ''}
+
+_Relatório gerado pelo SPEEDBOY_ 🏍️`;
+
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+// ══════════════════════════════════════
+//  GERADOR DE LINKS PARA LOJAS
+// ══════════════════════════════════════
+// Base URL do formulário — ajusta quando subir no GitHub
+const PEDIDO_BASE_URL = (() => {
+  const origin = window.location.origin;
+  const path   = window.location.pathname.replace('index.html','').replace(/\/+$\/','');
+  return origin + path + '/pedido.html';
+})();
+
+function getStoredLinks() {
+  return JSON.parse(localStorage.getItem('sb_store_links') || '[]');
+}
+function saveStoredLinks(links) {
+  localStorage.setItem('sb_store_links', JSON.stringify(links));
+}
+
+function buildStoreLink(storeName) {
+  const fbCfg  = localStorage.getItem('sb_firebase_cfg');
+  const room   = localStorage.getItem('sb_room_code') || '';
+  if (!fbCfg || !room) return null;
+
+  // Codifica o config em Base64 para esconder da URL
+  const cfgB64 = btoa(encodeURIComponent(fbCfg));
+  const params = new URLSearchParams({
+    cfg:   cfgB64,
+    room:  room,
+    store: storeName
+  });
+  return PEDIDO_BASE_URL + '?' + params.toString();
+}
+
+function genNewLink() {
+  const name = prompt('Nome da loja (ex: KS, Loja das Flores):');
+  if (!name || !name.trim()) return;
+
+  const fbCfg = localStorage.getItem('sb_firebase_cfg');
+  const room  = localStorage.getItem('sb_room_code');
+  if (!fbCfg || !room) {
+    toast('Configure o Firebase primeiro nas ⚙️ Configurações', 'error');
+    return;
+  }
+
+  const link  = buildStoreLink(name.trim());
+  const links = getStoredLinks();
+  links.push({ name: name.trim(), link, createdAt: new Date().toLocaleDateString('pt-BR') });
+  saveStoredLinks(links);
+  renderLinkgen();
+  toast('✅ Link da ' + name.trim() + ' gerado!', 'success');
+}
+
+function renderLinkgen() {
+  const list  = document.getElementById('linkgenList');
+  const links = getStoredLinks();
+
+  if (!links.length) {
+    list.innerHTML = `<div class="linkgen-empty">
+      Nenhum link gerado ainda.<br>
+      Toque em "Gerar link" abaixo e mande pelo WhatsApp pra loja — ela abre e já faz pedidos! 🚀
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = links.map((l, i) => `
+    <div class="linkgen-card">
+      <div class="linkgen-card-header">
+        <div class="linkgen-store-name">🏪 ${l.name}</div>
+        <span style="font-size:11px;color:var(--muted)">Criado ${l.createdAt}</span>
+      </div>
+      <div class="linkgen-link">${l.link}</div>
+      <div class="linkgen-actions">
+        <button class="btn-copy-link" onclick="copyLink(${i})">📋 Copiar link</button>
+        <button class="btn-wpp-link"  onclick="shareViaWpp(${i})">💬 Enviar no Zap</button>
+        <button class="btn-del-link"  onclick="deleteLink(${i})">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function copyLink(i) {
+  const links = getStoredLinks();
+  const link  = links[i]?.link;
+  if (!link) return;
+  navigator.clipboard?.writeText(link)
+    .then(() => toast('📋 Link copiado!', 'success'))
+    .catch(() => toast('Link: ' + link, 'success'));
+}
+
+function shareViaWpp(i) {
+  const links = getStoredLinks();
+  const l = links[i];
+  if (!l) return;
+  const msg = `Olá! 👋
+
+Use este link para solicitar suas entregas ao SPEEDBOY:
+
+${l.link}
+
+É só abrir, preencher os dados e enviar! 🛵`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function deleteLink(i) {
+  const links = getStoredLinks();
+  if (!confirm('Remover link da loja ' + links[i]?.name + '?')) return;
+  links.splice(i, 1);
+  saveStoredLinks(links);
+  renderLinkgen();
+  toast('Link removido', '');
+}
+
+// ══════════════════════════════════════
+//  PEDIDOS PENDENTES DA LOJA
+// ══════════════════════════════════════
+let _pendingListener = null;
+let _pendingData = {}; // { firebaseKey: stopObj }
+
+function listenPendingOrders() {
+  if (!_fbDb || !_fbRoomPath) return;
+  if (_pendingListener) { _pendingListener(); _pendingListener = null; }
+
+  const pendingPath = 'rooms/' + (localStorage.getItem('sb_room_code')||'') + '/pending';
+  const pendingRef  = _fbMods.ref(_fbDb, pendingPath);
+
+  _pendingListener = _fbMods.onValue(pendingRef, (snap) => {
+    const data = snap.val();
+    _pendingData = {};
+    if (data) {
+      Object.entries(data).forEach(([key, val]) => {
+        try {
+          _pendingData[key] = typeof val === 'string' ? JSON.parse(val) : val;
+        } catch(e) {}
+      });
+    }
+    renderPending();
+  });
+}
+
+function renderPending() {
+  const section = document.getElementById('pendingSection');
+  const list    = document.getElementById('pendingList');
+  const badge   = document.getElementById('pendingBadge');
+  const keys    = Object.keys(_pendingData);
+
+  if (!keys.length) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  badge.textContent = keys.length;
+
+  list.innerHTML = keys.map(key => {
+    const s = _pendingData[key];
+    const val = parseFloat(s.value) || 0;
+    return `
+    <div class="pending-card" id="pc_${key}">
+      <div class="pending-card-info">
+        <div class="pending-card-name">${s.name||'Sem nome'}</div>
+        <div class="pending-card-addr">${s.address||'Sem endereço'}</div>
+        <div class="pending-card-store">🏪 ${s.store||''} ${val>0?'· R$ '+val.toFixed(2).replace('.',','):''}</div>
+      </div>
+      <button class="btn-reject-pending" onclick="rejectPending('${key}')">✕</button>
+      <button class="btn-confirm-pending" onclick="confirmPending('${key}')">✅ Aceitar</button>
+    </div>`;
+  }).join('');
+}
+
+async function confirmPending(key) {
+  const stop = _pendingData[key];
+  if (!stop) return;
+
+  if (stops.length >= 10) {
+    toast('Lista cheia! Entregue alguma parada antes de aceitar.', 'error');
+    return;
+  }
+
+  // Adiciona à lista de paradas
+  stop.status  = 'confirmed';
+  stop._order  = stops.length;
+  stop.done    = false;
+  stop.paid    = stop.paid || false;
+  stops.push(stop);
+  save(); // já sincroniza via pushToFirebase
+
+  // Remove do pending no Firebase
+  await removePendingFromFirebase(key);
+  toast('✅ Entrega de ' + stop.name + ' adicionada!', 'success');
+  renderList();
+}
+
+async function rejectPending(key) {
+  const stop = _pendingData[key];
+  if (!confirm('Recusar entrega de ' + (stop?.name||'cliente') + '?')) return;
+  await removePendingFromFirebase(key);
+  toast('Entrega recusada', '');
+}
+
+async function rejectAllPending() {
+  const keys = Object.keys(_pendingData);
+  if (!keys.length) return;
+  if (!confirm('Recusar todos os ' + keys.length + ' pedido(s) pendentes?')) return;
+  for (const key of keys) await removePendingFromFirebase(key);
+  toast('Todos os pedidos recusados', '');
+}
+
+async function removePendingFromFirebase(key) {
+  if (!_fbDb) return;
+  try {
+    const room = localStorage.getItem('sb_room_code') || '';
+    const { ref, remove } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    const itemRef = ref(_fbDb, 'rooms/' + room + '/pending/' + key);
+    await remove(itemRef);
+  } catch(e) {
+    console.error('Remove pending error:', e);
+  }
 }
 
 // ══════════════════════════════════════
