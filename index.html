@@ -1034,19 +1034,18 @@ function getLinks(){ return JSON.parse(localStorage.getItem('sb_links')||'[]'); 
 function saveLinks(l){ localStorage.setItem('sb_links',JSON.stringify(l)); }
 
 function buildLink(storeName){
-  const fbCfg=localStorage.getItem('sb_firebase_cfg');
   const room=localStorage.getItem('sb_room_code')||'';
-  if(!fbCfg||!room)return null;
-  // URL fixa do formulário de pedidos
-  const base = 'https://speedboymotoboy.github.io/SpeedBoy-site-gpt/pedido.html';
-  const params=new URLSearchParams({cfg:btoa(encodeURIComponent(fbCfg)),room,store:storeName});
+  if(!room)return null;
+  // Link curto — Firebase config fica hardcoded no pedido.html
+  const base  = 'https://speedboymotoboy.github.io/SpeedBoy-site-gpt/pedido.html';
+  const params= new URLSearchParams({room, store:storeName});
   return base+'?'+params.toString();
 }
 
 function genLink(){
   const name=prompt('Nome da loja (ex: KS, Loja das Flores):');
   if(!name||!name.trim())return;
-  if(!localStorage.getItem('sb_firebase_cfg')||!localStorage.getItem('sb_room_code')){
+  if(!localStorage.getItem('sb_room_code')){
     toast('Configure o Firebase primeiro nas ⚙️ Configurações','error'); return;
   }
   const link=buildLink(name.trim());
