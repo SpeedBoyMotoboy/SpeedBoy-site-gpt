@@ -304,12 +304,12 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       <button class="modal-close" onclick="closeWpp()">✕</button>
     </div>
     <div class="modal-phone" id="wppPhone"></div>
-    <button class="wpp-btn" onclick="sendQ('caminho')"><span class="wpp-tag">🚀 a caminho</span>Olá! Estou a caminho com sua entrega. Já já chego! 😊</button>
-    <button class="wpp-btn" onclick="sendQ('chegando')"><span class="wpp-tag">📍 chegando agora</span>Oi! Estou chegando, já estou pertinho. Pode ficar de olho! 👀</button>
-    <button class="wpp-btn" onclick="sendQ('confirmar')"><span class="wpp-tag">✅ confirmar endereço</span>Olá! Pode confirmar seu endereço e ponto de referência? 📍</button>
-    <button class="wpp-btn" onclick="sendQ('ausente')"><span class="wpp-tag">🚪 ninguém em casa</span>Oi! Passei aí mas não encontrei ninguém. Pode me avisar? 🙏</button>
-    <button class="wpp-btn" onclick="sendQ('atraso')"><span class="wpp-tag">⏰ vou atrasar</span>Olá! Estou com um pequeno atraso, mas sua entrega está a caminho! 🙌</button>
-    <button class="wpp-btn" onclick="sendQ('entregue')"><span class="wpp-tag">✅ entregue</span>Entrega realizada! Obrigado pela preferência! 🎉</button>
+    <button class="wpp-btn" onclick="sendQ('caminho')"><span class="wpp-tag">🚀 a caminho</span>Olá {nome}! Entrega da {loja}. Estou a caminho! Já já chego! 😊</button>
+    <button class="wpp-btn" onclick="sendQ('chegando')"><span class="wpp-tag">📍 chegando agora</span>Oi {nome}! Estou chegando, já estou pertinho. Pode ficar de olho! 👀</button>
+    <button class="wpp-btn" onclick="sendQ('confirmar')"><span class="wpp-tag">📍 próxima entrega</span>Oi {nome}! Entrega da {loja}. Sua entrega é a próxima, poderia me enviar sua localização? 😅</button>
+    <button class="wpp-btn" onclick="sendQ('ausente')"><span class="wpp-tag">🚪 ninguém em casa</span>Oi {nome}! Passei aí mas não encontrei ninguém. Podemos reagendar a entrega? 🙏</button>
+    <button class="wpp-btn" onclick="sendQ('atraso')"><span class="wpp-tag">⏰ vou atrasar</span>Olá {nome}! Estou com um pequeno atraso, mas sua entrega está a caminho! 🙌</button>
+    <button class="wpp-btn" onclick="sendQ('entregue')"><span class="wpp-tag">✅ entregue</span>Olá {nome}! Entrega da {loja} realizada! Caso precise de um motoboy de confiança, estou à disposição. 🛵</button>
     <div class="wpp-custom">
       <input class="wpp-input" id="wppCustom" placeholder="Ou escreva uma mensagem..." />
       <button class="btn-wpp-send" onclick="sendCustomWpp()">Enviar</button>
@@ -738,17 +738,17 @@ function region(addr){ if(!addr)return'zzz'; const p=addr.split(',').map(x=>x.tr
 //  WHATSAPP QUICK MESSAGES
 // ═══════════════════════════════════════════════════════
 const QM={
-  caminho:  'Olá {nome}! Estou a caminho com sua entrega. Já já chego! 😊',
-  chegando: 'Oi {nome}! Estou chegando, já estou pertinho. Pode ficar de olho! 👀',
-  confirmar:'Olá {nome}! Pode confirmar seu endereço e ponto de referência? 📍',
-  ausente:  'Oi {nome}! Passei aí mas não encontrei ninguém. Pode me avisar quando estiver disponível? 🙏',
-  atraso:   'Olá {nome}! Estou com um pequeno atraso, mas sua entrega está a caminho! 🙌',
-  entregue: 'Olá {nome}! Entrega realizada com sucesso! Obrigado pela preferência! 🎉'
+  caminho:  'Olá {nome}! {loja}Estou a caminho com sua entrega. Já já chego! 😊',
+  chegando: 'Oi {nome}! {loja}Estou chegando, já estou pertinho. Pode ficar de olho! 👀',
+  confirmar:'Oi {nome}! {loja}Sua entrega é a próxima, poderia me enviar sua localização atual para facilitar a entrega? 😅',
+  ausente:  'Oi {nome}! Passei aí mas não encontrei ninguém. Podemos reagendar a entrega? 🙏',
+  atraso:   'Olá {nome}! {loja}Estou com um pequeno atraso, mas sua entrega está a caminho! 🙌',
+  entregue: 'Olá {nome}! {loja}Entrega realizada com sucesso! Caso precise de um motoboy de confiança, estou à disposição. 🛵'
 };
 function openWpp(i){ wppStop=stops[i]; document.getElementById('wppName').textContent='💬 '+wppStop.name; document.getElementById('wppPhone').textContent=fmtPhone(wppStop.phone); document.getElementById('wppCustom').value=''; document.getElementById('wppModal').classList.remove('hidden'); }
 function closeWpp(){ document.getElementById('wppModal').classList.add('hidden'); wppStop=null; }
 document.getElementById('wppModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeWpp();});
-function sendQ(type){ if(!wppStop)return; const msg=QM[type].replace(/{nome}/g,wppStop.name||''); window.open(`https://wa.me/55${wppStop.phone}?text=${encodeURIComponent(msg)}`,'_blank'); closeWpp(); }
+function sendQ(type){ if(!wppStop)return; const loja=wppStop.store?`Entrega da ${wppStop.store}. `:''; const msg=QM[type].replace(/{nome}/g,wppStop.name||'').replace(/{loja}/g,loja); window.open(`https://wa.me/55${wppStop.phone}?text=${encodeURIComponent(msg)}`,'_blank'); closeWpp(); }
 function sendCustomWpp(){ if(!wppStop)return; const msg=document.getElementById('wppCustom').value.trim(); if(!msg){toast('Digite uma mensagem','error');return;} window.open(`https://wa.me/55${wppStop.phone}?text=${encodeURIComponent(msg)}`,'_blank'); closeWpp(); }
 
 // ═══════════════════════════════════════════════════════
