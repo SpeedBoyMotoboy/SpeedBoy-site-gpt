@@ -156,6 +156,12 @@ body{max-width:480px;margin:0 auto;padding-bottom:50px;}
 .btn-submit:active{transform:scale(.98);box-shadow:0 2px 10px rgba(245,197,24,.2);}
 .btn-submit:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
 
+/* TIME RANGE */
+.time-row{display:flex;gap:8px;align-items:center;}
+.time-sep{font-size:13px;color:var(--muted);font-weight:600;padding-top:20px;flex-shrink:0;}
+.time-input{width:100%;background:var(--card);border:1.5px solid var(--border);color:var(--text);border-radius:12px;padding:13px 14px;font-size:15px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;text-align:center;}
+.time-input:focus{border-color:var(--accent);}
+
 /* PAYMENT TOGGLE */
 .pay-toggle{display:flex;gap:8px;margin-bottom:0;}
 .pay-opt{flex:1;padding:11px 8px;border-radius:10px;border:1.5px solid var(--border);background:var(--card2);color:var(--muted);font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;text-align:center;transition:all .2s;}
@@ -217,7 +223,7 @@ body{max-width:480px;margin:0 auto;padding-bottom:50px;}
 <div class="toast" id="toast"></div>
 <div class="loading" id="loading">
   <div class="spinner"></div>
-  <div class="loading-text">Enviando pedido...</div>
+  <div class="loading-text">Enviando para o Luan...</div>
   <div class="loading-sub">Aguarde um momento</div>
 </div>
 
@@ -259,9 +265,9 @@ body{max-width:480px;margin:0 auto;padding-bottom:50px;}
 
   <div class="submit-wrap">
     <button class="btn-submit" id="submitBtn" onclick="submitPedido()">
-      🛵 Enviar para o motoboy
+      🛵 Enviar para o Luan
     </button>
-    <div class="submit-note">O motoboy receberá as entregas automaticamente</div>
+    <div class="submit-note">O Luan receberá as entregas automaticamente</div>
   </div>
 
 </div>
@@ -270,7 +276,7 @@ body{max-width:480px;margin:0 auto;padding-bottom:50px;}
 <div class="success-screen" id="successScreen">
   <div class="success-anim">🛵</div>
   <div class="success-title">Pedido enviado!</div>
-  <div class="success-sub">O motoboy já recebeu. Ele vai confirmar em instantes.</div>
+  <div class="success-sub">O Luan já recebeu! Ele vai confirmar as entregas em instantes. 🛵</div>
   <div class="success-summary" id="successSummary"></div>
   <button class="btn-novo" onclick="resetForm()">+ Novo pedido</button>
 </div>
@@ -369,6 +375,22 @@ function addStop() {
           onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
       </div>
       <div class="field-group">
+        <div class="field-label">⏰ Horário de entrega (opcional)</div>
+        <div class="time-row">
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;">A PARTIR DE</div>
+            <input class="time-input" data-f="timeFrom" type="time"
+              onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
+          </div>
+          <div class="time-sep">até</div>
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;">ATÉ</div>
+            <input class="time-input" data-f="timeTo" type="time"
+              onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
         <div class="field-label">Telefone</div>
         <input class="field-input" data-f="phone" type="tel" placeholder="(XX) XXXXX-XXXX"
           oninput="maskPhone(this)" maxlength="15"
@@ -451,6 +473,8 @@ async function submitPedido() {
       newStops.push({
         name, address,
         complement:   el.querySelector('[data-f="complement"]').value.trim(),
+        timeFrom:     el.querySelector('[data-f="timeFrom"]')?.value || '',
+        timeTo:       el.querySelector('[data-f="timeTo"]')?.value   || '',
         phone:        el.querySelector('[data-f="phone"]').value.replace(/\D/g,''),
         value:        0,            // taxa entrega — motoboy preenche depois
         paid:         false,        // taxa — motoboy preenche depois
@@ -482,6 +506,7 @@ async function submitPedido() {
         <div>
           <div style="font-weight:600;font-size:14px">${i+1}. ${s.name}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px">${s.address}</div>
+          ${(s.timeFrom||s.timeTo)?`<div style="font-size:11px;color:var(--accent);margin-top:2px;font-weight:600;">⏰ ${s.timeFrom||'?'} até ${s.timeTo||'?'}</div>`:''}`
         </div>
         <div style="text-align:right">
           ${s.productValue>0?`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${s.productPaid?'var(--green)':'var(--accent)'}">R$ ${s.productValue.toFixed(2).replace('.',',')}</div>`:''}
