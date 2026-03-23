@@ -3,8 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SPEEDBOY — Pedido de Entrega</title>
+<title>SPEEDBOY — Pedido</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Firebase via CDN estático — sem dynamic import -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -15,203 +20,86 @@
 html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;}
 body{max-width:480px;margin:0 auto;padding-bottom:50px;}
 
-/* ── HERO HEADER ── */
-.hero{
-  position:relative;overflow:hidden;
-  padding:32px 20px 28px;
-  background:linear-gradient(160deg,#0d0d14 0%,#1a1220 60%,#0d0d14 100%);
-  border-bottom:1px solid var(--border);
-  text-align:center;
-}
-.hero::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse at 50% 0%,rgba(245,197,24,.12) 0%,transparent 65%);
-  pointer-events:none;
-}
-.hero-logo{
-  font-family:'Barlow Condensed',sans-serif;font-weight:900;
-  font-size:42px;letter-spacing:-2px;line-height:1;
-  color:var(--accent);position:relative;
-}
+.hero{position:relative;overflow:hidden;padding:32px 20px 28px;background:linear-gradient(160deg,#0d0d14 0%,#1a1220 60%,#0d0d14 100%);border-bottom:1px solid var(--border);text-align:center;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(245,197,24,.12) 0%,transparent 65%);pointer-events:none;}
+.hero-logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:42px;letter-spacing:-2px;color:var(--accent);position:relative;}
 .hero-logo span{color:var(--text);}
-.hero-tagline{
-  font-size:13px;color:var(--muted);margin-top:6px;
-  letter-spacing:.5px;font-weight:500;
-}
-.hero-store-badge{
-  display:inline-flex;align-items:center;gap:6px;
-  background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);
-  border-radius:20px;padding:6px 14px;margin-top:12px;
-  font-size:13px;font-weight:600;color:var(--accent);
-}
+.hero-tag{font-size:13px;color:var(--muted);margin-top:6px;letter-spacing:.5px;}
+.hero-badge{display:none;align-items:center;gap:6px;background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);border-radius:20px;padding:6px 14px;margin-top:12px;font-size:13px;font-weight:600;color:var(--accent);justify-content:center;}
+.hero-badge.show{display:inline-flex;}
 
-/* ── PROGRESS BAR ── */
-.progress-wrap{padding:20px 20px 0;}
-.progress-steps{display:flex;align-items:center;gap:0;margin-bottom:6px;}
-.progress-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
-.progress-step::after{content:'';position:absolute;top:14px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;}
-.progress-step:last-child::after{display:none;}
-.progress-dot{width:28px;height:28px;border-radius:50%;background:var(--card2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);position:relative;z-index:1;transition:all .3s;}
-.progress-dot.done{background:var(--green);border-color:var(--green);color:#000;}
-.progress-dot.active{background:var(--accent);border-color:var(--accent);color:#000;}
-.progress-label{font-size:10px;color:var(--muted);margin-top:4px;font-weight:600;letter-spacing:.3px;}
-.progress-step.active .progress-label{color:var(--accent);}
-.progress-step.done .progress-label{color:var(--green);}
-
-/* ── FORM WRAP ── */
 .form-wrap{padding:20px 16px 0;}
+.sec-divider{display:flex;align-items:center;gap:12px;margin:20px 0 18px;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:1px;}
+.sec-divider::before,.sec-divider::after{content:'';flex:1;height:1px;background:var(--border);}
 
-/* ── SECTION ── */
-.section{margin-bottom:6px;}
-.section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-.section-num{
-  width:28px;height:28px;border-radius:50%;
-  background:linear-gradient(135deg,var(--accent2),var(--accent));
-  color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:14px;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
-}
-.section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:.3px;}
+/* STOP CARD */
+.stops-wrap{display:flex;flex-direction:column;gap:12px;}
+.stop-card{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border);overflow:hidden;}
+.stop-card-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--card2);border-bottom:1px solid var(--border);}
+.stop-card-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:.5px;color:var(--accent);display:flex;align-items:center;gap:7px;}
+.stop-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#000;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;}
+.btn-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:2px;}
+.stop-card-body{padding:14px;}
 
-/* ── FIELDS ── */
 .field-group{margin-bottom:12px;}
-.field-label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:4px;}
+.field-label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
 .req{color:var(--red);}
-.field-input{
-  width:100%;background:var(--card);border:1.5px solid var(--border);
-  color:var(--text);border-radius:12px;padding:13px 14px;
-  font-size:15px;font-family:'Barlow',sans-serif;outline:none;
-  transition:border-color .2s,box-shadow .2s;
-}
-.field-input:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(245,197,24,.08);
-}
+.field-input{width:100%;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:12px;padding:13px 14px;font-size:15px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;}
+.field-input:focus{border-color:var(--accent);}
 .field-input::placeholder{color:var(--muted);}
 .field-input.error{border-color:var(--red);}
 .field-row{display:flex;gap:10px;}
 .field-row .field-group{flex:1;}
 
-/* ── STOP CARD ── */
-.stops-wrap{display:flex;flex-direction:column;gap:12px;}
-.stop-card{
-  background:var(--card);border-radius:var(--radius);
-  border:1.5px solid var(--border);overflow:hidden;
-  transition:border-color .3s;
-}
-.stop-card.focused{border-color:rgba(245,197,24,.4);}
-.stop-card.error{border-color:var(--red);}
-.stop-card-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 14px;background:var(--card2);
-  border-bottom:1px solid var(--border);
-}
-.stop-card-title{
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;
-  font-size:14px;letter-spacing:.5px;color:var(--accent);
-  display:flex;align-items:center;gap:7px;
-}
-.stop-card-num{
-  width:22px;height:22px;border-radius:50%;
-  background:var(--accent);color:#000;
-  font-size:12px;font-weight:900;
-  display:flex;align-items:center;justify-content:center;
-}
-.btn-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:2px;transition:color .15s;}
-.btn-remove:active{color:var(--red);}
-.stop-card-body{padding:14px;}
-
-/* ── ADD STOP ── */
-.btn-add-stop{
-  width:100%;background:transparent;
-  border:1.5px dashed var(--border);border-radius:var(--radius);
-  color:var(--muted);font-family:'Barlow',sans-serif;font-weight:600;font-size:14px;
-  padding:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
-  margin-top:4px;transition:all .2s;
-}
-.btn-add-stop:active,.btn-add-stop:hover{border-color:var(--accent);color:var(--accent);}
-
-/* ── DIVIDER ── */
-.divider{display:flex;align-items:center;gap:12px;margin:20px 0 18px;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:1px;}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
-
-/* ── STORE INFO ── */
-.store-section{
-  background:var(--card);border-radius:var(--radius);
-  padding:16px;margin-bottom:20px;
-  border:1.5px solid var(--border);
-}
-
-/* ── SUBMIT ── */
-.submit-wrap{padding:0 16px;margin-top:24px;}
-.btn-submit{
-  width:100%;
-  background:linear-gradient(135deg,var(--accent2),var(--accent));
-  color:#000;border:none;border-radius:var(--radius);
-  font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;
-  letter-spacing:.5px;padding:18px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  box-shadow:0 6px 24px rgba(245,197,24,.25);
-  transition:transform .1s,box-shadow .1s;
-}
-.btn-submit:active{transform:scale(.98);box-shadow:0 2px 10px rgba(245,197,24,.2);}
-.btn-submit:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
-
-/* TIME RANGE */
-.time-row{display:flex;gap:8px;align-items:center;}
-.time-sep{font-size:13px;color:var(--muted);font-weight:600;padding-top:20px;flex-shrink:0;}
-.time-input{width:100%;background:var(--card);border:1.5px solid var(--border);color:var(--text);border-radius:12px;padding:13px 14px;font-size:15px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;text-align:center;}
+/* TIME */
+.time-row{display:flex;gap:8px;align-items:flex-end;}
+.time-sep{font-size:12px;color:var(--muted);font-weight:600;padding-bottom:14px;flex-shrink:0;}
+.time-input{width:100%;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:12px;padding:13px 14px;font-size:15px;font-family:'Barlow',sans-serif;outline:none;text-align:center;transition:border-color .2s;}
 .time-input:focus{border-color:var(--accent);}
 
-/* PAYMENT TOGGLE */
-.pay-toggle{display:flex;gap:8px;margin-bottom:0;}
-.pay-opt{flex:1;padding:11px 8px;border-radius:10px;border:1.5px solid var(--border);background:var(--card2);color:var(--muted);font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;text-align:center;transition:all .2s;}
-.pay-opt.selected-paid{border-color:var(--green);background:rgba(0,230,118,.1);color:var(--green);}
-.pay-opt.selected-due{border-color:var(--accent);background:rgba(245,197,24,.1);color:var(--accent);}
-.value-reveal{display:none;margin-top:10px;}
-.value-reveal.show{display:block;}
+/* PAYMENT */
+.pay-row{display:flex;gap:8px;}
+.pay-btn{flex:1;padding:11px 8px;border-radius:10px;border:1.5px solid var(--border);background:var(--card2);color:var(--muted);font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;text-align:center;transition:all .2s;}
+.pay-btn.paid{border-color:var(--green);background:rgba(0,230,118,.1);color:var(--green);}
+.pay-btn.due{border-color:var(--accent);background:rgba(245,197,24,.1);color:var(--accent);}
+.value-group{display:none;margin-top:10px;}
+.value-group.show{display:block;}
+
+/* ADD STOP */
+.btn-add-stop{width:100%;background:transparent;border:1.5px dashed var(--border);border-radius:var(--radius);color:var(--muted);font-family:'Barlow',sans-serif;font-weight:600;font-size:14px;padding:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;transition:all .2s;}
+.btn-add-stop:active{border-color:var(--accent);color:var(--accent);}
+
+/* SUBMIT */
+.submit-wrap{padding:0 16px;margin-top:24px;}
+.btn-submit{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#000;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;letter-spacing:.5px;padding:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 24px rgba(245,197,24,.25);}
+.btn-submit:active{opacity:.85;}
+.btn-submit:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
 .submit-note{text-align:center;font-size:11px;color:var(--muted);margin-top:10px;}
 
-/* ── SUCCESS ── */
-.success-screen{
-  display:none;min-height:100vh;
-  flex-direction:column;align-items:center;justify-content:center;
-  padding:40px 24px;text-align:center;
-  background:radial-gradient(ellipse at 50% 30%,rgba(0,230,118,.06) 0%,transparent 60%);
-}
-.success-screen.show{display:flex;}
-.success-anim{font-size:80px;margin-bottom:20px;animation:bounceIn .5s ease;}
-@keyframes bounceIn{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+/* SUCCESS */
+.success-wrap{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
+.success-wrap.show{display:flex;}
+.success-icon{font-size:80px;margin-bottom:20px;animation:pop .5s ease;}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
 .success-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:36px;color:var(--green);margin-bottom:8px;}
 .success-sub{font-size:14px;color:var(--muted);line-height:1.7;max-width:300px;}
-.success-summary{
-  background:var(--card);border-radius:var(--radius);border:1px solid var(--border);
-  padding:16px;margin-top:20px;width:100%;text-align:left;
-}
-.summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
-.summary-row:last-child{border-bottom:none;}
-.summary-row-label{color:var(--muted);}
-.summary-row-val{font-weight:600;}
-.btn-novo{
-  margin-top:20px;
-  background:var(--accent);color:#000;border:none;
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;
-  padding:14px 36px;border-radius:var(--radius);cursor:pointer;
-  box-shadow:0 4px 16px rgba(245,197,24,.3);
-}
+.success-list{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-top:20px;width:100%;text-align:left;}
+.success-item{padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.success-item:last-child{border-bottom:none;}
+.btn-novo{margin-top:20px;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px 36px;border-radius:var(--radius);cursor:pointer;}
 
-/* ── ERROR ── */
-.error-screen{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
-.error-screen.show{display:flex;}
+/* ERROR */
+.error-wrap{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
+.error-wrap.show{display:flex;}
 
-/* ── LOADING ── */
+/* LOADING */
 .loading{display:none;position:fixed;inset:0;background:rgba(7,7,9,.9);align-items:center;justify-content:center;z-index:500;flex-direction:column;gap:18px;backdrop-filter:blur(6px);}
 .loading.show{display:flex;}
 .spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-text{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;color:var(--accent);}
-.loading-sub{font-size:12px;color:var(--muted);}
 
-/* ── TOAST ── */
+/* TOAST */
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;z-index:600;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.error{border-color:var(--red);color:var(--red);}
@@ -220,67 +108,54 @@ body{max-width:480px;margin:0 auto;padding-bottom:50px;}
 </head>
 <body>
 
-<div class="toast" id="toast"></div>
-<div class="loading" id="loading">
-  <div class="spinner"></div>
-  <div class="loading-text">Enviando para o Luan...</div>
-  <div class="loading-sub">Aguarde um momento</div>
-</div>
+<div class="toast"  id="toast"></div>
+<div class="loading" id="loading"><div class="spinner"></div><div class="loading-text">Enviando para o Luan...</div></div>
 
-<!-- ── HERO ── -->
+<!-- HERO -->
 <div class="hero">
   <div class="hero-logo">SPEED<span>BOY</span></div>
-  <div class="hero-tagline">Sua entrega nossa prioridade</div>
-  <div class="hero-store-badge" id="storeBadge" style="display:none">
-    🏪 <span id="storeNameBadge"></span>
-  </div>
+  <div class="hero-tag">Sua entrega nossa prioridade</div>
+  <div class="hero-badge" id="heroBadge">🏪 <span id="storeSpan"></span></div>
 </div>
 
-<!-- ── MAIN ── -->
-<div id="mainScreen">
-
+<!-- FORM -->
+<div id="mainWrap">
   <div class="form-wrap">
-
-    <div class="divider">ENTREGAS</div>
-
-    <!-- Paradas -->
+    <div class="sec-divider">ENTREGAS</div>
     <div class="stops-wrap" id="stopsWrap"></div>
-    <button class="btn-add-stop" id="addStopBtn" onclick="addStop()">
+    <button class="btn-add-stop" id="btnAdd" onclick="window.addStop()">
       <span style="font-size:20px">＋</span> Adicionar outro endereço
     </button>
-
   </div>
-
   <div class="submit-wrap">
-    <button class="btn-submit" id="submitBtn" onclick="submitPedido()">
+    <button class="btn-submit" id="btnSubmit" onclick="window.submitPedido()">
       🛵 Enviar para o Luan
     </button>
     <div class="submit-note">O Luan receberá as entregas automaticamente</div>
   </div>
-
 </div>
 
-<!-- ── SUCESSO ── -->
-<div class="success-screen" id="successScreen">
-  <div class="success-anim">🛵</div>
+<!-- SUCCESS -->
+<div class="success-wrap" id="successWrap">
+  <div class="success-icon">🛵</div>
   <div class="success-title">Pedido enviado!</div>
-  <div class="success-sub">O Luan já recebeu! Ele vai confirmar as entregas em instantes. 🛵</div>
-  <div class="success-summary" id="successSummary"></div>
-  <button class="btn-novo" onclick="resetForm()">+ Novo pedido</button>
+  <div class="success-sub">O Luan já recebeu! Ele vai confirmar as entregas em instantes.</div>
+  <div class="success-list" id="successList"></div>
+  <button class="btn-novo" onclick="window.resetForm()">+ Novo pedido</button>
 </div>
 
-<!-- ── ERRO ── -->
-<div class="error-screen" id="errorScreen">
+<!-- ERROR -->
+<div class="error-wrap" id="errorWrap">
   <div style="font-size:64px;margin-bottom:16px">⚠️</div>
   <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;color:var(--red);margin-bottom:10px">Link inválido</div>
-  <div style="font-size:13px;color:var(--muted);line-height:1.6;max-width:260px">Este link não está configurado. Peça um novo link para o motoboy.</div>
+  <div style="font-size:13px;color:var(--muted);line-height:1.6;max-width:260px">Peça um novo link para o Luan.</div>
 </div>
 
 <script>
-// ══════════════════════════════════════
-//  CONFIGURAÇÃO FIXA — edite aqui
-// ══════════════════════════════════════
-const FIREBASE_CFG = {
+// ═══════════════════════════════════════════════════
+//  CONFIGURAÇÃO FIREBASE — hardcoded
+// ═══════════════════════════════════════════════════
+var FIREBASE_CONFIG = {
   apiKey:            "AIzaSyDL8c28T9Q-IAK9JihzEXtT-OPiYOx24Jg",
   authDomain:        "speedboy-3c1c6.firebaseapp.com",
   projectId:         "speedboy-3c1c6",
@@ -290,282 +165,290 @@ const FIREBASE_CFG = {
   databaseURL:       "https://speedboy-3c1c6-default-rtdb.firebaseio.com"
 };
 
-// Nome da loja vem da URL (?store=KS) — gerado automaticamente pelo SPEEDBOY
-const P         = new URLSearchParams(window.location.search);
-const ROOM      = (P.get('room') || 'SB-DEFAULT').toUpperCase();
-const STORE_PRE = P.get('store') || '';
-const CFG_B64   = 'HARDCODED'; // não usado mais
+// URL params
+var params     = new URLSearchParams(window.location.search);
+var ROOM       = (params.get('room') || '').toUpperCase();
+var STORE_NAME = params.get('store') || '';
 
-let _db   = null;
-let _mods = {};
-let stopCount = 0;
+var db         = null;
+var stopCount  = 0;
 
-// ── INIT ──
-async function init() {
-  // Mostra badge da loja se vier na URL
-  if (STORE_PRE) {
-    document.getElementById('storeNameBadge').textContent = STORE_PRE;
-    document.getElementById('storeBadge').style.display = 'inline-flex';
-    document.title = 'SPEEDBOY — ' + STORE_PRE;
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+function init() {
+  // Mostra nome da loja no badge
+  if (STORE_NAME) {
+    document.getElementById('storeSpan').textContent = STORE_NAME;
+    document.getElementById('heroBadge').classList.add('show');
+    document.title = 'SPEEDBOY — ' + STORE_NAME;
   }
 
-  // Conecta direto com config hardcoded
-  const ok = await connectFirebase(JSON.stringify(FIREBASE_CFG));
-  if (!ok) { showError(); return; }
-  addStop();
-}
+  // Verifica se tem sala
+  if (!ROOM) {
+    document.getElementById('mainWrap').style.display = 'none';
+    document.getElementById('errorWrap').classList.add('show');
+    return;
+  }
 
-function showError() {
-  document.getElementById('mainScreen').style.display = 'none';
-  document.getElementById('errorScreen').classList.add('show');
-}
-
-// ── FIREBASE ──
-async function connectFirebase(cfgStr) {
+  // Inicializa Firebase
   try {
-    const cfg = JSON.parse(cfgStr);
-    if (!cfg.apiKey || !cfg.databaseURL) throw new Error('config inválida');
-    const { initializeApp, getApps, getApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-    const { getDatabase, ref, push }          = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
-    const app = getApps().length ? getApp() : initializeApp(cfg);
-    _db = getDatabase(app); _mods = { ref, push };
-    return true;
-  } catch(e) { console.error(e); return false; }
-}
-
-// ── STOP FORM ──
-function addStop() {
-  const wrap = document.getElementById('stopsWrap');
-  if (wrap.querySelectorAll('.stop-card').length >= 10) {
-    toast('Máximo de 10 entregas por pedido', 'error'); return;
+    var app = firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    console.log('Firebase OK — sala:', ROOM);
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    showToast('Erro ao conectar. Tente novamente.', 'error');
   }
-  stopCount++;
-  const id  = 'sc_' + stopCount;
-  const num = wrap.querySelectorAll('.stop-card').length + 1;
-  const div = document.createElement('div');
-  div.className = 'stop-card'; div.id = id;
-  div.innerHTML = `
-    <div class="stop-card-header">
-      <div class="stop-card-title">
-        <div class="stop-card-num">${num}</div>
-        ENTREGA ${num}
-      </div>
-      ${num > 1 ? `<button class="btn-remove" onclick="removeStop('${id}')" title="Remover">✕</button>` : ''}
-    </div>
-    <div class="stop-card-body">
-      <div class="field-group">
-        <div class="field-label">Nome do cliente <span class="req">*</span></div>
-        <input class="field-input" data-f="name" placeholder="Ex: Pedro Santos"
-          onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
-      </div>
-      <div class="field-group">
-        <div class="field-label">Endereço completo <span class="req">*</span></div>
-        <input class="field-input" data-f="address" placeholder="Rua, número, bairro, cidade — estado"
-          onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
-      </div>
-      <div class="field-group">
-        <div class="field-label">Complemento / Referência</div>
-        <input class="field-input" data-f="complement" placeholder="Apto, bloco, portão, cor da casa..."
-          onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
-      </div>
-      <div class="field-group">
-        <div class="field-label">⏰ Horário de entrega (opcional)</div>
-        <div class="time-row">
-          <div style="flex:1">
-            <div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;">A PARTIR DE</div>
-            <input class="time-input" data-f="timeFrom" type="time"
-              onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
-          </div>
-          <div class="time-sep">até</div>
-          <div style="flex:1">
-            <div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;">ATÉ</div>
-            <input class="time-input" data-f="timeTo" type="time"
-              onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
-          </div>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">Telefone</div>
-        <input class="field-input" data-f="phone" type="tel" placeholder="(XX) XXXXX-XXXX"
-          oninput="maskPhone(this)" maxlength="15"
-          onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
-      </div>
-      <div class="field-group">
-        <div class="field-label">Pagamento <span style="color:var(--red)">*</span></div>
-        <div class="pay-toggle" id="pay_${id}">
-          <button type="button" class="pay-opt" data-pay="paid" onclick="selectPay('${id}','paid')">✅ Já pago</button>
-          <button type="button" class="pay-opt" data-pay="due"  onclick="selectPay('${id}','due')">💰 A receber</button>
-        </div>
-      </div>
-      <div class="field-group value-reveal" id="vr_${id}">
-        <div class="field-label">Valor a receber (R$)</div>
-        <input class="field-input" data-f="value" type="text" inputmode="decimal"
-          placeholder="0,00" oninput="maskMoney(this)"
-          onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
-      </div>
-      <div class="field-group" style="margin-bottom:0">
-        <div class="field-label">Observações</div>
-        <input class="field-input" data-f="notes" placeholder="Ligar antes, cuidado com cachorro..."
-          onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
-      </div>
-    </div>`;
-  wrap.appendChild(div);
-  renumber();
-  if (wrap.querySelectorAll('.stop-card').length >= 10)
-    document.getElementById('addStopBtn').style.display = 'none';
+
+  // Adiciona primeiro stop
+  window.addStop();
 }
 
-function removeStop(id) {
-  document.getElementById(id)?.remove();
+// ═══════════════════════════════════════════════════
+//  GERENCIAR STOPS
+// ═══════════════════════════════════════════════════
+window.addStop = function() {
+  stopCount++;
+  var id  = 'stop_' + stopCount;
+  var num = document.querySelectorAll('.stop-card').length + 1;
+
+  var div = document.createElement('div');
+  div.className = 'stop-card';
+  div.id = id;
+
+  div.innerHTML =
+    '<div class="stop-card-hdr">' +
+      '<div class="stop-card-title">' +
+        '<div class="stop-num">' + num + '</div>' +
+        'ENTREGA ' + num +
+      '</div>' +
+      (num > 1 ? '<button class="btn-rm" onclick="window.removeStop(\'' + id + '\')">✕</button>' : '') +
+    '</div>' +
+    '<div class="stop-card-body">' +
+      '<div class="field-group">' +
+        '<div class="field-label">Nome do cliente <span class="req">*</span></div>' +
+        '<input class="field-input" id="' + id + '_name" placeholder="Ex: Pedro Santos" />' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">Endereço completo <span class="req">*</span></div>' +
+        '<input class="field-input" id="' + id + '_address" placeholder="Rua, número, bairro, cidade — estado" />' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">Complemento / Referência</div>' +
+        '<input class="field-input" id="' + id + '_complement" placeholder="Apto, bloco, portão, cor da casa..." />' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">⏰ Horário de entrega (opcional)</div>' +
+        '<div class="time-row">' +
+          '<div style="flex:1">' +
+            '<div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;">DE</div>' +
+            '<input class="time-input" id="' + id + '_timeFrom" type="time" />' +
+          '</div>' +
+          '<div class="time-sep">até</div>' +
+          '<div style="flex:1">' +
+            '<div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;">ATÉ</div>' +
+            '<input class="time-input" id="' + id + '_timeTo" type="time" />' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="field-row">' +
+        '<div class="field-group">' +
+          '<div class="field-label">Telefone</div>' +
+          '<input class="field-input" id="' + id + '_phone" type="tel" placeholder="(XX) XXXXX-XXXX" oninput="window.maskPhone(this)" maxlength="15" />' +
+        '</div>' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">Pagamento <span class="req">*</span></div>' +
+        '<div class="pay-row">' +
+          '<button type="button" class="pay-btn" id="' + id + '_paid_yes" onclick="window.selectPay(\'' + id + '\',\'paid\')">✅ Já pago</button>' +
+          '<button type="button" class="pay-btn" id="' + id + '_paid_no"  onclick="window.selectPay(\'' + id + '\',\'due\')">💰 A receber</button>' +
+        '</div>' +
+        '<div class="value-group" id="' + id + '_value_wrap">' +
+          '<div class="field-label" style="margin-top:10px">Valor a receber (R$)</div>' +
+          '<input class="field-input" id="' + id + '_value" type="text" inputmode="decimal" placeholder="0,00" oninput="window.maskMoney(this)" />' +
+        '</div>' +
+      '</div>' +
+      '<div class="field-group" style="margin-bottom:0">' +
+        '<div class="field-label">Observações</div>' +
+        '<input class="field-input" id="' + id + '_notes" placeholder="Ligar antes, cuidado com cachorro..." />' +
+      '</div>' +
+    '</div>';
+
+  document.getElementById('stopsWrap').appendChild(div);
   renumber();
-  document.getElementById('addStopBtn').style.display = 'flex';
-}
+};
+
+window.removeStop = function(id) {
+  var el = document.getElementById(id);
+  if (el) el.remove();
+  renumber();
+};
 
 function renumber() {
-  document.querySelectorAll('.stop-card').forEach((el, i) => {
-    const title = el.querySelector('.stop-card-title');
-    const btn   = el.querySelector('.btn-remove');
-    if (title) title.innerHTML = `<div class="stop-card-num">${i+1}</div> ENTREGA ${i+1}`;
-    if (btn && i === 0) btn.remove();
-    if (!btn && i > 0) {
-      const header = el.querySelector('.stop-card-header');
-      const b = document.createElement('button');
-      b.className='btn-remove'; b.title='Remover'; b.textContent='✕';
-      b.onclick = () => removeStop(el.id);
-      header.appendChild(b);
-    }
+  var cards = document.querySelectorAll('.stop-card');
+  cards.forEach(function(el, i) {
+    var title = el.querySelector('.stop-card-title');
+    var btn   = el.querySelector('.btn-rm');
+    if (title) title.innerHTML = '<div class="stop-num">' + (i+1) + '</div> ENTREGA ' + (i+1);
+    if (i === 0 && btn) btn.remove();
   });
 }
 
-function cardFocus(id) { document.getElementById(id)?.classList.add('focused'); }
-function cardBlur(id)  { document.getElementById(id)?.classList.remove('focused'); }
+window.selectPay = function(id, type) {
+  var yesBtn = document.getElementById(id + '_paid_yes');
+  var noBtn  = document.getElementById(id + '_paid_no');
+  var wrap   = document.getElementById(id + '_value_wrap');
+  if (!yesBtn || !noBtn) return;
+  yesBtn.className = 'pay-btn' + (type === 'paid' ? ' paid' : '');
+  noBtn.className  = 'pay-btn' + (type === 'due'  ? ' due'  : '');
+  if (wrap) wrap.className = 'value-group' + (type === 'due' ? ' show' : '');
+};
 
-// ── SUBMIT ──
-async function submitPedido() {
-  const storeName = STORE_PRE || 'Loja';
+// ═══════════════════════════════════════════════════
+//  ENVIAR
+// ═══════════════════════════════════════════════════
+window.submitPedido = function() {
+  var cards    = document.querySelectorAll('.stop-card');
+  var newStops = [];
+  var hasErr   = false;
 
-  const cards = document.querySelectorAll('.stop-card');
-  const newStops = []; let hasErr = false;
+  cards.forEach(function(card) {
+    var id      = card.id;
+    var nameEl  = document.getElementById(id + '_name');
+    var addrEl  = document.getElementById(id + '_address');
+    var name    = nameEl  ? nameEl.value.trim()  : '';
+    var address = addrEl  ? addrEl.value.trim()  : '';
 
-  cards.forEach(el => {
-    el.classList.remove('error');
-    const name    = el.querySelector('[data-f="name"]').value.trim();
-    const address = el.querySelector('[data-f="address"]').value.trim();
     if (!name || !address) {
-      el.classList.add('error');
-      if (!hasErr) el.scrollIntoView({ behavior:'smooth', block:'center' });
+      if (nameEl)  nameEl.classList.add('error');
+      if (addrEl)  addrEl.classList.add('error');
+      if (!hasErr) card.scrollIntoView({behavior:'smooth',block:'center'});
       hasErr = true;
-    } else {
-      // Read payment selection
-      // Payment: product value (does NOT count in motoboy financials)
-      const payToggle   = el.querySelector('.pay-toggle');
-      const payBtn      = payToggle ? payToggle.querySelector('.selected-paid, .selected-due') : null;
-      const productPaid = payBtn ? payBtn.dataset.pay === 'paid' : false;
-      const valInput    = el.querySelector('[data-f="value"]');
-      const productValue= valInput ? parseMoney(valInput.value) : 0;
-      newStops.push({
-        name, address,
-        complement:   el.querySelector('[data-f="complement"]').value.trim(),
-        timeFrom:     el.querySelector('[data-f="timeFrom"]')?.value || '',
-        timeTo:       el.querySelector('[data-f="timeTo"]')?.value   || '',
-        phone:        el.querySelector('[data-f="phone"]').value.replace(/\D/g,''),
-        value:        0,            // taxa entrega — motoboy preenche depois
-        paid:         false,        // taxa — motoboy preenche depois
-        productValue,               // valor do produto — cobrar do cliente
-        productPaid,                // se produto já foi pago
-        done:false,
-        notes:        el.querySelector('[data-f="notes"]').value.trim(),
-        store: storeName, status:'pending', submittedAt: new Date().toISOString()
-      });
+      return;
     }
+    if (nameEl)  nameEl.classList.remove('error');
+    if (addrEl)  addrEl.classList.remove('error');
+
+    var yesBtn      = document.getElementById(id + '_paid_yes');
+    var isPaid      = yesBtn && yesBtn.classList.contains('paid');
+    var isNoBtn     = document.getElementById(id + '_paid_no');
+    var hasPay      = (yesBtn && (yesBtn.classList.contains('paid') || (isNoBtn && isNoBtn.classList.contains('due'))));
+    var valEl       = document.getElementById(id + '_value');
+    var productVal  = valEl ? parseMoney(valEl.value) : 0;
+    var timeFromEl  = document.getElementById(id + '_timeFrom');
+    var timeToEl    = document.getElementById(id + '_timeTo');
+    var phoneEl     = document.getElementById(id + '_phone');
+    var compEl      = document.getElementById(id + '_complement');
+    var notesEl     = document.getElementById(id + '_notes');
+
+    newStops.push({
+      name:         name,
+      address:      address,
+      complement:   compEl    ? compEl.value.trim()                : '',
+      phone:        phoneEl   ? phoneEl.value.replace(/\D/g,'')    : '',
+      timeFrom:     timeFromEl? timeFromEl.value                    : '',
+      timeTo:       timeToEl  ? timeToEl.value                     : '',
+      productValue: productVal,
+      productPaid:  isPaid,
+      value:        0,
+      paid:         false,
+      notes:        notesEl   ? notesEl.value.trim()               : '',
+      store:        STORE_NAME || 'Loja',
+      done:         false,
+      status:       'pending',
+      submittedAt:  new Date().toISOString()
+    });
   });
 
-  if (hasErr) { toast('Preencha nome e endereço em todas as entregas', 'error'); return; }
-  if (!newStops.length) { toast('Adicione pelo menos uma entrega', 'error'); return; }
+  if (hasErr)         { showToast('Preencha nome e endereço de todas as entregas', 'error'); return; }
+  if (!newStops.length){ showToast('Adicione pelo menos uma entrega', 'error'); return; }
+  if (!db)            { showToast('Sem conexão com o sistema. Recarregue a página.', 'error'); return; }
 
   document.getElementById('loading').classList.add('show');
-  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('btnSubmit').disabled = true;
 
-  try {
-    for (const s of newStops)
-      await _mods.push(_mods.ref(_db, 'rooms/' + ROOM + '/pending'), JSON.stringify(s));
-
-    document.getElementById('loading').classList.remove('show');
-    document.getElementById('mainScreen').style.display = 'none';
-
-    // Resumo de sucesso
-    const rows = newStops.map((s,i) => `
-      <div class="summary-row">
-        <div>
-          <div style="font-weight:600;font-size:14px">${i+1}. ${s.name}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">${s.address}</div>
-          ${(s.timeFrom||s.timeTo)?`<div style="font-size:11px;color:var(--accent);margin-top:2px;font-weight:600;">⏰ ${s.timeFrom||'?'} até ${s.timeTo||'?'}</div>`:''}`
-        </div>
-        <div style="text-align:right">
-          ${s.productValue>0?`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${s.productPaid?'var(--green)':'var(--accent)'}">R$ ${s.productValue.toFixed(2).replace('.',',')}</div>`:''}
-          <div style="font-size:10px;font-weight:700;letter-spacing:.5px;color:${s.productPaid?'var(--green)':'var(--accent)'};">${s.productPaid?'✅ PAGO':'💰 COBRAR DO CLIENTE'}</div>
-        </div>
-      </div>`).join('');
-
-    document.getElementById('successSummary').innerHTML =
-      `<div style="font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">${newStops.length} entrega(s) enviada(s)</div>${rows}`;
-    document.getElementById('successScreen').classList.add('show');
-
-  } catch(e) {
-    document.getElementById('loading').classList.remove('show');
-    document.getElementById('submitBtn').disabled = false;
-    toast('Erro ao enviar: ' + e.message, 'error');
-  }
-}
-
-function resetForm() {
-  document.getElementById('successScreen').classList.remove('show');
-  document.getElementById('stopsWrap').innerHTML = '';
-  document.getElementById('mainScreen').style.display = 'block';
-  document.getElementById('submitBtn').disabled = false;
-  document.getElementById('addStopBtn').style.display = 'flex';
-  stopCount = 0;
-  addStop();
-  window.scrollTo(0, 0);
-}
-
-// ── utils ──
-function selectPay(stopId, type) {
-  const toggle = document.getElementById('pay_' + stopId);
-  const reveal = document.getElementById('vr_'  + stopId);
-  if (!toggle) return;
-  toggle.querySelectorAll('.pay-opt').forEach(b => {
-    b.classList.remove('selected-paid','selected-due');
+  var pendingRef = db.ref('rooms/' + ROOM + '/pending');
+  var promises   = newStops.map(function(s) {
+    return pendingRef.push(JSON.stringify(s));
   });
-  const btn = toggle.querySelector(`[data-pay="${type}"]`);
-  if (btn) btn.classList.add(type==='paid'?'selected-paid':'selected-due');
-  if (reveal) reveal.classList.toggle('show', type==='due');
+
+  Promise.all(promises)
+    .then(function() {
+      document.getElementById('loading').classList.remove('show');
+      document.getElementById('mainWrap').style.display = 'none';
+
+      // Resumo
+      var html = newStops.map(function(s, i) {
+        var valStr = s.productValue > 0
+          ? ' — R$ ' + s.productValue.toFixed(2).replace('.',',') + ' (' + (s.productPaid ? '✅ pago' : '💰 a cobrar') + ')'
+          : '';
+        var timeStr = (s.timeFrom || s.timeTo)
+          ? ' ⏰ ' + (s.timeFrom||'?') + '–' + (s.timeTo||'?')
+          : '';
+        return '<div class="success-item"><strong>' + (i+1) + '. ' + s.name + '</strong><br>' +
+          '<span style="font-size:11px;color:var(--muted)">' + s.address + timeStr + valStr + '</span></div>';
+      }).join('');
+
+      document.getElementById('successList').innerHTML =
+        '<div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">' +
+        newStops.length + ' entrega(s) enviada(s)</div>' + html;
+      document.getElementById('successWrap').classList.add('show');
+    })
+    .catch(function(e) {
+      document.getElementById('loading').classList.remove('show');
+      document.getElementById('btnSubmit').disabled = false;
+      showToast('Erro ao enviar: ' + e.message, 'error');
+      console.error(e);
+    });
+};
+
+window.resetForm = function() {
+  document.getElementById('successWrap').classList.remove('show');
+  document.getElementById('stopsWrap').innerHTML = '';
+  document.getElementById('mainWrap').style.display = 'block';
+  document.getElementById('btnSubmit').disabled = false;
+  stopCount = 0;
+  window.addStop();
+  window.scrollTo(0,0);
+};
+
+// ═══════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════
+window.maskPhone = function(el) {
+  var v = el.value.replace(/\D/g,'');
+  if(v.length>11) v=v.substring(0,11);
+  if(v.length>7)  v='('+v.substring(0,2)+') '+v.substring(2,7)+'-'+v.substring(7);
+  else if(v.length>2) v='('+v.substring(0,2)+') '+v.substring(2);
+  el.value=v;
+};
+
+window.maskMoney = function(el) {
+  var v=el.value.replace(/[^0-9,]/g,'');
+  var p=v.split(',');
+  if(p.length>2) v=p[0]+','+p.slice(1).join('');
+  if(p[1]&&p[1].length>2) v=p[0]+','+p[1].substring(0,2);
+  el.value=v;
+};
+
+function parseMoney(s) {
+  return parseFloat(String(s||'').replace(',','.')) || 0;
 }
 
-function maskPhone(i) {
-  let v=i.value.replace(/\D/g,'');
-  if(v.length>11)v=v.substring(0,11);
-  if(v.length>7)v=`(${v.substring(0,2)}) ${v.substring(2,7)}-${v.substring(7)}`;
-  else if(v.length>2)v=`(${v.substring(0,2)}) ${v.substring(2)}`;
-  i.value=v;
-}
-function maskMoney(i) {
-  let v=i.value.replace(/[^0-9,]/g,'');
-  const p=v.split(',');
-  if(p.length>2)v=p[0]+','+p.slice(1).join('');
-  if(p[1]&&p[1].length>2)v=p[0]+','+p[1].substring(0,2);
-  i.value=v;
-}
-function parseMoney(s){ return parseFloat(String(s||'').replace(',','.')) || 0; }
-
-let _tt;
-function toast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className='toast show '+type;
-  clearTimeout(_tt); _tt=setTimeout(()=>t.className='toast',3500);
+var _toastTimer;
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ t.className='toast'; }, 3500);
 }
 
-init();
+// ═══════════════════════════════════════════════════
+//  START
+// ═══════════════════════════════════════════════════
+window.addEventListener('load', init);
 </script>
 </body>
 </html>
