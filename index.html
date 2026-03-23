@@ -12,6 +12,11 @@
   --accent:#f5c518;--accent2:#ff6b00;--green:#00e676;--red:#ff3d3d;--blue:#3b82f6;
   --text:#f0f0f0;--muted:#777;--radius:14px;
 }
+body.light{
+  --bg:#f0f0eb;--card:#ffffff;--card2:#e8e8e3;--border:#d0d0c8;
+  --accent:#b8860a;--accent2:#e05500;--green:#1a7a3f;--red:#cc2233;--blue:#1a65d6;
+  --text:#1a1a1a;--muted:#888;
+}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;overscroll-behavior:none;}
 body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height:100vh;}
 
@@ -332,6 +337,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   <div class="logo">SPEED<span>BOY</span></div>
   <div class="header-right">
     <div id="syncRow"><div class="sync-dot" id="syncDot"></div><span class="sync-label" id="syncLabel"></span></div>
+    <button onclick="toggleTheme()" id="themeToggleBtn" style="background:none;border:none;font-size:18px;cursor:pointer;padding:2px 4px;" title="Alternar tema">☀️</button>
     <div id="badgeCount" class="badge-count">0</div>
   </div>
 </div>
@@ -694,6 +700,9 @@ function renderHome(){
           ${s.phone?`<div><strong>TEL</strong> ${fmtPhone(s.phone)}</div>`:''}
           ${s.complement?`<div><strong>REF</strong> ${s.complement}</div>`:''}
           ${(s.timeFrom||s.timeTo)?`<div><strong>HORÁRIO</strong> ⏰ ${s.timeFrom||'?'} até ${s.timeTo||'?'}</div>`:''}
+          ${s.deliveryDate?`<div><strong>DATA</strong> 📅 ${s.deliveryDate}</div>`:''}
+          ${s.serviceType?`<div><strong>TIPO</strong> ${s.serviceType==='retirada'?'📦 Retirada':'🛵 Entrega'}</div>`:''}
+          ${s.arrivedAt?`<div><strong>CHEGOU</strong> 📨 ${s.arrivedAt}</div>`:''}
           ${s.notes?`<div><strong>OBS</strong> ${s.notes}</div>`:''}
           ${valStr?`<div><strong>TAXA</strong> <span class="paid-badge ${s.paid?'yes':'no'}">${s.paid?'✓ Recebida':'⏳ A receber'}</span></div>`:''}
           ${s.productValue>0?`<div><strong>PRODUTO</strong> R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')} <span class="paid-badge ${s.productPaid?'yes':'no'}">${s.productPaid?'✓ Pago':'💰 A cobrar'}</span></div>`:''}
@@ -1133,7 +1142,13 @@ function saveConfig(){
   const fbStr=document.getElementById('cfgFb').value.trim();
   if(fbStr){
     const room=document.getElementById('cfgRoom').value.trim().toUpperCase();
-    initFb(fbStr).then(ok=>{ if(ok&&room)startSync(room); });
+    initFb(fbStr).then(ok=>{
+      if(ok){
+        toast('✅ Firebase conectado!','success');
+        const r=room||localStorage.getItem('sb_room_code')||'';
+        if(r) startSync(r);
+      }
+    });
   }
   toast('✅ Configurações salvas!','success');
   goNav('homeScreen','nav-home');
@@ -1162,7 +1177,20 @@ function setSyncUI(status,label){
 async function initFb(cfgStr){
   setSyncUI('syncing','conectando...');
   try{
-    let c; try{c=JSON.parse(cfgStr);}catch(e){const j=cfgStr.replace(/\/\/.*$/gm,'').replace(/([{,]\s*)([a-zA-Z_]\w*)\s*:/g,'$1"$2":').replace(/'/g,'"');c=JSON.parse(j);}
+    // Parse robusto — aceita formato JS do Firebase OU JSON estrito
+    let c;
+    try {
+      let str = cfgStr.trim();
+      // Adiciona chaves se colado sem elas
+      if (!str.includes('{')) { str = '{\n' + str + '\n}'; }
+      else { const m = str.match(/\{[\s\S]*\}/); if(m) str = m[0]; }
+      // Usa Function() para ler objeto JS sem aspas (formato do Firebase)
+      c = (new Function('return ' + str))();
+    } catch(e) {
+      // Fallback: tenta JSON puro
+      try { c = JSON.parse(cfgStr); }
+      catch(e2) { throw new Error('Configuração inválida — verifique se copiou tudo'); }
+    }
     if(!c.apiKey||!c.databaseURL)throw new Error('apiKey ou databaseURL ausente');
     const {initializeApp,getApps,getApp}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
     const {getDatabase,ref,onValue,set}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
@@ -1240,9 +1268,23 @@ function renderPending(){
   badge.textContent=keys.length;
   list.innerHTML=keys.map(k=>{
     const s=pendingData[k];
-    const timeStr=(s.timeFrom||s.timeTo)?`<div style="font-size:11px;color:var(--accent);font-weight:700;margin-top:2px;">⏰ ${s.timeFrom||'?'} até ${s.timeTo||'?'}</div>`:'';
-    const prodStr=s.productValue>0?`· cobrar R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')}`:''
-    return`<div class="pending-card" id="pc_${k}"><div class="pending-info"><div class="pending-name">${s.name||'Sem nome'}</div><div class="pending-addr">${s.address||''}</div>${timeStr}<div class="pending-store">🏪 ${s.store||''} ${prodStr}</div></div><button class="btn-reject" onclick="rejectPending('${k}')">✕</button><button class="btn-accept" onclick="acceptPending('${k}')">✅ Aceitar</button></div>`;
+    const typeIcon = s.serviceType==='retirada'?'📦 Retirada':'🛵 Entrega';
+    const dateStr  = s.deliveryDate?`📅 ${s.deliveryDate}`:'';
+    const timeStr  = (s.timeFrom||s.timeTo)?`⏰ ${s.timeFrom||'?'}–${s.timeTo||'?'}`:'';
+    const prodStr  = s.productValue>0?`· cobrar R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')}`:'';
+    const arrStr   = s.arrivedAt?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">📨 Chegou às ${s.arrivedAt}</div>`:'';
+    const tags     = [typeIcon,dateStr,timeStr].filter(Boolean).join(' · ');
+    return`<div class="pending-card" id="pc_${k}">
+      <div class="pending-info">
+        <div class="pending-name">${s.name||'Sem nome'}</div>
+        <div class="pending-addr">${s.address||''}</div>
+        ${tags?`<div style="font-size:11px;color:var(--accent);font-weight:700;margin-top:2px;">${tags}</div>`:''}
+        ${arrStr}
+        <div class="pending-store">🏪 ${s.store||''} ${prodStr}</div>
+      </div>
+      <button class="btn-reject" onclick="rejectPending('${k}')">✕</button>
+      <button class="btn-accept" onclick="acceptPending('${k}')">✅ Aceitar</button>
+    </div>`;
   }).join('');
 }
 async function acceptPending(key){
@@ -1285,6 +1327,16 @@ function checkNewDay(){
   localStorage.setItem('sb_last_date',today);
 }
 
+
+// ══════════════════════════════════════
+//  TEMA CLARO / ESCURO
+// ══════════════════════════════════════
+function toggleTheme() {
+  var isLight = document.body.classList.toggle('light');
+  var btn = document.getElementById('themeToggleBtn');
+  btn.textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('sb_theme', isLight ? 'light' : 'dark');
+}
 
 // ══════════════════════════════════════
 //  NOTIFICAÇÕES
@@ -1342,6 +1394,11 @@ updateStoreSelect();
 renderHome();
 initFirebase();
 checkNotifyPermission();
+// Restaura tema
+if(localStorage.getItem('sb_theme')==='light'){
+  document.body.classList.add('light');
+  document.getElementById('themeToggleBtn').textContent='🌙';
+}
 </script>
 </body>
 </html>
