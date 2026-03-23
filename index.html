@@ -346,7 +346,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <button class="btn-add" onclick="goForm()">＋ Adicionar parada</button>
     <button class="btn-cfg-icon" onclick="goNav('configScreen','nav-cfg')">⚙️</button>
   </div>
-  <button class="btn-import-bulk" onclick="goNav('bulkScreen','nav-home')">📂 Importar lista da loja</button>
   <div class="pending-section" id="pendingSection">
     <div class="pending-header">
       <div class="pending-title">🔔 Pedidos da loja <span class="pending-badge" id="pendingBadge">0</span></div>
@@ -1038,12 +1037,11 @@ function buildLink(storeName){
   const fbCfg=localStorage.getItem('sb_firebase_cfg');
   const room=localStorage.getItem('sb_room_code')||'';
   if(!fbCfg||!room)return null;
-  // Monta URL do pedido.html no mesmo repositório
+  // URL do pedido.html — mesmo repositório GitHub Pages
   const origin = window.location.origin;
-  const path   = window.location.pathname
-    .replace(/index\.html$/, '')  // remove index.html se existir
-    .replace(/\/?$/, '/');        // garante barra no final
-  const base = origin + path + 'pedido.html';
+  const rawDir = window.location.pathname.replace(/\/[^/]*$/, '');
+  const dir    = rawDir || '';
+  const base   = origin + dir + '/pedido.html';
   const params=new URLSearchParams({cfg:btoa(encodeURIComponent(fbCfg)),room,store:storeName});
   return base+'?'+params.toString();
 }
