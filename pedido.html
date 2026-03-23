@@ -155,6 +155,14 @@ body{max-width:480px;margin:0 auto;padding-bottom:50px;}
 }
 .btn-submit:active{transform:scale(.98);box-shadow:0 2px 10px rgba(245,197,24,.2);}
 .btn-submit:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+
+/* PAYMENT TOGGLE */
+.pay-toggle{display:flex;gap:8px;margin-bottom:0;}
+.pay-opt{flex:1;padding:11px 8px;border-radius:10px;border:1.5px solid var(--border);background:var(--card2);color:var(--muted);font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;text-align:center;transition:all .2s;}
+.pay-opt.selected-paid{border-color:var(--green);background:rgba(0,230,118,.1);color:var(--green);}
+.pay-opt.selected-due{border-color:var(--accent);background:rgba(245,197,24,.1);color:var(--accent);}
+.value-reveal{display:none;margin-top:10px;}
+.value-reveal.show{display:block;}
 .submit-note{text-align:center;font-size:11px;color:var(--muted);margin-top:10px;}
 
 /* ── SUCCESS ── */
@@ -360,19 +368,24 @@ function addStop() {
         <input class="field-input" data-f="complement" placeholder="Apto, bloco, portão, cor da casa..."
           onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
       </div>
-      <div class="field-row">
-        <div class="field-group">
-          <div class="field-label">Telefone</div>
-          <input class="field-input" data-f="phone" type="tel" placeholder="(XX) XXXXX-XXXX"
-            oninput="maskPhone(this)" maxlength="15"
-            onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
+      <div class="field-group">
+        <div class="field-label">Telefone</div>
+        <input class="field-input" data-f="phone" type="tel" placeholder="(XX) XXXXX-XXXX"
+          oninput="maskPhone(this)" maxlength="15"
+          onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
+      </div>
+      <div class="field-group">
+        <div class="field-label">Pagamento <span style="color:var(--red)">*</span></div>
+        <div class="pay-toggle" id="pay_${id}">
+          <button type="button" class="pay-opt" data-pay="paid" onclick="selectPay('${id}','paid')">✅ Já pago</button>
+          <button type="button" class="pay-opt" data-pay="due"  onclick="selectPay('${id}','due')">💰 A receber</button>
         </div>
-        <div class="field-group">
-          <div class="field-label">Valor (R$)</div>
-          <input class="field-input" data-f="value" type="text" inputmode="decimal"
-            placeholder="0,00" oninput="maskMoney(this)"
-            onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
-        </div>
+      </div>
+      <div class="field-group value-reveal" id="vr_${id}">
+        <div class="field-label">Valor a receber (R$)</div>
+        <input class="field-input" data-f="value" type="text" inputmode="decimal"
+          placeholder="0,00" oninput="maskMoney(this)"
+          onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
       </div>
       <div class="field-group" style="margin-bottom:0">
         <div class="field-label">Observações</div>
@@ -428,14 +441,19 @@ async function submitPedido() {
       if (!hasErr) el.scrollIntoView({ behavior:'smooth', block:'center' });
       hasErr = true;
     } else {
+      // Read payment selection
+      const payToggle  = el.querySelector('.pay-toggle');
+      const payBtn     = payToggle ? payToggle.querySelector('.selected-paid, .selected-due') : null;
+      const isPaid     = payBtn ? payBtn.dataset.pay === 'paid' : false;
+      const valInput   = el.querySelector('[data-f="value"]');
+      const value      = valInput ? parseMoney(valInput.value) : 0;
       newStops.push({
         name, address,
-        complement:  el.querySelector('[data-f="complement"]').value.trim(),
-        phone:       el.querySelector('[data-f="phone"]').value.replace(/\D/g,''),
-        value:       parseMoney(el.querySelector('[data-f="value"]').value),
-        notes:       el.querySelector('[data-f="notes"]').value.trim(),
-        store: storeName, paid:false, done:false,
-        status:'pending', submittedAt: new Date().toISOString()
+        complement: el.querySelector('[data-f="complement"]').value.trim(),
+        phone:      el.querySelector('[data-f="phone"]').value.replace(/\D/g,''),
+        value, paid: isPaid, done:false,
+        notes:      el.querySelector('[data-f="notes"]').value.trim(),
+        store: storeName, status:'pending', submittedAt: new Date().toISOString()
       });
     }
   });
@@ -460,7 +478,10 @@ async function submitPedido() {
           <div style="font-weight:600;font-size:14px">${i+1}. ${s.name}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px">${s.address}</div>
         </div>
-        ${s.value>0?`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:var(--green)">R$ ${s.value.toFixed(2).replace('.',',')}</div>`:''}
+        <div style="text-align:right">
+          ${s.value>0?`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${s.paid?'var(--green)':'var(--accent)'}">R$ ${s.value.toFixed(2).replace('.',',')}</div>`:''}
+          <div style="font-size:10px;font-weight:700;letter-spacing:.5px;color:${s.paid?'var(--green)':'var(--accent)'};">${s.paid?'✅ PAGO':'💰 A RECEBER'}</div>
+        </div>
       </div>`).join('');
 
     document.getElementById('successSummary').innerHTML =
@@ -486,6 +507,18 @@ function resetForm() {
 }
 
 // ── utils ──
+function selectPay(stopId, type) {
+  const toggle = document.getElementById('pay_' + stopId);
+  const reveal = document.getElementById('vr_'  + stopId);
+  if (!toggle) return;
+  toggle.querySelectorAll('.pay-opt').forEach(b => {
+    b.classList.remove('selected-paid','selected-due');
+  });
+  const btn = toggle.querySelector(`[data-pay="${type}"]`);
+  if (btn) btn.classList.add(type==='paid'?'selected-paid':'selected-due');
+  if (reveal) reveal.classList.toggle('show', type==='due');
+}
+
 function maskPhone(i) {
   let v=i.value.replace(/\D/g,'');
   if(v.length>11)v=v.substring(0,11);
