@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SPEEDBOY — Pedido de Entrega</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#070709;--card:#13131a;--card2:#1a1a24;--border:#252535;
+  --accent:#f5c518;--accent2:#ff6b00;--green:#00e676;--red:#ff4560;
+  --text:#f0f0f0;--muted:#666;--radius:16px;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;}
+body{max-width:480px;margin:0 auto;padding-bottom:50px;}
+
+/* ── HERO HEADER ── */
+.hero{
+  position:relative;overflow:hidden;
+  padding:32px 20px 28px;
+  background:linear-gradient(160deg,#0d0d14 0%,#1a1220 60%,#0d0d14 100%);
+  border-bottom:1px solid var(--border);
+  text-align:center;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(245,197,24,.12) 0%,transparent 65%);
+  pointer-events:none;
+}
+.hero-logo{
+  font-family:'Barlow Condensed',sans-serif;font-weight:900;
+  font-size:42px;letter-spacing:-2px;line-height:1;
+  color:var(--accent);position:relative;
+}
+.hero-logo span{color:var(--text);}
+.hero-tagline{
+  font-size:13px;color:var(--muted);margin-top:6px;
+  letter-spacing:.5px;font-weight:500;
+}
+.hero-store-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);
+  border-radius:20px;padding:6px 14px;margin-top:12px;
+  font-size:13px;font-weight:600;color:var(--accent);
+}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap{padding:20px 20px 0;}
+.progress-steps{display:flex;align-items:center;gap:0;margin-bottom:6px;}
+.progress-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+.progress-step::after{content:'';position:absolute;top:14px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;}
+.progress-step:last-child::after{display:none;}
+.progress-dot{width:28px;height:28px;border-radius:50%;background:var(--card2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);position:relative;z-index:1;transition:all .3s;}
+.progress-dot.done{background:var(--green);border-color:var(--green);color:#000;}
+.progress-dot.active{background:var(--accent);border-color:var(--accent);color:#000;}
+.progress-label{font-size:10px;color:var(--muted);margin-top:4px;font-weight:600;letter-spacing:.3px;}
+.progress-step.active .progress-label{color:var(--accent);}
+.progress-step.done .progress-label{color:var(--green);}
+
+/* ── FORM WRAP ── */
+.form-wrap{padding:20px 16px 0;}
+
+/* ── SECTION ── */
+.section{margin-bottom:6px;}
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.section-num{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:14px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:.3px;}
+
+/* ── FIELDS ── */
+.field-group{margin-bottom:12px;}
+.field-label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:4px;}
+.req{color:var(--red);}
+.field-input{
+  width:100%;background:var(--card);border:1.5px solid var(--border);
+  color:var(--text);border-radius:12px;padding:13px 14px;
+  font-size:15px;font-family:'Barlow',sans-serif;outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.field-input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(245,197,24,.08);
+}
+.field-input::placeholder{color:var(--muted);}
+.field-input.error{border-color:var(--red);}
+.field-row{display:flex;gap:10px;}
+.field-row .field-group{flex:1;}
+
+/* ── STOP CARD ── */
+.stops-wrap{display:flex;flex-direction:column;gap:12px;}
+.stop-card{
+  background:var(--card);border-radius:var(--radius);
+  border:1.5px solid var(--border);overflow:hidden;
+  transition:border-color .3s;
+}
+.stop-card.focused{border-color:rgba(245,197,24,.4);}
+.stop-card.error{border-color:var(--red);}
+.stop-card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;background:var(--card2);
+  border-bottom:1px solid var(--border);
+}
+.stop-card-title{
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;
+  font-size:14px;letter-spacing:.5px;color:var(--accent);
+  display:flex;align-items:center;gap:7px;
+}
+.stop-card-num{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--accent);color:#000;
+  font-size:12px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+}
+.btn-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:2px;transition:color .15s;}
+.btn-remove:active{color:var(--red);}
+.stop-card-body{padding:14px;}
+
+/* ── ADD STOP ── */
+.btn-add-stop{
+  width:100%;background:transparent;
+  border:1.5px dashed var(--border);border-radius:var(--radius);
+  color:var(--muted);font-family:'Barlow',sans-serif;font-weight:600;font-size:14px;
+  padding:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:4px;transition:all .2s;
+}
+.btn-add-stop:active,.btn-add-stop:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── DIVIDER ── */
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0 18px;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:1px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── STORE INFO ── */
+.store-section{
+  background:var(--card);border-radius:var(--radius);
+  padding:16px;margin-bottom:20px;
+  border:1.5px solid var(--border);
+}
+
+/* ── SUBMIT ── */
+.submit-wrap{padding:0 16px;margin-top:24px;}
+.btn-submit{
+  width:100%;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  color:#000;border:none;border-radius:var(--radius);
+  font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;
+  letter-spacing:.5px;padding:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 6px 24px rgba(245,197,24,.25);
+  transition:transform .1s,box-shadow .1s;
+}
+.btn-submit:active{transform:scale(.98);box-shadow:0 2px 10px rgba(245,197,24,.2);}
+.btn-submit:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+.submit-note{text-align:center;font-size:11px;color:var(--muted);margin-top:10px;}
+
+/* ── SUCCESS ── */
+.success-screen{
+  display:none;min-height:100vh;
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 24px;text-align:center;
+  background:radial-gradient(ellipse at 50% 30%,rgba(0,230,118,.06) 0%,transparent 60%);
+}
+.success-screen.show{display:flex;}
+.success-anim{font-size:80px;margin-bottom:20px;animation:bounceIn .5s ease;}
+@keyframes bounceIn{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.success-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:36px;color:var(--green);margin-bottom:8px;}
+.success-sub{font-size:14px;color:var(--muted);line-height:1.7;max-width:300px;}
+.success-summary{
+  background:var(--card);border-radius:var(--radius);border:1px solid var(--border);
+  padding:16px;margin-top:20px;width:100%;text-align:left;
+}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.summary-row:last-child{border-bottom:none;}
+.summary-row-label{color:var(--muted);}
+.summary-row-val{font-weight:600;}
+.btn-novo{
+  margin-top:20px;
+  background:var(--accent);color:#000;border:none;
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;
+  padding:14px 36px;border-radius:var(--radius);cursor:pointer;
+  box-shadow:0 4px 16px rgba(245,197,24,.3);
+}
+
+/* ── ERROR ── */
+.error-screen{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
+.error-screen.show{display:flex;}
+
+/* ── LOADING ── */
+.loading{display:none;position:fixed;inset:0;background:rgba(7,7,9,.9);align-items:center;justify-content:center;z-index:500;flex-direction:column;gap:18px;backdrop-filter:blur(6px);}
+.loading.show{display:flex;}
+.spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;color:var(--accent);}
+.loading-sub{font-size:12px;color:var(--muted);}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;z-index:600;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.error{border-color:var(--red);color:var(--red);}
+.toast.success{border-color:var(--green);color:var(--green);}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Enviando pedido...</div>
+  <div class="loading-sub">Aguarde um momento</div>
+</div>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-logo">SPEED<span>BOY</span></div>
+  <div class="hero-tagline">Entrega rápida e segura</div>
+  <div class="hero-store-badge" id="storeBadge" style="display:none">
+    🏪 <span id="storeNameBadge"></span>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div id="mainScreen">
+
+  <div class="form-wrap">
+
+    <!-- Dados da loja -->
+    <div class="store-section" id="storeSection">
+      <div class="section-header" style="margin-bottom:12px">
+        <div class="section-num">🏪</div>
+        <div class="section-title">Sua loja</div>
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <div class="field-label">Nome da loja <span class="req">*</span></div>
+        <input class="field-input" id="fStoreName" placeholder="Ex: Loja KS" />
+      </div>
+    </div>
+
+    <div class="divider">ENTREGAS</div>
+
+    <!-- Paradas -->
+    <div class="stops-wrap" id="stopsWrap"></div>
+    <button class="btn-add-stop" id="addStopBtn" onclick="addStop()">
+      <span style="font-size:20px">＋</span> Adicionar outro endereço
+    </button>
+
+  </div>
+
+  <div class="submit-wrap">
+    <button class="btn-submit" id="submitBtn" onclick="submitPedido()">
+      🛵 Enviar para o motoboy
+    </button>
+    <div class="submit-note">O motoboy receberá as entregas automaticamente</div>
+  </div>
+
+</div>
+
+<!-- ── SUCESSO ── -->
+<div class="success-screen" id="successScreen">
+  <div class="success-anim">🛵</div>
+  <div class="success-title">Pedido enviado!</div>
+  <div class="success-sub">O motoboy já recebeu. Ele vai confirmar em instantes.</div>
+  <div class="success-summary" id="successSummary"></div>
+  <button class="btn-novo" onclick="resetForm()">+ Novo pedido</button>
+</div>
+
+<!-- ── ERRO ── -->
+<div class="error-screen" id="errorScreen">
+  <div style="font-size:64px;margin-bottom:16px">⚠️</div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;color:var(--red);margin-bottom:10px">Link inválido</div>
+  <div style="font-size:13px;color:var(--muted);line-height:1.6;max-width:260px">Este link não está configurado. Peça um novo link para o motoboy.</div>
+</div>
+
+<script>
+// ── URL params ──
+const P         = new URLSearchParams(window.location.search);
+const ROOM      = (P.get('room') || '').toUpperCase();
+const STORE_PRE = P.get('store') || '';
+const CFG_B64   = P.get('cfg')   || '';
+
+let _db   = null;
+let _mods = {};
+let stopCount = 0;
+
+// ── INIT ──
+async function init() {
+  if (!CFG_B64 || !ROOM) { showError(); return; }
+
+  let cfgStr;
+  try { cfgStr = decodeURIComponent(atob(CFG_B64)); }
+  catch(e) { showError(); return; }
+
+  if (STORE_PRE) {
+    document.getElementById('fStoreName').value = STORE_PRE;
+    document.getElementById('storeNameBadge').textContent = STORE_PRE;
+    document.getElementById('storeBadge').style.display = 'inline-flex';
+    document.title = 'SPEEDBOY — ' + STORE_PRE;
+    // Se tem loja pré-definida, esconde seção de nome
+    document.getElementById('storeSection').style.display = 'none';
+  }
+
+  const ok = await connectFirebase(cfgStr);
+  if (!ok) { showError(); return; }
+  addStop(); // primeiro stop automático
+}
+
+function showError() {
+  document.getElementById('mainScreen').style.display = 'none';
+  document.getElementById('errorScreen').classList.add('show');
+}
+
+// ── FIREBASE ──
+async function connectFirebase(cfgStr) {
+  try {
+    const cfg = JSON.parse(cfgStr);
+    if (!cfg.apiKey || !cfg.databaseURL) throw new Error('config inválida');
+    const { initializeApp, getApps, getApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const { getDatabase, ref, push }          = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    const app = getApps().length ? getApp() : initializeApp(cfg);
+    _db = getDatabase(app); _mods = { ref, push };
+    return true;
+  } catch(e) { console.error(e); return false; }
+}
+
+// ── STOP FORM ──
+function addStop() {
+  const wrap = document.getElementById('stopsWrap');
+  if (wrap.querySelectorAll('.stop-card').length >= 10) {
+    toast('Máximo de 10 entregas por pedido', 'error'); return;
+  }
+  stopCount++;
+  const id  = 'sc_' + stopCount;
+  const num = wrap.querySelectorAll('.stop-card').length + 1;
+  const div = document.createElement('div');
+  div.className = 'stop-card'; div.id = id;
+  div.innerHTML = `
+    <div class="stop-card-header">
+      <div class="stop-card-title">
+        <div class="stop-card-num">${num}</div>
+        ENTREGA ${num}
+      </div>
+      ${num > 1 ? `<button class="btn-remove" onclick="removeStop('${id}')" title="Remover">✕</button>` : ''}
+    </div>
+    <div class="stop-card-body">
+      <div class="field-group">
+        <div class="field-label">Nome do cliente <span class="req">*</span></div>
+        <input class="field-input" data-f="name" placeholder="Ex: Pedro Santos"
+          onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
+      </div>
+      <div class="field-group">
+        <div class="field-label">Endereço completo <span class="req">*</span></div>
+        <input class="field-input" data-f="address" placeholder="Rua, número, bairro, cidade — estado"
+          onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
+      </div>
+      <div class="field-group">
+        <div class="field-label">Complemento / Referência</div>
+        <input class="field-input" data-f="complement" placeholder="Apto, bloco, portão, cor da casa..."
+          onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <div class="field-label">Telefone</div>
+          <input class="field-input" data-f="phone" type="tel" placeholder="(XX) XXXXX-XXXX"
+            oninput="maskPhone(this)" maxlength="15"
+            onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
+        </div>
+        <div class="field-group">
+          <div class="field-label">Valor (R$)</div>
+          <input class="field-input" data-f="value" type="text" inputmode="decimal"
+            placeholder="0,00" oninput="maskMoney(this)"
+            onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
+        </div>
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <div class="field-label">Observações</div>
+        <input class="field-input" data-f="notes" placeholder="Ligar antes, cuidado com cachorro..."
+          onfocus="cardFocus('${id}')" onblur="cardBlur('${id}')" />
+      </div>
+    </div>`;
+  wrap.appendChild(div);
+  renumber();
+  if (wrap.querySelectorAll('.stop-card').length >= 10)
+    document.getElementById('addStopBtn').style.display = 'none';
+}
+
+function removeStop(id) {
+  document.getElementById(id)?.remove();
+  renumber();
+  document.getElementById('addStopBtn').style.display = 'flex';
+}
+
+function renumber() {
+  document.querySelectorAll('.stop-card').forEach((el, i) => {
+    const title = el.querySelector('.stop-card-title');
+    const btn   = el.querySelector('.btn-remove');
+    if (title) title.innerHTML = `<div class="stop-card-num">${i+1}</div> ENTREGA ${i+1}`;
+    if (btn && i === 0) btn.remove();
+    if (!btn && i > 0) {
+      const header = el.querySelector('.stop-card-header');
+      const b = document.createElement('button');
+      b.className='btn-remove'; b.title='Remover'; b.textContent='✕';
+      b.onclick = () => removeStop(el.id);
+      header.appendChild(b);
+    }
+  });
+}
+
+function cardFocus(id) { document.getElementById(id)?.classList.add('focused'); }
+function cardBlur(id)  { document.getElementById(id)?.classList.remove('focused'); }
+
+// ── SUBMIT ──
+async function submitPedido() {
+  const storeName = document.getElementById('fStoreName').value.trim();
+  if (!storeName) { toast('Digite o nome da loja', 'error'); document.getElementById('fStoreName').focus(); return; }
+
+  const cards = document.querySelectorAll('.stop-card');
+  const newStops = []; let hasErr = false;
+
+  cards.forEach(el => {
+    el.classList.remove('error');
+    const name    = el.querySelector('[data-f="name"]').value.trim();
+    const address = el.querySelector('[data-f="address"]').value.trim();
+    if (!name || !address) {
+      el.classList.add('error');
+      if (!hasErr) el.scrollIntoView({ behavior:'smooth', block:'center' });
+      hasErr = true;
+    } else {
+      newStops.push({
+        name, address,
+        complement:  el.querySelector('[data-f="complement"]').value.trim(),
+        phone:       el.querySelector('[data-f="phone"]').value.replace(/\D/g,''),
+        value:       parseMoney(el.querySelector('[data-f="value"]').value),
+        notes:       el.querySelector('[data-f="notes"]').value.trim(),
+        store: storeName, paid:false, done:false,
+        status:'pending', submittedAt: new Date().toISOString()
+      });
+    }
+  });
+
+  if (hasErr) { toast('Preencha nome e endereço em todas as entregas', 'error'); return; }
+  if (!newStops.length) { toast('Adicione pelo menos uma entrega', 'error'); return; }
+
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('submitBtn').disabled = true;
+
+  try {
+    for (const s of newStops)
+      await _mods.push(_mods.ref(_db, 'rooms/' + ROOM + '/pending'), JSON.stringify(s));
+
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('mainScreen').style.display = 'none';
+
+    // Resumo de sucesso
+    const rows = newStops.map((s,i) => `
+      <div class="summary-row">
+        <div>
+          <div style="font-weight:600;font-size:14px">${i+1}. ${s.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${s.address}</div>
+        </div>
+        ${s.value>0?`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:var(--green)">R$ ${s.value.toFixed(2).replace('.',',')}</div>`:''}
+      </div>`).join('');
+
+    document.getElementById('successSummary').innerHTML =
+      `<div style="font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">${newStops.length} entrega(s) enviada(s)</div>${rows}`;
+    document.getElementById('successScreen').classList.add('show');
+
+  } catch(e) {
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('submitBtn').disabled = false;
+    toast('Erro ao enviar: ' + e.message, 'error');
+  }
+}
+
+function resetForm() {
+  document.getElementById('successScreen').classList.remove('show');
+  document.getElementById('stopsWrap').innerHTML = '';
+  document.getElementById('mainScreen').style.display = 'block';
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('addStopBtn').style.display = 'flex';
+  stopCount = 0;
+  addStop();
+  window.scrollTo(0, 0);
+}
+
+// ── utils ──
+function maskPhone(i) {
+  let v=i.value.replace(/\D/g,'');
+  if(v.length>11)v=v.substring(0,11);
+  if(v.length>7)v=`(${v.substring(0,2)}) ${v.substring(2,7)}-${v.substring(7)}`;
+  else if(v.length>2)v=`(${v.substring(0,2)}) ${v.substring(2)}`;
+  i.value=v;
+}
+function maskMoney(i) {
+  let v=i.value.replace(/[^0-9,]/g,'');
+  const p=v.split(',');
+  if(p.length>2)v=p[0]+','+p.slice(1).join('');
+  if(p[1]&&p[1].length>2)v=p[0]+','+p[1].substring(0,2);
+  i.value=v;
+}
+function parseMoney(s){ return parseFloat(String(s||'').replace(',','.')) || 0; }
+
+let _tt;
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+type;
+  clearTimeout(_tt); _tt=setTimeout(()=>t.className='toast',3500);
+}
+
+init();
+</script>
+</body>
+</html>
