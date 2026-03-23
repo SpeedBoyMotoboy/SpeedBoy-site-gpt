@@ -285,6 +285,16 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .danger-btn{width:100%;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:var(--radius);padding:11px;font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px;}
 .danger-btn.gray{border-color:var(--border);color:var(--muted);}
 
+/* NOTIFY */
+.notify-bar{background:rgba(245,197,24,.08);border:1px solid rgba(245,197,24,.2);border-radius:10px;padding:10px 14px;margin:0 14px 8px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.notify-bar.hidden{display:none;}
+.notify-bar-text{font-size:12px;color:var(--muted);flex:1;line-height:1.4;}
+.btn-allow-notify{background:var(--accent);color:#000;border:none;border-radius:7px;padding:6px 12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
+
+/* DUAL VALUE CARD */
+.stop-product-val{font-size:11px;color:var(--muted);margin-top:2px;}
+.stop-product-val span{color:var(--accent);font-weight:700;}
+
 /* TOAST */
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:9px 18px;border-radius:30px;font-size:13px;font-weight:600;z-index:400;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -328,6 +338,10 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 
 <!-- ══ HOME ══ -->
 <div class="screen active" id="homeScreen">
+  <div class="notify-bar hidden" id="notifyBar">
+    <div class="notify-bar-text">🔔 Ative as notificações para ser avisado de novos pedidos</div>
+    <button class="btn-allow-notify" onclick="requestNotify()">Ativar</button>
+  </div>
   <div class="home-top">
     <button class="btn-add" onclick="goForm()">＋ Adicionar parada</button>
     <button class="btn-cfg-icon" onclick="goNav('configScreen','nav-cfg')">⚙️</button>
@@ -372,9 +386,23 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <div class="field"><div class="flabel">Complemento / Referência</div><input class="finput" id="fComplement" placeholder="Apto, bloco, cor da casa..." /></div>
     <div class="field"><div class="flabel">Telefone (WhatsApp)</div><input class="finput" id="fPhone" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" /></div>
     <div class="frow">
-      <div class="field"><div class="flabel">💰 Valor (R$)</div><input class="finput" id="fValue" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" /></div>
-      <div class="field"><div class="flabel">Pagamento</div>
+      <div class="field">
+        <div class="flabel">🛵 Sua taxa (R$)</div>
+        <input class="finput" id="fValue" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" />
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">Entra no seu financeiro</div>
+      </div>
+      <div class="field">
+        <div class="flabel">💰 Produto cliente (R$)</div>
+        <input class="finput" id="fProductValue" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" />
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">Cobrar do cliente</div>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="field"><div class="flabel">Taxa paga?</div>
         <label class="toggle-row"><input type="checkbox" id="fPaid" onchange="document.getElementById('paidLbl').textContent=this.checked?'Recebido ✓':'A receber'" /><div class="toggle-track"></div><span class="toggle-lbl" id="paidLbl">A receber</span></label>
+      </div>
+      <div class="field"><div class="flabel">Produto pago?</div>
+        <label class="toggle-row"><input type="checkbox" id="fProductPaid" onchange="document.getElementById('prodPaidLbl').textContent=this.checked?'Pago ✓':'A cobrar'" /><div class="toggle-track"></div><span class="toggle-lbl" id="prodPaidLbl">A cobrar</span></label>
       </div>
     </div>
     <div class="field"><div class="flabel">Observações</div><input class="finput" id="fNotes" placeholder="Ex: Cuidado com o cachorro" /></div>
@@ -599,9 +627,12 @@ function goForm(idx) {
     document.getElementById('fAddress').value     = s.address    || '';
     document.getElementById('fComplement').value  = s.complement || '';
     document.getElementById('fNotes').value       = s.notes      || '';
-    document.getElementById('fValue').value       = s.value ? String(s.value).replace('.',',') : '';
-    document.getElementById('fPaid').checked      = !!s.paid;
-    document.getElementById('paidLbl').textContent= s.paid ? 'Recebido ✓' : 'A receber';
+    document.getElementById('fValue').value          = s.value ? String(s.value).replace('.',',') : '';
+    document.getElementById('fPaid').checked          = !!s.paid;
+    document.getElementById('paidLbl').textContent    = s.paid ? 'Recebido ✓' : 'A receber';
+    document.getElementById('fProductValue').value    = s.productValue ? String(s.productValue).replace('.',',') : '';
+    document.getElementById('fProductPaid').checked   = !!s.productPaid;
+    document.getElementById('prodPaidLbl').textContent= s.productPaid ? 'Pago ✓' : 'A cobrar';
     const ph = document.getElementById('fPhone'); ph.value=s.phone||''; if(s.phone) maskPhone(ph);
   }
   document.getElementById('editIdx').value = editingIdx;
@@ -612,10 +643,12 @@ function goForm(idx) {
 }
 
 function resetForm(){
-  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes','fValue'].forEach(id=>document.getElementById(id).value='');
+  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes','fValue','fProductValue'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fStore').value='';
   document.getElementById('fPaid').checked=false;
   document.getElementById('paidLbl').textContent='A receber';
+  document.getElementById('fProductPaid').checked=false;
+  document.getElementById('prodPaidLbl').textContent='A cobrar';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -646,19 +679,25 @@ function renderHome(){
         <div class="stop-header">
           <div class="stop-num">${i+1}</div>
           <div class="stop-info"><div class="stop-name">${s.name||'Sem nome'}</div><div class="stop-addr">${s.address||'Sem endereço'}</div></div>
-          <div class="stop-right">${valStr?`<div class="stop-val ${s.paid?'':'unpaid'}">${valStr}</div>`:''}<div class="stop-dot"></div></div>
+          <div class="stop-right">
+            ${valStr?`<div class="stop-val ${s.paid?'':'unpaid'}">${valStr}</div>`:''}
+            ${s.productValue>0?`<div class="stop-product-val">cobrar: <span>R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')}</span></div>`:''}
+            <div class="stop-dot"></div>
+          </div>
         </div>
         <div class="stop-detail">
           ${s.phone?`<div><strong>TEL</strong> ${fmtPhone(s.phone)}</div>`:''}
           ${s.complement?`<div><strong>REF</strong> ${s.complement}</div>`:''}
           ${s.notes?`<div><strong>OBS</strong> ${s.notes}</div>`:''}
-          ${valStr?`<div><strong>PGTO</strong> <span class="paid-badge ${s.paid?'yes':'no'}">${s.paid?'✓ Recebido':'⏳ A receber'}</span></div>`:''}
+          ${valStr?`<div><strong>TAXA</strong> <span class="paid-badge ${s.paid?'yes':'no'}">${s.paid?'✓ Recebida':'⏳ A receber'}</span></div>`:''}
+          ${s.productValue>0?`<div><strong>PRODUTO</strong> R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')} <span class="paid-badge ${s.productPaid?'yes':'no'}">${s.productPaid?'✓ Pago':'💰 A cobrar'}</span></div>`:''}
         </div>
         <div class="stop-actions" onclick="event.stopPropagation()">
           ${s.phone?`<button class="btn-act ba-wpp" onclick="openWpp(${i})">💬 WhatsApp</button>`:''}
           <button class="btn-act ba-maps" onclick="openMaps('${esc(s.address)}')">🗺️ Navegar</button>
           <button class="btn-act ba-done" onclick="togDone(${i})">${s.done?'↩️ Reabrir':'✅ Entregue'}</button>
-          ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togPaid(${i})">${s.paid?'💸 Recebido':'💰 Marcar pago'}</button>`:''}
+          ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togPaid(${i})">${s.paid?'💸 Taxa ok':'💰 Taxa paga?'}</button>`:''}
+          ${s.productValue>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''}" onclick="togProductPaid(${i})">${s.productPaid?'✅ Produto ok':'💳 Cobrar produto'}</button>`:''}
           <button class="btn-act ba-edit" onclick="goForm(${i})">✏️ Editar</button>
           <button class="btn-act ba-del"  onclick="delStop(${i})">🗑️ Remover</button>
         </div>
@@ -674,8 +713,9 @@ function toggleCard(i){
   if(!was) c.classList.add('expanded');
 }
 
-function togDone(i){ stops[i].done=!stops[i].done; saveStops(); renderHome(); }
-function togPaid(i){ stops[i].paid=!stops[i].paid; saveStops(); renderHome(); }
+function togDone(i)        { stops[i].done=!stops[i].done; saveStops(); renderHome(); }
+function togPaid(i)        { stops[i].paid=!stops[i].paid; saveStops(); renderHome(); }
+function togProductPaid(i) { stops[i].productPaid=!stops[i].productPaid; saveStops(); renderHome(); }
 function delStop(i){ if(!confirm(`Remover ${stops[i].name}?`))return; stops.splice(i,1); saveStops(); renderHome(); }
 
 function saveStop(){
@@ -686,14 +726,16 @@ function saveStop(){
   
   const s={
     name, address,
-    store:      document.getElementById('fStore').value,
-    complement: document.getElementById('fComplement').value.trim(),
-    phone:      document.getElementById('fPhone').value.replace(/\D/g,''),
-    value:      parseMoney(document.getElementById('fValue').value),
-    paid:       document.getElementById('fPaid').checked,
-    notes:      document.getElementById('fNotes').value.trim(),
-    done:       idx>=0 ? stops[idx].done : false,
-    _order:     idx>=0 ? (stops[idx]._order||idx) : stops.length
+    store:        document.getElementById('fStore').value,
+    complement:   document.getElementById('fComplement').value.trim(),
+    phone:        document.getElementById('fPhone').value.replace(/\D/g,''),
+    value:        parseMoney(document.getElementById('fValue').value),        // taxa entrega
+    paid:         document.getElementById('fPaid').checked,
+    productValue: parseMoney(document.getElementById('fProductValue').value), // valor produto
+    productPaid:  document.getElementById('fProductPaid').checked,
+    notes:        document.getElementById('fNotes').value.trim(),
+    done:         idx>=0 ? stops[idx].done : false,
+    _order:       idx>=0 ? (stops[idx]._order||idx) : stops.length
   };
   if(idx>=0) stops[idx]=s; else stops.push(s);
   saveStops();
@@ -1144,7 +1186,8 @@ function startSync(code){
     if(raw!==null&&raw!==undefined){
       try{
         const remote=typeof raw==='string'?JSON.parse(raw):raw;
-        if(JSON.stringify(remote)!==JSON.stringify(stops)){stops=remote;localStorage.setItem('sb_stops',JSON.stringify(stops));renderHome();toast('🔄 Lista sincronizada!','success');}
+        if(JSON.stringify(remote)!==JSON.stringify(stops)){stops=remote;localStorage.setItem('sb_stops',JSON.stringify(stops));renderHome();toast('🔄 Lista sincronizada!','success');
+          if (document.hidden) sendNotify('🔄 SPEEDBOY — Lista atualizada!', 'Sua esposa atualizou a lista de entregas', 'sync');}
       }catch(e){console.error(e);}
     }
     setSyncUI('synced','🟢 Sala: '+code);
@@ -1186,6 +1229,11 @@ function renderPending(){
   const keys=Object.keys(pendingData);
   sec.style.display=keys.length?'block':'none';
   if(!keys.length)return;
+  // Notify if new pending orders appeared
+  const prevCount = parseInt(document.getElementById('pendingBadge').textContent) || 0;
+  if (keys.length > prevCount && prevCount >= 0 && document.hidden) {
+    sendNotify('🔔 SPEEDBOY — Novo pedido!', `${keys.length} pedido(s) aguardando confirmação`, 'pending');
+  }
   badge.textContent=keys.length;
   list.innerHTML=keys.map(k=>{const s=pendingData[k];return`<div class="pending-card" id="pc_${k}"><div class="pending-info"><div class="pending-name">${s.name||'Sem nome'}</div><div class="pending-addr">${s.address||''}</div><div class="pending-store">🏪 ${s.store||''} ${parseMoney(s.value)>0?'· '+fmtMoney(parseMoney(s.value)):''}</div></div><button class="btn-reject" onclick="rejectPending('${k}')">✕</button><button class="btn-accept" onclick="acceptPending('${k}')">✅ Aceitar</button></div>`;}).join('');
 }
@@ -1229,6 +1277,47 @@ function checkNewDay(){
   localStorage.setItem('sb_last_date',today);
 }
 
+
+// ══════════════════════════════════════
+//  NOTIFICAÇÕES
+// ══════════════════════════════════════
+function checkNotifyPermission() {
+  if (!('Notification' in window)) return;
+  const bar = document.getElementById('notifyBar');
+  if (!bar) return;
+  if (Notification.permission === 'default') {
+    bar.classList.remove('hidden');
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+
+function requestNotify() {
+  if (!('Notification' in window)) { toast('Notificações não suportadas neste navegador', 'error'); return; }
+  Notification.requestPermission().then(p => {
+    if (p === 'granted') {
+      toast('🔔 Notificações ativadas!', 'success');
+      document.getElementById('notifyBar').classList.add('hidden');
+      sendNotify('SPEEDBOY', 'Notificações ativadas! Você será avisado de novos pedidos. 🛵');
+    } else {
+      toast('Permissão negada', 'error');
+    }
+  });
+}
+
+function sendNotify(title, body, tag) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    new Notification(title, {
+      body,
+      icon: 'https://speedboymotoboy.github.io/SpeedBoy-site-gpt/favicon.ico',
+      tag:  tag || 'speedboy',
+      renotify: true,
+      badge: 'https://speedboymotoboy.github.io/SpeedBoy-site-gpt/favicon.ico'
+    });
+  } catch(e) { console.log('Notify error:', e); }
+}
+
 // ═══════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════
@@ -1244,6 +1333,7 @@ checkNewDay();
 updateStoreSelect();
 renderHome();
 initFirebase();
+checkNotifyPermission();
 </script>
 </body>
 </html>
