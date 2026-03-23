@@ -322,7 +322,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   <div class="logo">SPEED<span>BOY</span></div>
   <div class="header-right">
     <div id="syncRow"><div class="sync-dot" id="syncDot"></div><span class="sync-label" id="syncLabel"></span></div>
-    <div id="badgeCount" class="badge-count">0/10</div>
+    <div id="badgeCount" class="badge-count">0</div>
   </div>
 </div>
 
@@ -625,8 +625,8 @@ function renderHome(){
   const list  = document.getElementById('stopsList');
   const badge = document.getElementById('badgeCount');
   const total = stops.length;
-  badge.textContent = total+'/10';
-  badge.classList.toggle('full', total>=10);
+  badge.textContent = total+' parada(s)';
+  badge.classList.toggle('full', false);
   document.getElementById('routeBtn').disabled = total===0;
   document.getElementById('sortBar').classList.toggle('visible', total>1);
 
@@ -683,7 +683,7 @@ function saveStop(){
   const address = document.getElementById('fAddress').value.trim();
   if(!name||!address){ toast('Nome e endereço são obrigatórios!','error'); return; }
   const idx = parseInt(document.getElementById('editIdx').value);
-  if(stops.length>=10 && idx<0){ toast('Limite de 10 paradas!','error'); return; }
+  
   const s={
     name, address,
     store:      document.getElementById('fStore').value,
@@ -810,7 +810,7 @@ async function apiParse(text,key){
 // ═══════════════════════════════════════════════════════
 function renderFinance(){
   const todayStr=new Date().toLocaleDateString('pt-BR');
-  const allDays=[{date:todayStr,stops},{...history}].flat ? [{date:todayStr,stops},...history] : [{date:todayStr,stops}];
+  const allDays=[{date:todayStr,stops},...history];
   const now=new Date();
   const w7=new Date(now); w7.setDate(now.getDate()-6);
   const m1=new Date(now.getFullYear(),now.getMonth(),1);
@@ -987,7 +987,12 @@ function buildLink(storeName){
   const fbCfg=localStorage.getItem('sb_firebase_cfg');
   const room=localStorage.getItem('sb_room_code')||'';
   if(!fbCfg||!room)return null;
-  const base=window.location.origin+window.location.pathname.replace('index.html','').replace(/\/+$/,'')+'/pedido.html';
+  // Monta URL do pedido.html no mesmo repositório
+  const origin = window.location.origin;
+  const path   = window.location.pathname
+    .replace(/index\.html$/, '')  // remove index.html se existir
+    .replace(/\/?$/, '/');        // garante barra no final
+  const base = origin + path + 'pedido.html';
   const params=new URLSearchParams({cfg:btoa(encodeURIComponent(fbCfg)),room,store:storeName});
   return base+'?'+params.toString();
 }
@@ -1048,8 +1053,8 @@ function readCSV(file){
       if(c.nome<0||c.endereco<0){toast('"nome" e "endereco" são obrigatórios','error');return;}
       bulkData=rows.slice(1).filter(r=>r.some(x=>x.trim())).map(r=>({name:(r[c.nome]||'').trim(),address:(r[c.endereco]||'').trim(),complement:c.complemento>=0?(r[c.complemento]||'').trim():'',phone:c.telefone>=0?(r[c.telefone]||'').replace(/\D/g,''):'',value:c.valor>=0?parseMoney((r[c.valor]||'').replace(',','.')):0,notes:c.observacao>=0?(r[c.observacao]||'').trim():'',paid:false,done:false,store:''})).filter(s=>s.name&&s.address);
       if(!bulkData.length){toast('Nenhuma linha válida','error');return;}
-      const avail=10-stops.length, toAdd=Math.min(bulkData.length,avail);
-      document.getElementById('previewCnt').innerHTML=`<strong>${bulkData.length}</strong> clientes · <strong style="color:var(--green)">${toAdd}</strong> serão adicionados`;
+      const toAdd=bulkData.length;
+      document.getElementById('previewCnt').innerHTML=`<strong>${bulkData.length}</strong> clientes encontrados`;
       document.getElementById('previewTbl').innerHTML=`<tr><th>#</th><th>Nome</th><th>Endereço</th><th>Valor</th></tr>`+bulkData.slice(0,toAdd).map((s,i)=>`<tr><td>${i+1}</td><td style="color:var(--green)">${s.name}</td><td>${s.address.substring(0,24)}</td><td>${s.value>0?fmtMoney(s.value):'—'}</td></tr>`).join('');
       document.getElementById('previewArea').style.display='block';
     }catch(e){toast('Erro ao ler arquivo','error');}
@@ -1058,7 +1063,7 @@ function readCSV(file){
 }
 function fc(h,c){for(const x of c){const i=h.findIndex(v=>v.includes(x));if(i>=0)return i;}return -1;}
 function parseCSV(text){const rows=[];for(const line of text.split(/\r?\n/)){if(!line.trim())continue;const row=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}else if(ch===','&&!inQ){row.push(cur);cur='';}else cur+=ch;}row.push(cur);rows.push(row);}return rows;}
-function confirmBulk(){const avail=10-stops.length,toAdd=bulkData.slice(0,avail);if(!toAdd.length){toast('Lista já cheia','error');return;}toAdd.forEach((s,i)=>{s._order=stops.length+i;});stops=stops.concat(toAdd);saveStops();toast(`✅ ${toAdd.length} parada(s) adicionada(s)!`,'success');bulkData=[];document.getElementById('previewArea').style.display='none';document.getElementById('csvInput').value='';setTimeout(()=>goNav('homeScreen','nav-home'),600);}
+function confirmBulk(){const toAdd=bulkData;toAdd.forEach((s,i)=>{s._order=stops.length+i;});stops=stops.concat(toAdd);saveStops();toast(`✅ ${toAdd.length} parada(s) adicionada(s)!`,'success');bulkData=[];document.getElementById('previewArea').style.display='none';document.getElementById('csvInput').value='';setTimeout(()=>goNav('homeScreen','nav-home'),600);}
 
 // ═══════════════════════════════════════════════════════
 //  CONFIG
@@ -1186,7 +1191,7 @@ function renderPending(){
 }
 async function acceptPending(key){
   const s=pendingData[key]; if(!s)return;
-  if(stops.length>=10){toast('Lista cheia! Entregue antes de aceitar.','error');return;}
+  
   s.status='confirmed'; s._order=stops.length; s.done=false;
   stops.push(s); saveStops();
   await rmPending(key);
