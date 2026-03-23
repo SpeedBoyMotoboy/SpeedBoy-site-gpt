@@ -1148,20 +1148,20 @@ async function saveConfig() {
   cfg.origin = document.getElementById('cfgOrigin').value.trim();
   cfg.wppMsg = document.getElementById('cfgWppMsg').value.trim();
   cfg.apiKey = document.getElementById('cfgApiKey').value.trim();
-  localStorage.setItem('sb_cfg',JSON.stringify(cfg));
+  localStorage.setItem('sb_cfg', JSON.stringify(cfg));
 
-  // Tenta iniciar Firebase se tiver config
+  // Inicializa Firebase se tiver config preenchida
   const fbStr = document.getElementById('cfgFirebase').value.trim();
   if (fbStr) {
     const ok = await initFirebase(fbStr);
     if (ok) {
-      const room = document.getElementById('cfgRoomCode').value.trim().toUpperCase() || fbRoomCode;
-      if (room) startSync(room);
+      const room = document.getElementById('cfgRoomCode').value.trim().toUpperCase();
+      if (room) startRoomSync(room);
     }
   }
 
-  toast('✅ Configurações salvas!','success');
-  navTo('homeScreen','nav-home');
+  toast('✅ Configurações salvas!', 'success');
+  navTo('homeScreen', 'nav-home');
 }
 
 function getGPSLocation() {
@@ -1422,190 +1422,167 @@ function ensureOrder() {
 
 
 // ══════════════════════════════════════
-//  FIREBASE SYNC
+//  FIREBASE SYNC — versão simplificada
 // ══════════════════════════════════════
-let fbDatabase = null;
-let fbRoomCode = localStorage.getItem('sb_room_code') || '';
-let fbConfig   = null;
-let isSyncing  = false;
-let fbUnsubscribe = null;
+let _fbDb        = null;
+let _fbRoomPath  = null;
+let _fbPushing   = false;
+let _fbListener  = null;
+let _fbMods      = { ref: null, onValue: null, set: null };
 
 function setSyncStatus(status, label) {
-  // status: 'off' | 'syncing' | 'synced' | 'error'
-  const dots  = [document.getElementById('syncDot'), document.getElementById('cfgSyncDot')];
+  const dots   = [document.getElementById('syncDot'), document.getElementById('cfgSyncDot')];
   const labels = [document.getElementById('syncLabel'), document.getElementById('cfgSyncLabel')];
-  const row = document.getElementById('syncRow');
-
-  dots.forEach(d => { if(d) { d.className = 'sync-dot ' + (status === 'off' ? '' : status === 'syncing' ? 'syncing' : status === 'synced' ? 'synced' : 'error'); } });
+  const row    = document.getElementById('syncRow');
+  const cls    = { off:'', syncing:'syncing', synced:'synced', error:'error' }[status] || '';
+  dots.forEach(d   => { if(d) d.className = 'sync-dot ' + cls; });
   labels.forEach(l => { if(l) l.textContent = label; });
-  if (row) row.style.display = status === 'off' ? 'none' : 'flex';
+  if(row) row.style.display = status === 'off' ? 'none' : 'flex';
 }
 
 async function initFirebase(configStr) {
+  setSyncStatus('syncing', 'conectando...');
   try {
-    setSyncStatus('syncing', 'conectando...');
-
-    // Parse config — aceita tanto o objeto JS quanto JSON
+    // Parse — aceita JSON ou objeto JS
     let cfg;
-    try {
-      // tenta JSON puro
-      cfg = JSON.parse(configStr);
-    } catch(e) {
-      // tenta extrair do formato objeto JS: { apiKey: "...", ... }
+    try { cfg = JSON.parse(configStr); }
+    catch(e) {
       const json = configStr
-        .replace(/\/\/.*$/gm, '')         // remove comments
-        .replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":') // quote keys
-        .replace(/'/g, '"');               // single to double quotes
+        .replace(/\/\/.*$/gm,'')
+        .replace(/([{,]\s*)([a-zA-Z_][\w]*)\s*:/g,'$1"$2":')
+        .replace(/'/g,'"');
       cfg = JSON.parse(json);
     }
+    if (!cfg.apiKey || !cfg.databaseURL) throw new Error('apiKey ou databaseURL ausente');
 
-    if (!cfg.apiKey || !cfg.databaseURL) {
-      setSyncStatus('error', 'config inválida — verifique apiKey e databaseURL');
-      return false;
-    }
+    const { initializeApp, getApps, getApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const { getDatabase, ref, onValue, set }  = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
 
-    // Importa Firebase dinamicamente
-    const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-    const { getDatabase, ref, onValue, set, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
-
-    // Evita re-inicializar
-    const app = getApps().length ? getApps()[0] : initializeApp(cfg);
-    fbDatabase = getDatabase(app);
-    fbConfig   = cfg;
+    const app = getApps().length ? getApp() : initializeApp(cfg);
+    _fbDb = getDatabase(app);
+    _fbMods = { ref, onValue, set };
 
     localStorage.setItem('sb_firebase_cfg', JSON.stringify(cfg));
-    setSyncStatus('synced', 'Firebase conectado ✓');
+    setSyncStatus('synced', '🟢 Firebase conectado');
     return true;
   } catch(e) {
-    console.error('Firebase init error:', e);
-    setSyncStatus('error', 'erro: ' + e.message.substring(0, 40));
+    setSyncStatus('error', '❌ ' + e.message.substring(0,50));
+    console.error('Firebase init:', e);
     return false;
   }
 }
 
-async function startSync(roomCode) {
-  if (!fbDatabase) { toast('Configure o Firebase primeiro', 'error'); return; }
-  if (!roomCode) { toast('Informe um código de sala', 'error'); return; }
+function startRoomSync(roomCode) {
+  if (!_fbDb) { toast('Firebase não conectado', 'error'); return; }
+  const code = roomCode.toUpperCase().trim();
+  if (!code) { toast('Código de sala vazio', 'error'); return; }
 
   // Remove listener anterior
-  if (fbUnsubscribe) { fbUnsubscribe(); fbUnsubscribe = null; }
+  if (_fbListener) { _fbListener(); _fbListener = null; }
 
-  fbRoomCode = roomCode.toUpperCase().trim();
-  localStorage.setItem('sb_room_code', fbRoomCode);
+  _fbRoomPath = 'rooms/' + code + '/stops';
+  localStorage.setItem('sb_room_code', code);
+  document.getElementById('roomCodeDisplay').textContent = code;
 
-  const { ref, onValue, set } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
-  const stopsRef = ref(fbDatabase, 'rooms/' + fbRoomCode + '/stops');
+  setSyncStatus('syncing', 'entrando na sala ' + code + '...');
 
-  setSyncStatus('syncing', 'sincronizando...');
+  const stopsRef = _fbMods.ref(_fbDb, _fbRoomPath);
 
   // Escuta mudanças em tempo real
-  fbUnsubscribe = onValue(stopsRef, (snapshot) => {
-    const data = snapshot.val();
-    if (data && !isSyncing) {
-      const remoteStops = JSON.parse(data);
-      // Só atualiza se diferente do local
-      if (JSON.stringify(remoteStops) !== JSON.stringify(stops)) {
-        stops = remoteStops;
-        save();
-        renderList();
-        setSyncStatus('synced', '🟢 ' + fbRoomCode);
-        toast('🔄 Lista atualizada!', 'success');
-      }
-    } else if (!data) {
-      // Sala vazia — envia dados locais
-      pushToFirebase();
+  _fbListener = _fbMods.onValue(stopsRef, (snapshot) => {
+    const raw = snapshot.val();
+    if (raw !== null && raw !== undefined) {
+      try {
+        const remote = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        // Só atualiza se realmente diferente
+        if (JSON.stringify(remote) !== JSON.stringify(stops)) {
+          stops = remote;
+          localStorage.setItem('sb_stops', JSON.stringify(stops));
+          renderList();
+          toast('🔄 Lista sincronizada!', 'success');
+        }
+      } catch(e) { console.error('Sync parse error:', e); }
     }
-    setSyncStatus('synced', '🟢 ' + fbRoomCode);
-  }, (error) => {
-    setSyncStatus('error', 'erro de conexão');
+    setSyncStatus('synced', '🟢 Sala: ' + code);
+  }, (err) => {
+    setSyncStatus('error', '❌ Erro de conexão');
+    console.error('Firebase listener error:', err);
   });
 
-  toast('🔥 Sincronização ativa: ' + fbRoomCode, 'success');
+  toast('🔥 Sala ' + code + ' ativa!', 'success');
 }
 
 async function pushToFirebase() {
-  if (!fbDatabase || !fbRoomCode || isSyncing) return;
-  isSyncing = true;
+  if (!_fbDb || !_fbRoomPath || _fbPushing) return;
+  _fbPushing = true;
   try {
-    const { ref, set } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
-    const stopsRef = ref(fbDatabase, 'rooms/' + fbRoomCode + '/stops');
-    await set(stopsRef, JSON.stringify(stops));
-    setSyncStatus('synced', '🟢 ' + fbRoomCode);
+    const stopsRef = _fbMods.ref(_fbDb, _fbRoomPath);
+    await _fbMods.set(stopsRef, JSON.stringify(stops));
+    setSyncStatus('synced', '🟢 Sala: ' + (localStorage.getItem('sb_room_code')||''));
   } catch(e) {
-    setSyncStatus('error', 'falha ao sincronizar');
+    setSyncStatus('error', '❌ Falha ao enviar');
+    console.error('Push error:', e);
   } finally {
-    isSyncing = false;
+    _fbPushing = false;
   }
+}
+
+// Sobrescreve save() para sempre sincronizar
+const _baseSave = save;
+function save() {
+  localStorage.setItem('sb_stops', JSON.stringify(stops));
+  if (_fbDb && _fbRoomPath) pushToFirebase();
 }
 
 function generateRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = 'SB-';
-  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  for(let i=0;i<4;i++) code += chars[Math.floor(Math.random()*chars.length)];
   return code;
 }
 
 function generateNewCode() {
   const code = generateRoomCode();
-  fbRoomCode = code;
   localStorage.setItem('sb_room_code', code);
   document.getElementById('roomCodeDisplay').textContent = code;
   document.getElementById('cfgRoomCode').value = code;
-  if (fbDatabase) startSync(code);
+  if(_fbDb) startRoomSync(code);
+  toast('🔄 Novo código: ' + code, 'success');
 }
 
 function copyRoomCode() {
   const code = document.getElementById('roomCodeDisplay').textContent;
-  if (code === '——') { toast('Gere um código primeiro', 'error'); return; }
-  navigator.clipboard?.writeText(code).then(() => toast('📋 Código copiado: ' + code, 'success'))
-    .catch(() => toast('Código: ' + code, 'success'));
+  if(code==='——'){toast('Salve as configurações primeiro','error');return;}
+  navigator.clipboard?.writeText(code)
+    .then(()=>toast('📋 Código copiado: '+code,'success'))
+    .catch(()=>toast('Código: '+code,'success'));
 }
 
 function joinRoom() {
   const code = document.getElementById('cfgRoomCode').value.trim().toUpperCase();
-  if (!code) { toast('Digite o código da sala', 'error'); return; }
-  fbRoomCode = code;
-  localStorage.setItem('sb_room_code', code);
-  document.getElementById('roomCodeDisplay').textContent = code;
-  startSync(code);
-  toast('🔥 Entrando na sala ' + code, 'success');
+  if(!code){toast('Digite o código da sala','error');return;}
+  startRoomSync(code);
 }
 
-// Sobrescreve a função save() para também sincronizar
-const _origSave = save;
-function save() {
-  _origSave();
-  if (fbDatabase && fbRoomCode) pushToFirebase();
-}
-
-// Inicializa Firebase se já tiver config salva
 async function initFirebaseFromStorage() {
-  const saved = localStorage.getItem('sb_firebase_cfg');
-  const room  = localStorage.getItem('sb_room_code');
-  if (saved) {
-    const ok = await initFirebase(saved);
-    if (ok && room) {
-      fbRoomCode = room;
-      startSync(room);
-    }
-  }
+  const savedCfg  = localStorage.getItem('sb_firebase_cfg');
+  const savedRoom = localStorage.getItem('sb_room_code');
+  if(!savedCfg) return;
+  const ok = await initFirebase(savedCfg);
+  if(ok && savedRoom) startRoomSync(savedRoom);
 }
 
-// Atualiza UI da config
 function loadFirebaseConfig() {
   const saved = localStorage.getItem('sb_firebase_cfg');
-  if (saved) {
-    try {
-      document.getElementById('cfgFirebase').value = JSON.stringify(JSON.parse(saved), null, 2);
-    } catch(e) {}
+  if(saved) {
+    try { document.getElementById('cfgFirebase').value = JSON.stringify(JSON.parse(saved), null, 2); }
+    catch(e){}
   }
   const room = localStorage.getItem('sb_room_code') || generateRoomCode();
   localStorage.setItem('sb_room_code', room);
-  fbRoomCode = room;
   document.getElementById('roomCodeDisplay').textContent = room;
   document.getElementById('cfgRoomCode').value = room;
 }
-
 
 // ══════════════════════════════════════
 //  BACKUP EXPORT / IMPORT
