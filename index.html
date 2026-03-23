@@ -384,6 +384,10 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <div class="field"><div class="flabel">Nome do cliente *</div><input class="finput" id="fName" placeholder="Ex: Pedro Santos" /></div>
     <div class="field"><div class="flabel">Endereço completo *</div><input class="finput" id="fAddress" placeholder="Av. Central 890, Morada de Laranjeiras, Serra/ES" /></div>
     <div class="field"><div class="flabel">Complemento / Referência</div><input class="finput" id="fComplement" placeholder="Apto, bloco, cor da casa..." /></div>
+    <div class="frow">
+      <div class="field"><div class="flabel">⏰ Horário — de</div><input class="finput" id="fTimeFrom" type="time" /></div>
+      <div class="field"><div class="flabel">⏰ Horário — até</div><input class="finput" id="fTimeTo" type="time" /></div>
+    </div>
     <div class="field"><div class="flabel">Telefone (WhatsApp)</div><input class="finput" id="fPhone" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" /></div>
     <div class="frow">
       <div class="field">
@@ -626,6 +630,8 @@ function goForm(idx) {
     document.getElementById('fName').value        = s.name       || '';
     document.getElementById('fAddress').value     = s.address    || '';
     document.getElementById('fComplement').value  = s.complement || '';
+    document.getElementById('fTimeFrom').value     = s.timeFrom    || '';
+    document.getElementById('fTimeTo').value       = s.timeTo      || '';
     document.getElementById('fNotes').value       = s.notes      || '';
     document.getElementById('fValue').value          = s.value ? String(s.value).replace('.',',') : '';
     document.getElementById('fPaid').checked          = !!s.paid;
@@ -643,7 +649,7 @@ function goForm(idx) {
 }
 
 function resetForm(){
-  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes','fValue','fProductValue'].forEach(id=>document.getElementById(id).value='');
+  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes','fValue','fProductValue','fTimeFrom','fTimeTo'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fStore').value='';
   document.getElementById('fPaid').checked=false;
   document.getElementById('paidLbl').textContent='A receber';
@@ -688,6 +694,7 @@ function renderHome(){
         <div class="stop-detail">
           ${s.phone?`<div><strong>TEL</strong> ${fmtPhone(s.phone)}</div>`:''}
           ${s.complement?`<div><strong>REF</strong> ${s.complement}</div>`:''}
+          ${(s.timeFrom||s.timeTo)?`<div><strong>HORÁRIO</strong> ⏰ ${s.timeFrom||'?'} até ${s.timeTo||'?'}</div>`:''}
           ${s.notes?`<div><strong>OBS</strong> ${s.notes}</div>`:''}
           ${valStr?`<div><strong>TAXA</strong> <span class="paid-badge ${s.paid?'yes':'no'}">${s.paid?'✓ Recebida':'⏳ A receber'}</span></div>`:''}
           ${s.productValue>0?`<div><strong>PRODUTO</strong> R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')} <span class="paid-badge ${s.productPaid?'yes':'no'}">${s.productPaid?'✓ Pago':'💰 A cobrar'}</span></div>`:''}
@@ -728,6 +735,8 @@ function saveStop(){
     name, address,
     store:        document.getElementById('fStore').value,
     complement:   document.getElementById('fComplement').value.trim(),
+    timeFrom:     document.getElementById('fTimeFrom')?.value || '',
+    timeTo:       document.getElementById('fTimeTo')?.value   || '',
     phone:        document.getElementById('fPhone').value.replace(/\D/g,''),
     value:        parseMoney(document.getElementById('fValue').value),        // taxa entrega
     paid:         document.getElementById('fPaid').checked,
@@ -1235,7 +1244,12 @@ function renderPending(){
     sendNotify('🔔 SPEEDBOY — Novo pedido!', `${keys.length} pedido(s) aguardando confirmação`, 'pending');
   }
   badge.textContent=keys.length;
-  list.innerHTML=keys.map(k=>{const s=pendingData[k];return`<div class="pending-card" id="pc_${k}"><div class="pending-info"><div class="pending-name">${s.name||'Sem nome'}</div><div class="pending-addr">${s.address||''}</div><div class="pending-store">🏪 ${s.store||''} ${parseMoney(s.value)>0?'· '+fmtMoney(parseMoney(s.value)):''}</div></div><button class="btn-reject" onclick="rejectPending('${k}')">✕</button><button class="btn-accept" onclick="acceptPending('${k}')">✅ Aceitar</button></div>`;}).join('');
+  list.innerHTML=keys.map(k=>{
+    const s=pendingData[k];
+    const timeStr=(s.timeFrom||s.timeTo)?`<div style="font-size:11px;color:var(--accent);font-weight:700;margin-top:2px;">⏰ ${s.timeFrom||'?'} até ${s.timeTo||'?'}</div>`:'';
+    const prodStr=s.productValue>0?`· cobrar R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')}`:''
+    return`<div class="pending-card" id="pc_${k}"><div class="pending-info"><div class="pending-name">${s.name||'Sem nome'}</div><div class="pending-addr">${s.address||''}</div>${timeStr}<div class="pending-store">🏪 ${s.store||''} ${prodStr}</div></div><button class="btn-reject" onclick="rejectPending('${k}')">✕</button><button class="btn-accept" onclick="acceptPending('${k}')">✅ Aceitar</button></div>`;
+  }).join('');
 }
 async function acceptPending(key){
   const s=pendingData[key]; if(!s)return;
