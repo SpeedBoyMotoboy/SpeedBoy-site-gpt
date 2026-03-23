@@ -442,17 +442,22 @@ async function submitPedido() {
       hasErr = true;
     } else {
       // Read payment selection
-      const payToggle  = el.querySelector('.pay-toggle');
-      const payBtn     = payToggle ? payToggle.querySelector('.selected-paid, .selected-due') : null;
-      const isPaid     = payBtn ? payBtn.dataset.pay === 'paid' : false;
-      const valInput   = el.querySelector('[data-f="value"]');
-      const value      = valInput ? parseMoney(valInput.value) : 0;
+      // Payment: product value (does NOT count in motoboy financials)
+      const payToggle   = el.querySelector('.pay-toggle');
+      const payBtn      = payToggle ? payToggle.querySelector('.selected-paid, .selected-due') : null;
+      const productPaid = payBtn ? payBtn.dataset.pay === 'paid' : false;
+      const valInput    = el.querySelector('[data-f="value"]');
+      const productValue= valInput ? parseMoney(valInput.value) : 0;
       newStops.push({
         name, address,
-        complement: el.querySelector('[data-f="complement"]').value.trim(),
-        phone:      el.querySelector('[data-f="phone"]').value.replace(/\D/g,''),
-        value, paid: isPaid, done:false,
-        notes:      el.querySelector('[data-f="notes"]').value.trim(),
+        complement:   el.querySelector('[data-f="complement"]').value.trim(),
+        phone:        el.querySelector('[data-f="phone"]').value.replace(/\D/g,''),
+        value:        0,            // taxa entrega — motoboy preenche depois
+        paid:         false,        // taxa — motoboy preenche depois
+        productValue,               // valor do produto — cobrar do cliente
+        productPaid,                // se produto já foi pago
+        done:false,
+        notes:        el.querySelector('[data-f="notes"]').value.trim(),
         store: storeName, status:'pending', submittedAt: new Date().toISOString()
       });
     }
@@ -479,8 +484,8 @@ async function submitPedido() {
           <div style="font-size:11px;color:var(--muted);margin-top:2px">${s.address}</div>
         </div>
         <div style="text-align:right">
-          ${s.value>0?`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${s.paid?'var(--green)':'var(--accent)'}">R$ ${s.value.toFixed(2).replace('.',',')}</div>`:''}
-          <div style="font-size:10px;font-weight:700;letter-spacing:.5px;color:${s.paid?'var(--green)':'var(--accent)'};">${s.paid?'✅ PAGO':'💰 A RECEBER'}</div>
+          ${s.productValue>0?`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${s.productPaid?'var(--green)':'var(--accent)'}">R$ ${s.productValue.toFixed(2).replace('.',',')}</div>`:''}
+          <div style="font-size:10px;font-weight:700;letter-spacing:.5px;color:${s.productPaid?'var(--green)':'var(--accent)'};">${s.productPaid?'✅ PAGO':'💰 COBRAR DO CLIENTE'}</div>
         </div>
       </div>`).join('');
 
