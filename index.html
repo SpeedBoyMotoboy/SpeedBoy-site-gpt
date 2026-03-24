@@ -1046,7 +1046,7 @@ function buildLink(storeName){
   const room=localStorage.getItem('sb_room_code')||'';
   if(!room)return null;
   // Link curto — Firebase config fica hardcoded no pedido.html
-  const base  = 'https://speedboymotoboy.github.io/SpeedBoy-site-gpt/pedido.html';
+  const base  = 'https://speedboymotoboy.github.io/SpeedBoy-APP/pedido.html';
   const params= new URLSearchParams({room, store:storeName});
   return base+'?'+params.toString();
 }
@@ -1370,10 +1370,10 @@ function sendNotify(title, body, tag) {
   try {
     new Notification(title, {
       body,
-      icon: 'https://speedboymotoboy.github.io/SpeedBoy-site-gpt/favicon.ico',
+      icon: 'https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico',
       tag:  tag || 'speedboy',
       renotify: true,
-      badge: 'https://speedboymotoboy.github.io/SpeedBoy-site-gpt/favicon.ico'
+      badge: 'https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico'
     });
   } catch(e) { console.log('Notify error:', e); }
 }
