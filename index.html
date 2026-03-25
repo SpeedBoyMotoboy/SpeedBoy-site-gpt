@@ -67,6 +67,19 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .btn-accept{background:var(--green);color:#000;border:none;border-radius:9px;padding:9px 12px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;cursor:pointer;flex-shrink:0;}
 .btn-reject{background:var(--card2);color:var(--red);border:1px solid var(--red);border-radius:9px;padding:9px 10px;font-size:13px;cursor:pointer;flex-shrink:0;margin-right:5px;}
 
+/* FILTER BAR */
+.filter-wrap{padding:0 14px 8px;display:none;}
+.filter-wrap.visible{display:block;}
+.filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+.filter-row::-webkit-scrollbar{display:none;}
+.filter-chip{flex-shrink:0;padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.filter-chip.on{background:var(--accent);border-color:var(--accent);color:#000;}
+.filter-chip.city{border-color:var(--blue);}
+.filter-chip.city.on{background:var(--blue);border-color:var(--blue);color:#fff;}
+.filter-chip.type{border-color:var(--green);}
+.filter-chip.type.on{background:var(--green);border-color:var(--green);color:#000;}
+.filter-section-lbl{font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin:8px 0 4px;}
+
 /* SORT BAR */
 .sort-bar{display:none;gap:7px;padding:0 14px 8px;align-items:center;}
 .sort-bar.visible{display:flex;}
@@ -350,6 +363,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   </div>
   <div class="home-top">
     <button class="btn-add" onclick="goForm()">＋ Adicionar parada</button>
+    <button class="btn-cfg-icon" id="btnFilter" onclick="toggleFilters()" title="Filtros">🔍</button>
     <button class="btn-cfg-icon" onclick="goNav('configScreen','nav-cfg')">⚙️</button>
   </div>
   <div class="pending-section" id="pendingSection">
@@ -364,6 +378,32 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <button class="btn-sort on" id="sortM" onclick="setSort('manual')">✋ Manual</button>
     <button class="btn-sort"    id="sortR" onclick="setSort('region')">🗺️ Região</button>
     <button class="btn-sort"    id="sortS" onclick="setSort('store')">🏪 Loja</button>
+  </div>
+  <!-- FILTER BAR -->
+  <div class="filter-wrap" id="filterWrap">
+    <div class="filter-section-lbl">Status</div>
+    <div class="filter-row">
+      <button class="filter-chip on" id="fs-all"     onclick="setFilter('status','all')">Todas</button>
+      <button class="filter-chip"    id="fs-pending" onclick="setFilter('status','pending')">⏳ Pendentes</button>
+      <button class="filter-chip"    id="fs-done"    onclick="setFilter('status','done')">✅ Feitas</button>
+    </div>
+    <div class="filter-section-lbl">Cidade</div>
+    <div class="filter-row">
+      <button class="filter-chip city on" id="fc-all" onclick="setFilter('city','all')">Todas</button>
+      <button class="filter-chip city" id="fc-SRR" onclick="setFilter('city','SRR')">SRR • Serra</button>
+      <button class="filter-chip city" id="fc-VIX" onclick="setFilter('city','VIX')">VIX • Vitória</button>
+      <button class="filter-chip city" id="fc-VV"  onclick="setFilter('city','VV')">VV • Vila Velha</button>
+      <button class="filter-chip city" id="fc-CCA" onclick="setFilter('city','CCA')">CCA • Cariacica</button>
+    </div>
+    <div class="filter-section-lbl">Tipo</div>
+    <div class="filter-row">
+      <button class="filter-chip type on"  id="ft-all"      onclick="setFilter('type','all')">Todos</button>
+      <button class="filter-chip type"     id="ft-entrega"  onclick="setFilter('type','entrega')">🛵 Entrega</button>
+      <button class="filter-chip type"     id="ft-retirada" onclick="setFilter('type','retirada')">📦 Retirada</button>
+      <button class="filter-chip type"     id="ft-troca"    onclick="setFilter('type','troca')">🔄 Troca</button>
+    </div>
+    <div class="filter-section-lbl">Data</div>
+    <div class="filter-row" id="dateFilterRow"></div>
   </div>
   <div class="stops-list" id="stopsList"></div>
   <div class="route-bar">
@@ -388,10 +428,32 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <div class="field"><div class="flabel">🏪 Loja de origem</div><select class="fselect" id="fStore"><option value="">— Sem loja específica —</option></select></div>
     <div class="field"><div class="flabel">Nome do cliente *</div><input class="finput" id="fName" placeholder="Ex: Pedro Santos" /></div>
     <div class="field"><div class="flabel">Endereço completo *</div><input class="finput" id="fAddress" placeholder="Av. Central 890, Morada de Laranjeiras, Serra/ES" /></div>
+    <div class="frow">
+      <div class="field"><div class="flabel">Cidade</div>
+        <select class="fselect" id="fCity">
+          <option value="">— Selecione —</option>
+          <option value="SRR">🏙️ Serra (SRR)</option>
+          <option value="VIX">🏙️ Vitória (VIX)</option>
+          <option value="VV">🏙️ Vila Velha (VV)</option>
+          <option value="CCA">🏙️ Cariacica (CCA)</option>
+          <option value="OUT">📍 Outra</option>
+        </select>
+      </div>
+      <div class="field"><div class="flabel">Tipo</div>
+        <select class="fselect" id="fServiceType">
+          <option value="entrega">🛵 Entrega</option>
+          <option value="retirada">📦 Retirada</option>
+          <option value="troca">🔄 Troca</option>
+        </select>
+      </div>
+    </div>
     <div class="field"><div class="flabel">Complemento / Referência</div><input class="finput" id="fComplement" placeholder="Apto, bloco, cor da casa..." /></div>
     <div class="frow">
-      <div class="field"><div class="flabel">⏰ Horário — de</div><input class="finput" id="fTimeFrom" type="time" /></div>
-      <div class="field"><div class="flabel">⏰ Horário — até</div><input class="finput" id="fTimeTo" type="time" /></div>
+      <div class="field"><div class="flabel">📅 Data da entrega</div><input class="finput" id="fDelivDate" type="date" style="color:var(--text)" /></div>
+      <div class="field"><div class="flabel">⏰ De</div><input class="finput" id="fTimeFrom" type="time" /></div>
+    </div>
+    <div class="frow">
+      <div class="field"><div class="flabel">⏰ Até</div><input class="finput" id="fTimeTo" type="time" /></div>
     </div>
     <div class="field"><div class="flabel">Telefone (WhatsApp)</div><input class="finput" id="fPhone" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" /></div>
     <div class="frow">
@@ -555,6 +617,66 @@ if (!cfg.meta)   cfg.meta   = 0;
 
 let wppStop     = null;
 let bulkData    = [];
+
+// ══════════════════════════════════════
+//  FILTROS
+// ══════════════════════════════════════
+var activeFilters = { status:'all', city:'all', type:'all', date:'all' };
+
+function toggleFilters() {
+  var wrap = document.getElementById('filterWrap');
+  var isVisible = wrap.classList.contains('visible');
+  wrap.classList.toggle('visible', !isVisible);
+  document.getElementById('btnFilter').style.color = isVisible ? '' : 'var(--accent)';
+  if (!isVisible) buildDateChips();
+}
+
+function buildDateChips() {
+  var row = document.getElementById('dateFilterRow');
+  if (!row) return;
+  var today = new Date();
+  var chips = [
+    { label:'Todas', val:'all' },
+    { label: fmtChipDate(new Date(today.getTime() - 86400000)), val: toDateStr(new Date(today.getTime() - 86400000)) },
+    { label: 'Hoje ' + fmtChipDate(today), val: toDateStr(today) },
+    { label: fmtChipDate(new Date(today.getTime() + 86400000)), val: toDateStr(new Date(today.getTime() + 86400000)) },
+  ];
+  row.innerHTML = chips.map(function(ch) {
+    var on = activeFilters.date === ch.val ? ' on' : '';
+    return '<button class="filter-chip' + on + '" onclick="setFilter(&quot;date&quot;,&quot;' + ch.val + '&quot;)">' + ch.label + '</button>';
+  }).join('');
+}
+
+function toDateStr(d) {
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+}
+function fmtChipDate(d) {
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+function setFilter(type, val) {
+  activeFilters[type] = val;
+  var prefix = {status:'fs-',city:'fc-',type:'ft-'}[type]||'';
+  if (prefix) {
+    document.querySelectorAll('[id^="'+prefix+'"]').forEach(function(b){b.classList.remove('on');});
+    var el = document.getElementById(prefix+val);
+    if (el) el.classList.add('on');
+  }
+  if (type==='date') buildDateChips();
+  renderHome();
+}
+
+function applyFilters(list) {
+  return list.filter(function(s) {
+    if (activeFilters.status==='done'    && !s.done)  return false;
+    if (activeFilters.status==='pending' &&  s.done)  return false;
+    if (activeFilters.city!=='all' && (s.city||'')!==activeFilters.city) return false;
+    if (activeFilters.type!=='all' && (s.serviceType||'entrega')!==activeFilters.type) return false;
+    if (activeFilters.date!=='all' && (s.deliveryDate||'')!==activeFilters.date) return false;
+    return true;
+  });
+}
+
 let sortMode    = 'manual';
 let reportPeriod= 'week';
 let editingIdx  = -1;
@@ -634,9 +756,16 @@ function goForm(idx) {
     document.getElementById('fStore').value      = s.store      || '';
     document.getElementById('fName').value        = s.name       || '';
     document.getElementById('fAddress').value     = s.address    || '';
-    document.getElementById('fComplement').value  = s.complement || '';
+    document.getElementById('fComplement').value   = s.complement  || '';
+    document.getElementById('fCity').value         = s.city        || '';
+    document.getElementById('fServiceType').value  = s.serviceType || 'entrega';
     document.getElementById('fTimeFrom').value     = s.timeFrom    || '';
     document.getElementById('fTimeTo').value       = s.timeTo      || '';
+    // Convert dd/mm/yyyy → yyyy-mm-dd for date input
+    if(s.deliveryDate){
+      const dp = s.deliveryDate.split('/');
+      if(dp.length===3) document.getElementById('fDelivDate').value = dp[2]+'-'+dp[1]+'-'+dp[0];
+    } else { document.getElementById('fDelivDate').value=''; }
     document.getElementById('fNotes').value       = s.notes      || '';
     document.getElementById('fValue').value          = s.value ? String(s.value).replace('.',',') : '';
     document.getElementById('fPaid').checked          = !!s.paid;
@@ -654,7 +783,9 @@ function goForm(idx) {
 }
 
 function resetForm(){
-  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes','fValue','fProductValue','fTimeFrom','fTimeTo'].forEach(id=>document.getElementById(id).value='');
+  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes','fValue','fProductValue','fTimeFrom','fTimeTo','fDelivDate'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fCity').value='';
+  document.getElementById('fServiceType').value='entrega';
   document.getElementById('fStore').value='';
   document.getElementById('fPaid').checked=false;
   document.getElementById('paidLbl').textContent='A receber';
@@ -673,13 +804,16 @@ function renderHome(){
   badge.classList.toggle('full', false);
   document.getElementById('routeBtn').disabled = total===0;
   document.getElementById('sortBar').classList.toggle('visible', total>1);
+  document.getElementById('filterWrap').classList.toggle('visible',
+    total>0 && document.getElementById('filterWrap').classList.contains('visible'));
 
   if(!total){
     list.innerHTML=`<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Nenhuma parada ainda</div><div class="empty-sub">Adicione clientes ou importe a lista da loja</div></div>`;
     return;
   }
+  const filtered = applyFilters(stops.map(function(s,i){return Object.assign({},s,{_idx:i});}));
   const groups={};
-  stops.forEach((s,i)=>{ const k=s.store||'__'; if(!groups[k])groups[k]=[]; groups[k].push({s,i}); });
+  filtered.forEach(function(s){ const k=s.store||'__'; if(!groups[k])groups[k]=[]; groups[k].push({s,i:s._idx}); });
   let html='';
   Object.entries(groups).forEach(([k,items])=>{
     if(k!=='__') html+=`<div class="store-label">🏪 ${k}</div>`;
@@ -689,7 +823,8 @@ function renderHome(){
       html+=`<div class="stop-card ${s.done?'done':''}" id="sc${i}" onclick="toggleCard(${i})">
         <div class="stop-header">
           <div class="stop-num">${i+1}</div>
-          <div class="stop-info"><div class="stop-name">${s.name||'Sem nome'}</div><div class="stop-addr">${s.address||'Sem endereço'}</div></div>
+          <div class="stop-info"><div class="stop-name">${s.name||'Sem nome'}</div><div class="stop-addr">${s.address||'Sem endereço'}</div>
+          ${(s.city||s.deliveryDate||s.serviceType)?`<div style="font-size:10px;color:var(--accent);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${[s.serviceType==='retirada'?'📦':s.serviceType==='troca'?'🔄':'🛵',s.city||'',s.deliveryDate||''].filter(Boolean).join(' · ')}</div>`:''}</div>
           <div class="stop-right">
             ${valStr?`<div class="stop-val ${s.paid?'':'unpaid'}">${valStr}</div>`:''}
             ${s.productValue>0?`<div class="stop-product-val">cobrar: <span>R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')}</span></div>`:''}
@@ -701,7 +836,8 @@ function renderHome(){
           ${s.complement?`<div><strong>REF</strong> ${s.complement}</div>`:''}
           ${(s.timeFrom||s.timeTo)?`<div><strong>HORÁRIO</strong> ⏰ ${s.timeFrom||'?'} até ${s.timeTo||'?'}</div>`:''}
           ${s.deliveryDate?`<div><strong>DATA</strong> 📅 ${s.deliveryDate}</div>`:''}
-          ${s.serviceType?`<div><strong>TIPO</strong> ${s.serviceType==='retirada'?'📦 Retirada':'🛵 Entrega'}</div>`:''}
+          ${s.serviceType?`<div><strong>TIPO</strong> ${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</div>`:''}
+          ${s.city?`<div><strong>CIDADE</strong> 🏙️ ${s.city}</div>`:''}
           ${s.arrivedAt?`<div><strong>CHEGOU</strong> 📨 ${s.arrivedAt}</div>`:''}
           ${s.notes?`<div><strong>OBS</strong> ${s.notes}</div>`:''}
           ${valStr?`<div><strong>TAXA</strong> <span class="paid-badge ${s.paid?'yes':'no'}">${s.paid?'✓ Recebida':'⏳ A receber'}</span></div>`:''}
@@ -739,16 +875,21 @@ function saveStop(){
   if(!name||!address){ toast('Nome e endereço são obrigatórios!','error'); return; }
   const idx = parseInt(document.getElementById('editIdx').value);
   
+  const rawDate = document.getElementById('fDelivDate').value;
+  const delivDate = rawDate ? rawDate.split('-').reverse().join('/') : '';
   const s={
     name, address,
     store:        document.getElementById('fStore').value,
+    city:         document.getElementById('fCity').value,
+    serviceType:  document.getElementById('fServiceType').value,
+    deliveryDate: delivDate,
     complement:   document.getElementById('fComplement').value.trim(),
     timeFrom:     document.getElementById('fTimeFrom')?.value || '',
     timeTo:       document.getElementById('fTimeTo')?.value   || '',
     phone:        document.getElementById('fPhone').value.replace(/\D/g,''),
-    value:        parseMoney(document.getElementById('fValue').value),        // taxa entrega
+    value:        parseMoney(document.getElementById('fValue').value),
     paid:         document.getElementById('fPaid').checked,
-    productValue: parseMoney(document.getElementById('fProductValue').value), // valor produto
+    productValue: parseMoney(document.getElementById('fProductValue').value),
     productPaid:  document.getElementById('fProductPaid').checked,
     notes:        document.getElementById('fNotes').value.trim(),
     done:         idx>=0 ? stops[idx].done : false,
