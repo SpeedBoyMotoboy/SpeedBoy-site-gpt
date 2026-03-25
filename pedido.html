@@ -248,6 +248,50 @@ var stopCount  = 0;
 var lastSubmittedStops = []; // Armazena os últimos pedidos para WhatsApp
 
 // ═══════════════════════════════════════════════════
+//  BAIRROS CUSTOMIZADOS (localStorage por loja)
+// ═══════════════════════════════════════════════════
+function getCustomBairros() {
+  var key = 'sb_custom_bairros_' + (STORE_NAME||'default');
+  try { return JSON.parse(localStorage.getItem(key)||'{}'); } catch(e) { return {}; }
+}
+
+function saveCustomBairros(customBairros) {
+  var key = 'sb_custom_bairros_' + (STORE_NAME||'default');
+  localStorage.setItem(key, JSON.stringify(customBairros));
+}
+
+function addCustomBairro(city, bairro) {
+  if (!city || !bairro) return false;
+  var customBairros = getCustomBairros();
+  if (!customBairros[city]) customBairros[city] = [];
+  bairro = bairro.trim();
+  if (customBairros[city].indexOf(bairro) === -1) {
+    customBairros[city].push(bairro);
+    customBairros[city].sort();
+    saveCustomBairros(customBairros);
+    return true;
+  }
+  return false;
+}
+
+function getAllBairros(city) {
+  if (!city || !CIDADE_BAIRROS[city]) return [];
+  var officialBairros = CIDADE_BAIRROS[city].bairros || [];
+  var customBairros = getCustomBairros();
+  var custom = customBairros[city] || [];
+  var combined = officialBairros.concat(custom);
+  var unique = [];
+  var seen = {};
+  combined.forEach(function(b) {
+    if (!seen[b.toLowerCase()]) {
+      seen[b.toLowerCase()] = true;
+      unique.push(b);
+    }
+  });
+  return unique.sort();
+}
+
+// ═══════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════
 function init() {
@@ -419,7 +463,7 @@ window.removeStop = function(id) {
   renumber();
 };
 
-// Filtrar bairros com busca
+// Filtrar bairros com busca (incluindo customizados)
 window.filterBairros = function(stopId) {
   var input = document.getElementById(stopId + '_bairro');
   var citySelect = document.getElementById(stopId + '_city');
@@ -432,7 +476,7 @@ window.filterBairros = function(stopId) {
     return;
   }
   
-  var bairros = CIDADE_BAIRROS[cityValue].bairros;
+  var bairros = getAllBairros(cityValue);
   var filtered = bairros.filter(function(b) {
     return b.toLowerCase().includes(searchValue);
   });
@@ -451,8 +495,13 @@ window.filterBairros = function(stopId) {
 window.selectBairro = function(stopId, bairro) {
   var input = document.getElementById(stopId + '_bairro');
   var suggestionsDiv = document.getElementById(stopId + '_bairro_suggestions');
+  var citySelect = document.getElementById(stopId + '_city');
   input.value = bairro;
   suggestionsDiv.classList.remove('show');
+  // Salva bairro customizado se for novo
+  if (citySelect.value) {
+    addCustomBairro(citySelect.value, bairro);
+  }
 };
 
 // Atualizar bairros quando cidade muda
@@ -539,6 +588,11 @@ window.submitPedido = function() {
     if (!rua)                   { errors.push(ruaEl);     }
     if (!numero)                { errors.push(numeroEl);  }
     if (!phone || phone.length < 10) { errors.push(phoneEl); showToast('⚠️ Telefone inválido ou não preenchido', 'error'); }
+    
+    // Salva bairro customizado se for novo
+    if (city && bairro) {
+      addCustomBairro(city, bairro);
+    }
     
     if (errors.length > 0) {
       errors.forEach(function(el) { if (el) el.classList.add('error'); });
