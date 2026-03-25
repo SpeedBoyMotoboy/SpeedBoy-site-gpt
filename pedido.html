@@ -6,7 +6,6 @@
 <title>SPEEDBOY — Pedido</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 
-<!-- Firebase via CDN estático — sem dynamic import -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
@@ -59,6 +58,14 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
 .field-row{display:flex;gap:10px;}
 .field-row .field-group{flex:1;}
 
+/* SEARCH BAIRRO */
+.bairro-search-wrap{position:relative;}
+.bairro-suggestions{display:none;position:absolute;top:100%;left:0;right:0;background:var(--card2);border:1.5px solid var(--border);border-top:none;border-radius:0 0 12px 12px;max-height:200px;overflow-y:auto;z-index:10;}
+.bairro-suggestions.show{display:block;}
+.bairro-suggestion-item{padding:10px 14px;cursor:pointer;font-size:14px;color:var(--text);border-bottom:1px solid var(--border);transition:background .15s;}
+.bairro-suggestion-item:hover{background:var(--border);}
+.bairro-suggestion-item:last-child{border-bottom:none;}
+
 /* TIME */
 .time-row{display:flex;gap:8px;align-items:flex-end;}
 .time-sep{font-size:12px;color:var(--muted);font-weight:600;padding-bottom:14px;flex-shrink:0;}
@@ -72,6 +79,11 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
 .pay-btn.due{border-color:var(--accent);background:rgba(245,197,24,.1);color:var(--accent);}
 .value-group{display:none;margin-top:10px;}
 .value-group.show{display:block;}
+
+/* MONEY INPUT WITH PREFIX */
+.money-input-wrap{position:relative;}
+.money-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;font-weight:600;pointer-events:none;}
+.money-input-wrap .field-input{padding-left:40px;}
 
 /* ADD STOP */
 .btn-add-stop{width:100%;background:transparent;border:1.5px dashed var(--border);border-radius:var(--radius);color:var(--muted);font-family:'Barlow',sans-serif;font-weight:600;font-size:14px;padding:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;transition:all .2s;}
@@ -94,7 +106,8 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
 .success-list{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-top:20px;width:100%;text-align:left;}
 .success-item{padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
 .success-item:last-child{border-bottom:none;}
-.btn-novo{margin-top:20px;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px 36px;border-radius:var(--radius);cursor:pointer;}
+.btn-novo{margin-top:20px;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px 36px;border-radius:var(--radius);cursor:pointer;margin-right:8px;}
+.btn-whatsapp{margin-top:20px;background:var(--green);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px 36px;border-radius:var(--radius);cursor:pointer;}
 
 /* ERROR */
 .error-wrap{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
@@ -117,6 +130,12 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
 .hist-item-info{color:var(--muted);margin-top:2px;}
 .hist-empty{padding:16px;text-align:center;color:var(--muted);font-size:12px;}
 
+/* STATUS BADGE */
+.status-badge{display:inline-block;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;margin-top:6px;}
+.status-pending{background:rgba(245,197,24,.15);color:var(--accent);}
+.status-viewed{background:rgba(0,230,118,.15);color:var(--green);}
+.status-delivered{background:rgba(0,230,118,.2);color:var(--green);}
+
 /* TOAST */
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;z-index:600;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -129,7 +148,6 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
 <div class="toast"  id="toast"></div>
 <div class="loading" id="loading"><div class="spinner"></div><div class="loading-text">Enviando para o Luan...</div></div>
 
-<!-- HERO -->
 <div class="hero">
   <button class="theme-toggle" id="themeBtn" onclick="window.toggleTheme()">☀️ Claro</button>
   <div class="hero-logo">SPEED<span>BOY</span></div>
@@ -137,7 +155,6 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
   <div class="hero-badge" id="heroBadge">🏪 <span id="storeSpan"></span></div>
 </div>
 
-<!-- FORM -->
 <div id="mainWrap">
   <div class="form-wrap">
     <div class="sec-divider">ENTREGAS</div>
@@ -163,16 +180,17 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
   </div>
 </div>
 
-<!-- SUCCESS -->
 <div class="success-wrap" id="successWrap">
   <div class="success-icon">🛵</div>
   <div class="success-title">Pedido enviado!</div>
   <div class="success-sub">O Luan já recebeu! Ele vai confirmar as entregas em instantes.</div>
   <div class="success-list" id="successList"></div>
-  <button class="btn-novo" onclick="window.resetForm()">+ Novo pedido</button>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+    <button class="btn-novo" onclick="window.resetForm()">+ Novo pedido</button>
+    <button class="btn-whatsapp" id="btnWhatsApp" onclick="window.sendWhatsApp()" style="display:none;">💬 Avisar no WhatsApp</button>
+  </div>
 </div>
 
-<!-- ERROR -->
 <div class="error-wrap" id="errorWrap">
   <div style="font-size:64px;margin-bottom:16px">⚠️</div>
   <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;color:var(--red);margin-bottom:10px">Link inválido</div>
@@ -180,6 +198,32 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════
+//  BAIRROS POR CIDADE — Região Metropolitana Vitória
+// ═══════════════════════════════════════════════════
+var CIDADE_BAIRROS = {
+  'vitoria': {
+    nome: 'Vitória',
+    bairros: ['Andorinhas', 'Antônio Honório', 'Bairro da Penha', 'Bairro de Lourdes', 'Bairro do Quadro', 'Bairro República', 'Barro Vermelho', 'Bento Ferreira', 'Boa Vista', 'Bonfim', 'Caratoíra', 'Centro', 'Comdusa', 'Conquista', 'Consolação', 'Cruzamento', 'Da Penha', 'De Lourdes', 'Do Cabral', 'Do Moscoso', 'Do Quadro', 'Enseada do Suá', 'Estrelinha', 'Fazendinha', 'Forte São João', 'Fradinhos', 'Goiabeiras', 'Grande Vitória', 'Gurigica', 'Ilha de Santa Maria', 'Ilha do Boi', 'Ilha do Príncipe', 'Inhanguetá', 'Itararé', 'Jabour', 'Jardim Camburi', 'Jardim da Penha', 'Joana D´Arc', 'Jucutuquara', 'Maria Ortiz', 'Maruípe', 'Mata da Praia', 'Monte Belo', 'Morada de Camburi', 'Nova Palestina', 'Parque Industrial', 'Parque Moscoso', 'Piedade', 'Pontal de Camburi', 'Praia do Canto', 'Praia do Suá', 'Redenção', 'República', 'Resistência', 'Romão', 'Santa Cecília', 'Santa Clara', 'Santa Helena', 'Santa Lúcia', 'Santa Luíza', 'Santa Martha', 'Santa Tereza', 'Santo André', 'Santo Antônio', 'Santos Dumont', 'São Benedito', 'São Cristóvão', 'São José', 'São Pedro', 'Segurança do Lar', 'Tabuazeiro', 'Universitário', 'Vila Rubim'].sort()
+  },
+  'vilavelha': {
+    nome: 'Vila Velha',
+    bairros: ['Alvorada', 'Aribiri', 'Argolas', 'Araçás', 'Ataíde', 'Balneário Ponta da Fruta', 'Barra do Jucu', 'Boa Vista', 'Brisas de Marilândia', 'Cobilândia', 'Coqueiral de Itaparica', 'Centro', 'Cristóvão Colombo', 'Divino Espírito Santo', 'Garoto', 'Glória', 'Guaranhuns', 'Ibes', 'Ilha da Jussara', 'Ilha dos Ayres', 'Ilha dos Bentos', 'Itapuã', 'Itaparica', 'Jaburuna', 'Jardim Asteca', 'Jardim Colorado', 'Jardim Guaranhuns', 'Jardim Marilândia', 'Jockey de Itaparica', 'Morada da Barra', 'Nossa Senhora da Penha', 'Nova Itaparica', 'Nova Ponta da Fruta', 'Novo México', 'Olaria', 'Paul', 'Ponta da Fruta', 'Praia da Costa', 'Praia das Gaivotas', 'Primeiro de Maio', 'Residencial Coqueiral', 'Rio Marinho', 'Riviera da Barra', 'Santa Inês', 'Santa Mônica', 'Santa Paula', 'Santa Rita', 'São Conrado', 'São Torquato', 'Soteco', 'Terra Vermelha', 'Vale Encantado', 'Vila Batista', 'Vila Nova'].sort()
+  },
+  'cariacica': {
+    nome: 'Cariacica',
+    bairros: ['Alto Esperança', 'Alto Lage', 'Aparecida', 'Bandeirantes', 'Bela Aurora', 'Bela Vista', 'Boa Sorte', 'Campina Grande', 'Campo Grande', 'Cariacica Sede', 'Castelo Branco', 'Cruzeiro do Sul', 'Dom Bosco', 'Flexal I', 'Flexal II', 'Graúna', 'Itacibá', 'Itapebura', 'Jardim América', 'Jardim Botânico', 'Jardim Campo Grande', 'Maracanã', 'Morada de Santa Fé', 'Nova Brasília', 'Nova Esperança', 'Nova Rosa da Penha', 'Nova Valverde', 'Novo Brasil', 'Operário', 'Oriente', 'Padre Gabriel', 'Porto de Santana', 'Porto Novo', 'Presidente Médici', 'Rio Marinho', 'Santa Bárbara', 'Santa Cecília', 'Santa Luzia', 'Santa Paula', 'Santana', 'São Conrado', 'São Francisco', 'São Geraldo', 'São João Batista', 'Tiradentes', 'Vale Esperança', 'Vera Cruz', 'Vila Capixaba', 'Vila Independência', 'Vila Isabel', 'Vila Palestina', 'Vila Prudêncio'].sort()
+  },
+  'serra': {
+    nome: 'Serra',
+    bairros: ['Alterosas', 'Bairro das Laranjeiras', 'Barcelona', 'Boa Vista', 'Bairro de Fátima', 'Campinho da Serra', 'Carapina', 'Carapina Grande', 'Central Carapina', 'Chácara Parreiral', 'Cidade Pomar', 'Colina de Laranjeiras', 'Eldorado', 'Eurico Salles', 'Feu Rosa', 'Guaraciaba', 'Hélio Ferraz', 'Jacaraípe', 'Jardim Limoeiro', 'Jardim Tropical', 'José de Anchieta', 'Laranjeiras Velha', 'Manguinhos', 'Manoel Plaza', 'Morada de Laranjeiras', 'Nova Almeida', 'Nova Carapina I', 'Nova Carapina II', 'Novo Horizonte', 'Parque Residencial Laranjeiras', 'Planalto de Carapina', 'Porto Canoa', 'Rosário de Fátima', 'São Diogo', 'Serra Dourada I', 'Serra Dourada II', 'Serra Dourada III', 'Serra Sede', 'Taquara I', 'Taquara II', 'Valparaíso', 'Vila Nova de Colares', 'Vista da Serra'].sort()
+  },
+  'viana': {
+    nome: 'Viana',
+    bairros: ['Arlindo Villaschi', 'Areinha', 'Bom Pastor', 'Canaã', 'Caxias do Sul', 'Ipanema', 'Jucu', 'Marcílio de Noronha', 'Morada de Bethânia', 'Nova Bethânia', 'Primavera', 'Ribeira', 'Universal', 'Viana Sede', 'Vila Bethânia'].sort()
+  }
+};
+
 // ═══════════════════════════════════════════════════
 //  CONFIGURAÇÃO FIREBASE — hardcoded
 // ═══════════════════════════════════════════════════
@@ -197,9 +241,11 @@ var FIREBASE_CONFIG = {
 var params     = new URLSearchParams(window.location.search);
 var ROOM       = (params.get('room') || '').toUpperCase();
 var STORE_NAME = params.get('store') || '';
+var LUAN_PHONE = params.get('phone') || '5527999999999'; // Número do Luan para WhatsApp
 
 var db         = null;
 var stopCount  = 0;
+var lastSubmittedStops = []; // Armazena os últimos pedidos para WhatsApp
 
 // ═══════════════════════════════════════════════════
 //  INIT
@@ -272,37 +318,55 @@ window.addStop = function() {
         '<div class="field-label">Nome do cliente <span class="req">*</span></div>' +
         '<input class="field-input" id="' + id + '_name" placeholder="Ex: Pedro Santos" />' +
       '</div>' +
-      '<div class="field-group">' +
-        '<div class="field-label">Endereço completo <span class="req">*</span></div>' +
-        '<input class="field-input" id="' + id + '_address" placeholder="Rua, número, bairro, cidade — estado" />' +
+      '<div class="sec-divider" style="margin:16px 0 12px">📍 Endereço</div>' +
+      '<div class="field-row">' +
+        '<div class="field-group">' +
+          '<div class="field-label">Cidade <span class="req">*</span></div>' +
+          '<select class="field-input" id="' + id + '_city" style="appearance:none;cursor:pointer" onchange="window.updateBairros(\'' + id + '\')">' +
+            '<option value="">— Selecione —</option>' +
+            '<option value="vitoria">Vitória</option>' +
+            '<option value="vilavelha">Vila Velha</option>' +
+            '<option value="cariacica">Cariacica</option>' +
+            '<option value="serra">Serra</option>' +
+            '<option value="viana">Viana</option>' +
+          '</select>' +
+        '</div>' +
+        '<div class="field-group">' +
+          '<div class="field-label">Bairro <span class="req">*</span></div>' +
+          '<div class="bairro-search-wrap">' +
+            '<input class="field-input" id="' + id + '_bairro" placeholder="Digite para buscar..." oninput="window.filterBairros(\'' + id + '\')" />' +
+            '<div class="bairro-suggestions" id="' + id + '_bairro_suggestions"></div>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
       '<div class="field-group">' +
-        '<div class="field-label">Complemento / Referência</div>' +
-        '<input class="field-input" id="' + id + '_complement" placeholder="Apto, bloco, portão, cor da casa..." />' +
+        '<div class="field-label">Rua / Avenida <span class="req">*</span></div>' +
+        '<input class="field-input" id="' + id + '_rua" placeholder="Rua Exemplo, Avenida Brasil..." />' +
       '</div>' +
       '<div class="field-row">' +
         '<div class="field-group">' +
-          '<div class="field-label">📅 Data da entrega <span class="req">*</span></div>' +
-          '<input class="field-input" id="' + id + '_date" type="date" style="color:var(--text)" />' +
+          '<div class="field-label">Número <span class="req">*</span></div>' +
+          '<input class="field-input" id="' + id + '_numero" placeholder="123" />' +
         '</div>' +
         '<div class="field-group">' +
-          '<div class="field-label">Tipo de serviço</div>' +
-          '<select class="field-input" id="' + id + '_type" style="appearance:none;cursor:pointer">' +
-            '<option value="entrega">🛵 Entrega</option>' +
-            '<option value="retirada">📦 Retirada</option>' +
-            '<option value="troca">🔄 Troca</option>' +
-          '</select>' +
+          '<div class="field-label">Complemento</div>' +
+          '<input class="field-input" id="' + id + '_complement" placeholder="Apto 42, bloco C..." />' +
         '</div>' +
       '</div>' +
       '<div class="field-group">' +
-        '<div class="field-label">🏙️ Cidade de entrega</div>' +
-        '<select class="field-input" id="' + id + '_city" style="appearance:none;cursor:pointer">' +
-          '<option value="">— Selecione a cidade —</option>' +
-          '<option value="SRR">Serra (SRR)</option>' +
-          '<option value="VIX">Vitória (VIX)</option>' +
-          '<option value="VV">Vila Velha (VV)</option>' +
-          '<option value="CCA">Cariacica (CCA)</option>' +
-          '<option value="OUT">Outra cidade</option>' +
+        '<div class="field-label">Ponto de Referência</div>' +
+        '<input class="field-input" id="' + id + '_reference" placeholder="Próximo à padaria, perto do banco..." />' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">📅 Data da entrega <span class="req">*</span></div>' +
+        '<input class="field-input" id="' + id + '_date" type="date" style="color:var(--text)" />' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">Tipo de serviço</div>' +
+        '<select class="field-input" id="' + id + '_type" style="appearance:none;cursor:pointer">' +
+          '<option value="entrega">🛵 Entrega</option>' +
+          '<option value="retirada">📦 Retirada</option>' +
+          '<option value="troca">🔄 Troca</option>' +
         '</select>' +
       '</div>' +
       '<div class="field-group">' +
@@ -333,7 +397,10 @@ window.addStop = function() {
         '</div>' +
         '<div class="value-group" id="' + id + '_value_wrap">' +
           '<div class="field-label" style="margin-top:10px">Valor a receber (R$)</div>' +
-          '<input class="field-input" id="' + id + '_value" type="text" inputmode="decimal" placeholder="0,00" oninput="window.maskMoney(this)" />' +
+          '<div class="money-input-wrap">' +
+            '<span class="money-prefix">R$</span>' +
+            '<input class="field-input" id="' + id + '_value" type="text" inputmode="decimal" placeholder="0,00" oninput="window.maskMoney(this)" />' +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="field-group" style="margin-bottom:0">' +
@@ -350,6 +417,59 @@ window.removeStop = function(id) {
   var el = document.getElementById(id);
   if (el) el.remove();
   renumber();
+};
+
+// Filtrar bairros com busca
+window.filterBairros = function(stopId) {
+  var input = document.getElementById(stopId + '_bairro');
+  var citySelect = document.getElementById(stopId + '_city');
+  var suggestionsDiv = document.getElementById(stopId + '_bairro_suggestions');
+  var cityValue = citySelect.value;
+  var searchValue = input.value.toLowerCase().trim();
+  
+  if (!cityValue || !CIDADE_BAIRROS[cityValue]) {
+    suggestionsDiv.classList.remove('show');
+    return;
+  }
+  
+  var bairros = CIDADE_BAIRROS[cityValue].bairros;
+  var filtered = bairros.filter(function(b) {
+    return b.toLowerCase().includes(searchValue);
+  });
+  
+  if (searchValue.length === 0 || filtered.length === 0) {
+    suggestionsDiv.classList.remove('show');
+    return;
+  }
+  
+  suggestionsDiv.innerHTML = filtered.map(function(b) {
+    return '<div class="bairro-suggestion-item" onclick="window.selectBairro(\'' + stopId + '\', \'' + b + '\')">' + b + '</div>';
+  }).join('');
+  suggestionsDiv.classList.add('show');
+};
+
+window.selectBairro = function(stopId, bairro) {
+  var input = document.getElementById(stopId + '_bairro');
+  var suggestionsDiv = document.getElementById(stopId + '_bairro_suggestions');
+  input.value = bairro;
+  suggestionsDiv.classList.remove('show');
+};
+
+// Atualizar bairros quando cidade muda
+window.updateBairros = function(stopId) {
+  var citySelect = document.getElementById(stopId + '_city');
+  var bairroInput = document.getElementById(stopId + '_bairro');
+  var suggestionsDiv = document.getElementById(stopId + '_bairro_suggestions');
+  var cityValue = citySelect.value;
+  
+  if (!cityValue || !CIDADE_BAIRROS[cityValue]) {
+    bairroInput.value = '';
+    suggestionsDiv.classList.remove('show');
+    return;
+  }
+  
+  bairroInput.value = '';
+  suggestionsDiv.classList.remove('show');
 };
 
 function renumber() {
@@ -381,37 +501,67 @@ window.submitPedido = function() {
   var hasErr   = false;
 
   cards.forEach(function(card) {
-    var id      = card.id;
-    var nameEl  = document.getElementById(id + '_name');
-    var addrEl  = document.getElementById(id + '_address');
-    var name    = nameEl  ? nameEl.value.trim()  : '';
-    var address = addrEl  ? addrEl.value.trim()  : '';
+    var id = card.id;
+    
+    // Elementos
+    var nameEl      = document.getElementById(id + '_name');
+    var cityEl      = document.getElementById(id + '_city');
+    var bairroEl    = document.getElementById(id + '_bairro');
+    var ruaEl       = document.getElementById(id + '_rua');
+    var numeroEl    = document.getElementById(id + '_numero');
+    var compEl      = document.getElementById(id + '_complement');
+    var refEl       = document.getElementById(id + '_reference');
+    var phoneEl     = document.getElementById(id + '_phone');
+    var yesBtn      = document.getElementById(id + '_paid_yes');
+    var dateEl      = document.getElementById(id + '_date');
+    var typeEl      = document.getElementById(id + '_type');
+    var timeFromEl  = document.getElementById(id + '_timeFrom');
+    var timeToEl    = document.getElementById(id + '_timeTo');
+    var valEl       = document.getElementById(id + '_value');
+    var notesEl     = document.getElementById(id + '_notes');
+    
+    // Valores
+    var name    = nameEl  ? nameEl.value.trim()      : '';
+    var city    = cityEl  ? cityEl.value             : '';
+    var bairro  = bairroEl ? bairroEl.value          : '';
+    var rua     = ruaEl   ? ruaEl.value.trim()       : '';
+    var numero  = numeroEl ? numeroEl.value.trim()   : '';
+    var comp    = compEl  ? compEl.value.trim()      : '';
+    var ref     = refEl   ? refEl.value.trim()       : '';
+    var phone   = phoneEl ? phoneEl.value.replace(/\D/g,'') : '';
 
-    if (!name || !address) {
-      if (nameEl)  nameEl.classList.add('error');
-      if (addrEl)  addrEl.classList.add('error');
+    // VALIDAÇÕES OBRIGATÓRIAS
+    var errors = [];
+    
+    if (!name)                  { errors.push(nameEl);    }
+    if (!city)                  { errors.push(cityEl);    }
+    if (!bairro)                { errors.push(bairroEl);  }
+    if (!rua)                   { errors.push(ruaEl);     }
+    if (!numero)                { errors.push(numeroEl);  }
+    if (!phone || phone.length < 10) { errors.push(phoneEl); showToast('⚠️ Telefone inválido ou não preenchido', 'error'); }
+    
+    if (errors.length > 0) {
+      errors.forEach(function(el) { if (el) el.classList.add('error'); });
       if (!hasErr) card.scrollIntoView({behavior:'smooth',block:'center'});
       hasErr = true;
       return;
     }
-    if (nameEl)  nameEl.classList.remove('error');
-    if (addrEl)  addrEl.classList.remove('error');
+    
+    // Remover marcação de erro se passou
+    [nameEl, cityEl, bairroEl, ruaEl, numeroEl, compEl, phoneEl].forEach(function(el) {
+      if (el) el.classList.remove('error');
+    });
 
-    var yesBtn      = document.getElementById(id + '_paid_yes');
-    var isPaid      = yesBtn && yesBtn.classList.contains('paid');
-    var isNoBtn     = document.getElementById(id + '_paid_no');
-    var hasPay      = (yesBtn && (yesBtn.classList.contains('paid') || (isNoBtn && isNoBtn.classList.contains('due'))));
-    var valEl       = document.getElementById(id + '_value');
-    var productVal  = valEl ? parseMoney(valEl.value) : 0;
-    var timeFromEl  = document.getElementById(id + '_timeFrom');
-    var timeToEl    = document.getElementById(id + '_timeTo');
-    var phoneEl     = document.getElementById(id + '_phone');
-    var compEl      = document.getElementById(id + '_complement');
-    var notesEl     = document.getElementById(id + '_notes');
-    var dateEl      = document.getElementById(id + '_date');
-    var typeEl      = document.getElementById(id + '_type');
-    var cityEl      = document.getElementById(id + '_city');
+    // Montar endereço completo
+    var address = rua + ', ' + numero + ', ' + bairro + ' - ' + CIDADE_BAIRROS[city].nome;
 
+    // Verificar pagamento
+    var isPaid  = yesBtn && yesBtn.classList.contains('paid');
+    var isNoBtn = document.getElementById(id + '_paid_no');
+    var hasPay  = (yesBtn && (yesBtn.classList.contains('paid') || (isNoBtn && isNoBtn.classList.contains('due'))));
+    var productVal = valEl ? parseMoney(valEl.value) : 0;
+
+    // Data
     var delivDate = '';
     if (dateEl && dateEl.value) {
       var dp = dateEl.value.split('-');
@@ -421,18 +571,22 @@ window.submitPedido = function() {
     newStops.push({
       name:         name,
       address:      address,
-      complement:   compEl    ? compEl.value.trim()             : '',
-      phone:        phoneEl   ? phoneEl.value.replace(/\D/g,'') : '',
-      timeFrom:     timeFromEl? timeFromEl.value                 : '',
-      timeTo:       timeToEl  ? timeToEl.value                  : '',
+      complement:   comp,
+      reference:    ref,
+      phone:        phone,
+      timeFrom:     timeFromEl? timeFromEl.value : '',
+      timeTo:       timeToEl  ? timeToEl.value   : '',
       deliveryDate: delivDate,
-      serviceType:  typeEl    ? typeEl.value                    : 'entrega',
-      city:         cityEl    ? cityEl.value                    : '',
+      serviceType:  typeEl    ? typeEl.value     : 'entrega',
+      city:         CIDADE_BAIRROS[city].nome,
+      neighborhood: bairro,
+      street:       rua,
+      number:       numero,
       productValue: productVal,
       productPaid:  isPaid,
       value:        0,
       paid:         false,
-      notes:        notesEl   ? notesEl.value.trim()            : '',
+      notes:        notesEl   ? notesEl.value.trim() : '',
       store:        STORE_NAME || 'Loja',
       done:         false,
       status:       'pending',
@@ -441,7 +595,7 @@ window.submitPedido = function() {
     });
   });
 
-  if (hasErr)         { showToast('Preencha nome e endereço de todas as entregas', 'error'); return; }
+  if (hasErr) { return; }
   if (!newStops.length){ showToast('Adicione pelo menos uma entrega', 'error'); return; }
   if (!db)            { showToast('Sem conexão com o sistema. Recarregue a página.', 'error'); return; }
 
@@ -457,6 +611,8 @@ window.submitPedido = function() {
     .then(function() {
       document.getElementById('loading').classList.remove('show');
       document.getElementById('mainWrap').style.display = 'none';
+      
+      lastSubmittedStops = newStops;
 
       // Resumo
       var html = newStops.map(function(s, i) {
@@ -478,6 +634,9 @@ window.submitPedido = function() {
         newStops.length + ' entrega(s) enviada(s)</div>' + html;
       addToClientHistory(newStops);
       document.getElementById('successWrap').classList.add('show');
+      
+      // Mostra botão de WhatsApp
+      document.getElementById('btnWhatsApp').style.display = 'inline-block';
     })
     .catch(function(e) {
       document.getElementById('loading').classList.remove('show');
@@ -492,9 +651,37 @@ window.resetForm = function() {
   document.getElementById('stopsWrap').innerHTML = '';
   document.getElementById('mainWrap').style.display = 'block';
   document.getElementById('btnSubmit').disabled = false;
+  document.getElementById('btnWhatsApp').style.display = 'none';
   stopCount = 0;
   window.addStop();
   window.scrollTo(0,0);
+};
+
+// Enviar para WhatsApp
+window.sendWhatsApp = function() {
+  if (!lastSubmittedStops.length) return;
+  
+  var message = '🛵 *SPEEDBOY - Novo Pedido Recebido*\n\n';
+  message += '📦 *' + lastSubmittedStops.length + ' entrega(s):*\n\n';
+  
+  lastSubmittedStops.forEach(function(s, i) {
+    var type = s.serviceType === 'retirada' ? '📦 Retirada' : s.serviceType === 'troca' ? '🔄 Troca' : '🛵 Entrega';
+    message += (i+1) + '. *' + s.name + '*\n';
+    message += '   ' + type + '\n';
+    message += '   📍 ' + s.address + '\n';
+    if (s.reference) message += '   🔍 Ref: ' + s.reference + '\n';
+    if (s.timeFrom || s.timeTo) message += '   ⏰ ' + (s.timeFrom||'?') + ' - ' + (s.timeTo||'?') + '\n';
+    if (s.deliveryDate) message += '   📅 ' + s.deliveryDate + '\n';
+    if (s.productValue > 0) message += '   💰 R$ ' + s.productValue.toFixed(2).replace('.',',') + ' (' + (s.productPaid ? 'pago' : 'a cobrar') + ')\n';
+    message += '\n';
+  });
+  
+  message += '✅ Pedido enviado via SPEEDBOY';
+  
+  var encodedMessage = encodeURIComponent(message);
+  var whatsappUrl = 'https://wa.me/' + LUAN_PHONE + '?text=' + encodedMessage;
+  
+  window.open(whatsappUrl, '_blank');
 };
 
 // ═══════════════════════════════════════════════════
@@ -555,7 +742,7 @@ function addToClientHistory(stops) {
   var entry = {
     date: new Date().toLocaleDateString('pt-BR'),
     time: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
-    stops: stops.map(function(s){ return {name:s.name, address:s.address, serviceType:s.serviceType, city:s.city, deliveryDate:s.deliveryDate}; })
+    stops: stops.map(function(s){ return {name:s.name, address:s.address, serviceType:s.serviceType, city:s.city, deliveryDate:s.deliveryDate, reference:s.reference}; })
   };
   hist.unshift(entry);
   saveClientHistory(hist);
@@ -576,7 +763,8 @@ function renderClientHistory() {
   list.innerHTML = hist.map(function(entry) {
     var stops = entry.stops.map(function(s,i) {
       var type = s.serviceType==='retirada'?'📦':s.serviceType==='troca'?'🔄':'🛵';
-      return '<div style="margin-top:4px">' + type + ' ' + (i+1) + '. <strong>' + s.name + '</strong> — ' + (s.city||'') + (s.deliveryDate?' · 📅 '+s.deliveryDate:'') + '</div>';
+      var refStr = s.reference ? ' · 🔍 ' + s.reference : '';
+      return '<div style="margin-top:4px">' + type + ' ' + (i+1) + '. <strong>' + s.name + '</strong> — ' + (s.city||'') + (s.deliveryDate?' · 📅 '+s.deliveryDate:'') + refStr + '</div>';
     }).join('');
     return '<div class="hist-item"><div class="hist-item-name">📅 ' + entry.date + ' às ' + entry.time + '</div><div class="hist-item-info">' + stops + '</div></div>';
   }).join('');
