@@ -181,6 +181,32 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
 
 <script>
 // ═══════════════════════════════════════════════════
+//  BAIRROS POR CIDADE — Região Metropolitana Vitória
+// ═══════════════════════════════════════════════════
+var CIDADE_BAIRROS = {
+  'vitoria': {
+    nome: 'Vitória',
+    bairros: ['Centro', 'Praia do Canto', 'Bento Ferreira', 'Jardim Camburi', 'Santo Antônio', 'Maruípe', 'Jucutuquara', 'São Cristóvão', 'Morro do Moscoso', 'Funchal', 'Tabuazeiro', 'Ilhas']
+  },
+  'vilavelha': {
+    nome: 'Vila Velha',
+    bairros: ['Centro', 'Praia Costa', 'Ataíde', 'Itapemirim', 'Praia de Itaparica', 'Pontal das Garças', 'De Todos Os Santos', 'Barro Vermelho', 'Caxangá', 'Araxá']
+  },
+  'cariacica': {
+    nome: 'Cariacica',
+    bairros: ['Centro', 'Campo Grande', 'Barra do Jucu', 'Santa Paula', 'Sahy', 'Dois Rios', 'Tabajara', 'Porto de Cariacica', 'Utopia']
+  },
+  'serra': {
+    nome: 'Serra',
+    bairros: ['Centro', 'Laranjeiras', 'Manguinhos', 'Carapina', 'Novo México', 'Jacaraípe', 'Parque Residencial Laranjeiras', 'Homocea', 'Feu Rosa']
+  },
+  'viana': {
+    nome: 'Viana',
+    bairros: ['Centro', 'Alto Marista', 'Sede', 'Distrito de Itaguaçu']
+  }
+};
+
+// ═══════════════════════════════════════════════════
 //  CONFIGURAÇÃO FIREBASE — hardcoded
 // ═══════════════════════════════════════════════════
 var FIREBASE_CONFIG = {
@@ -272,37 +298,50 @@ window.addStop = function() {
         '<div class="field-label">Nome do cliente <span class="req">*</span></div>' +
         '<input class="field-input" id="' + id + '_name" placeholder="Ex: Pedro Santos" />' +
       '</div>' +
-      '<div class="field-group">' +
-        '<div class="field-label">Endereço completo <span class="req">*</span></div>' +
-        '<input class="field-input" id="' + id + '_address" placeholder="Rua, número, bairro, cidade — estado" />' +
-      '</div>' +
-      '<div class="field-group">' +
-        '<div class="field-label">Complemento / Referência</div>' +
-        '<input class="field-input" id="' + id + '_complement" placeholder="Apto, bloco, portão, cor da casa..." />' +
-      '</div>' +
+      '<div class="sec-divider" style="margin:16px 0 12px">📍 Endereço</div>' +
       '<div class="field-row">' +
         '<div class="field-group">' +
-          '<div class="field-label">📅 Data da entrega <span class="req">*</span></div>' +
-          '<input class="field-input" id="' + id + '_date" type="date" style="color:var(--text)" />' +
+          '<div class="field-label">Cidade <span class="req">*</span></div>' +
+          '<select class="field-input" id="' + id + '_city" style="appearance:none;cursor:pointer" onchange="window.updateBairros(\'' + id + '\')">' +
+            '<option value="">— Selecione —</option>' +
+            '<option value="vitoria">Vitória</option>' +
+            '<option value="vilavelha">Vila Velha</option>' +
+            '<option value="cariacica">Cariacica</option>' +
+            '<option value="serra">Serra</option>' +
+            '<option value="viana">Viana</option>' +
+          '</select>' +
         '</div>' +
         '<div class="field-group">' +
-          '<div class="field-label">Tipo de serviço</div>' +
-          '<select class="field-input" id="' + id + '_type" style="appearance:none;cursor:pointer">' +
-            '<option value="entrega">🛵 Entrega</option>' +
-            '<option value="retirada">📦 Retirada</option>' +
-            '<option value="troca">🔄 Troca</option>' +
+          '<div class="field-label">Bairro <span class="req">*</span></div>' +
+          '<select class="field-input" id="' + id + '_bairro" style="appearance:none;cursor:pointer">' +
+            '<option value="">— Selecione a cidade —</option>' +
           '</select>' +
         '</div>' +
       '</div>' +
       '<div class="field-group">' +
-        '<div class="field-label">🏙️ Cidade de entrega</div>' +
-        '<select class="field-input" id="' + id + '_city" style="appearance:none;cursor:pointer">' +
-          '<option value="">— Selecione a cidade —</option>' +
-          '<option value="SRR">Serra (SRR)</option>' +
-          '<option value="VIX">Vitória (VIX)</option>' +
-          '<option value="VV">Vila Velha (VV)</option>' +
-          '<option value="CCA">Cariacica (CCA)</option>' +
-          '<option value="OUT">Outra cidade</option>' +
+        '<div class="field-label">Rua / Avenida <span class="req">*</span></div>' +
+        '<input class="field-input" id="' + id + '_rua" placeholder="Rua Exemplo, Avenida Brasil..." />' +
+      '</div>' +
+      '<div class="field-row">' +
+        '<div class="field-group">' +
+          '<div class="field-label">Número <span class="req">*</span></div>' +
+          '<input class="field-input" id="' + id + '_numero" placeholder="123" />' +
+        '</div>' +
+        '<div class="field-group">' +
+          '<div class="field-label">Complemento <span class="req">*</span></div>' +
+          '<input class="field-input" id="' + id + '_complement" placeholder="Apto 42, bloco C, próximo à padaria..." />' +
+        '</div>' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">📅 Data da entrega <span class="req">*</span></div>' +
+        '<input class="field-input" id="' + id + '_date" type="date" style="color:var(--text)" />' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">Tipo de serviço</div>' +
+        '<select class="field-input" id="' + id + '_type" style="appearance:none;cursor:pointer">' +
+          '<option value="entrega">🛵 Entrega</option>' +
+          '<option value="retirada">📦 Retirada</option>' +
+          '<option value="troca">🔄 Troca</option>' +
         '</select>' +
       '</div>' +
       '<div class="field-group">' +
@@ -352,6 +391,25 @@ window.removeStop = function(id) {
   renumber();
 };
 
+// Atualizar bairros quando cidade muda
+window.updateBairros = function(stopId) {
+  var citySelect = document.getElementById(stopId + '_city');
+  var bairroSelect = document.getElementById(stopId + '_bairro');
+  var cityValue = citySelect.value;
+  
+  if (!cityValue || !CIDADE_BAIRROS[cityValue]) {
+    bairroSelect.innerHTML = '<option value="">— Selecione a cidade —</option>';
+    return;
+  }
+  
+  var bairros = CIDADE_BAIRROS[cityValue].bairros;
+  var html = '<option value="">— Selecione o bairro —</option>';
+  bairros.forEach(function(b) {
+    html += '<option value="' + b + '">' + b + '</option>';
+  });
+  bairroSelect.innerHTML = html;
+};
+
 function renumber() {
   var cards = document.querySelectorAll('.stop-card');
   cards.forEach(function(el, i) {
@@ -381,37 +439,66 @@ window.submitPedido = function() {
   var hasErr   = false;
 
   cards.forEach(function(card) {
-    var id      = card.id;
-    var nameEl  = document.getElementById(id + '_name');
-    var addrEl  = document.getElementById(id + '_address');
-    var name    = nameEl  ? nameEl.value.trim()  : '';
-    var address = addrEl  ? addrEl.value.trim()  : '';
+    var id = card.id;
+    
+    // Elementos
+    var nameEl      = document.getElementById(id + '_name');
+    var cityEl      = document.getElementById(id + '_city');
+    var bairroEl    = document.getElementById(id + '_bairro');
+    var ruaEl       = document.getElementById(id + '_rua');
+    var numeroEl    = document.getElementById(id + '_numero');
+    var compEl      = document.getElementById(id + '_complement');
+    var phoneEl     = document.getElementById(id + '_phone');
+    var yesBtn      = document.getElementById(id + '_paid_yes');
+    var dateEl      = document.getElementById(id + '_date');
+    var typeEl      = document.getElementById(id + '_type');
+    var timeFromEl  = document.getElementById(id + '_timeFrom');
+    var timeToEl    = document.getElementById(id + '_timeTo');
+    var valEl       = document.getElementById(id + '_value');
+    var notesEl     = document.getElementById(id + '_notes');
+    
+    // Valores
+    var name    = nameEl  ? nameEl.value.trim()      : '';
+    var city    = cityEl  ? cityEl.value             : '';
+    var bairro  = bairroEl ? bairroEl.value          : '';
+    var rua     = ruaEl   ? ruaEl.value.trim()       : '';
+    var numero  = numeroEl ? numeroEl.value.trim()   : '';
+    var comp    = compEl  ? compEl.value.trim()      : '';
+    var phone   = phoneEl ? phoneEl.value.replace(/\D/g,'') : '';
 
-    if (!name || !address) {
-      if (nameEl)  nameEl.classList.add('error');
-      if (addrEl)  addrEl.classList.add('error');
+    // VALIDAÇÕES OBRIGATÓRIAS
+    var errors = [];
+    
+    if (!name)                  { errors.push(nameEl);    }
+    if (!city)                  { errors.push(cityEl);    }
+    if (!bairro)                { errors.push(bairroEl);  }
+    if (!rua)                   { errors.push(ruaEl);     }
+    if (!numero)                { errors.push(numeroEl);  }
+    if (!comp)                  { errors.push(compEl);    showToast('⚠️ Complemento é obrigatório (apto, bloco, referência...)', 'error'); }
+    if (!phone || phone.length < 10) { errors.push(phoneEl); showToast('⚠️ Telefone inválido ou não preenchido', 'error'); }
+    
+    if (errors.length > 0) {
+      errors.forEach(function(el) { if (el) el.classList.add('error'); });
       if (!hasErr) card.scrollIntoView({behavior:'smooth',block:'center'});
       hasErr = true;
       return;
     }
-    if (nameEl)  nameEl.classList.remove('error');
-    if (addrEl)  addrEl.classList.remove('error');
+    
+    // Remover marcação de erro se passou
+    [nameEl, cityEl, bairroEl, ruaEl, numeroEl, compEl, phoneEl].forEach(function(el) {
+      if (el) el.classList.remove('error');
+    });
 
-    var yesBtn      = document.getElementById(id + '_paid_yes');
-    var isPaid      = yesBtn && yesBtn.classList.contains('paid');
-    var isNoBtn     = document.getElementById(id + '_paid_no');
-    var hasPay      = (yesBtn && (yesBtn.classList.contains('paid') || (isNoBtn && isNoBtn.classList.contains('due'))));
-    var valEl       = document.getElementById(id + '_value');
-    var productVal  = valEl ? parseMoney(valEl.value) : 0;
-    var timeFromEl  = document.getElementById(id + '_timeFrom');
-    var timeToEl    = document.getElementById(id + '_timeTo');
-    var phoneEl     = document.getElementById(id + '_phone');
-    var compEl      = document.getElementById(id + '_complement');
-    var notesEl     = document.getElementById(id + '_notes');
-    var dateEl      = document.getElementById(id + '_date');
-    var typeEl      = document.getElementById(id + '_type');
-    var cityEl      = document.getElementById(id + '_city');
+    // Montar endereço completo
+    var address = rua + ', ' + numero + ', ' + bairro + ' - ' + CIDADE_BAIRROS[city].nome;
 
+    // Verificar pagamento
+    var isPaid  = yesBtn && yesBtn.classList.contains('paid');
+    var isNoBtn = document.getElementById(id + '_paid_no');
+    var hasPay  = (yesBtn && (yesBtn.classList.contains('paid') || (isNoBtn && isNoBtn.classList.contains('due'))));
+    var productVal = valEl ? parseMoney(valEl.value) : 0;
+
+    // Data
     var delivDate = '';
     if (dateEl && dateEl.value) {
       var dp = dateEl.value.split('-');
@@ -421,18 +508,21 @@ window.submitPedido = function() {
     newStops.push({
       name:         name,
       address:      address,
-      complement:   compEl    ? compEl.value.trim()             : '',
-      phone:        phoneEl   ? phoneEl.value.replace(/\D/g,'') : '',
-      timeFrom:     timeFromEl? timeFromEl.value                 : '',
-      timeTo:       timeToEl  ? timeToEl.value                  : '',
+      complement:   comp,
+      phone:        phone,
+      timeFrom:     timeFromEl? timeFromEl.value : '',
+      timeTo:       timeToEl  ? timeToEl.value   : '',
       deliveryDate: delivDate,
-      serviceType:  typeEl    ? typeEl.value                    : 'entrega',
-      city:         cityEl    ? cityEl.value                    : '',
+      serviceType:  typeEl    ? typeEl.value     : 'entrega',
+      city:         CIDADE_BAIRROS[city].nome,
+      neighborhood: bairro,
+      street:       rua,
+      number:       numero,
       productValue: productVal,
       productPaid:  isPaid,
       value:        0,
       paid:         false,
-      notes:        notesEl   ? notesEl.value.trim()            : '',
+      notes:        notesEl   ? notesEl.value.trim() : '',
       store:        STORE_NAME || 'Loja',
       done:         false,
       status:       'pending',
@@ -441,7 +531,7 @@ window.submitPedido = function() {
     });
   });
 
-  if (hasErr)         { showToast('Preencha nome e endereço de todas as entregas', 'error'); return; }
+  if (hasErr) { return; }
   if (!newStops.length){ showToast('Adicione pelo menos uma entrega', 'error'); return; }
   if (!db)            { showToast('Sem conexão com o sistema. Recarregue a página.', 'error'); return; }
 
