@@ -410,6 +410,7 @@ window.submitPedido = function() {
     var notesEl     = document.getElementById(id + '_notes');
     var dateEl      = document.getElementById(id + '_date');
     var typeEl      = document.getElementById(id + '_type');
+    var cityEl      = document.getElementById(id + '_city');
 
     var delivDate = '';
     if (dateEl && dateEl.value) {
@@ -465,7 +466,7 @@ window.submitPedido = function() {
         var timeStr = (s.timeFrom || s.timeTo)
           ? ' · ⏰ ' + (s.timeFrom||'?') + '–' + (s.timeTo||'?')
           : '';
-        var typeIcon = s.serviceType === 'retirada' ? '📦 Retirada' : '🛵 Entrega';
+        var typeIcon = s.serviceType === 'retirada' ? '📦 Retirada' : s.serviceType === 'troca' ? '🔄 Troca' : '🛵 Entrega';
         var dateStr  = s.deliveryDate ? ' · 📅 ' + s.deliveryDate : '';
         return '<div class="success-item">' +
           '<strong>' + typeIcon + ' ' + (i+1) + '. ' + s.name + '</strong>' + dateStr + '<br>' +
