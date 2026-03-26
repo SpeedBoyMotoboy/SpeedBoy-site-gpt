@@ -72,7 +72,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .pending-store{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.5px;text-transform:uppercase;margin-top:3px;}
 .btn-accept{background:var(--green);color:#000;border:none;border-radius:9px;padding:14px 16px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;cursor:pointer;flex-shrink:0;}
 .btn-quick-done{background:var(--green);color:#000;border:none;border-radius:9px;padding:12px 14px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;cursor:pointer;width:100%;margin-top:8px;}
-.btn-copy-addr{background:var(--blue);color:#fff;border:none;border-radius:9px;padding:12px 14px;font-family:'Barlow',sans-serif;font-weight:700;font-size:13px;cursor:pointer;width:100%;margin-bottom:8px;}
+
 .btn-reject{background:var(--card2);color:var(--red);border:1px solid var(--red);border-radius:9px;padding:14px 16px;font-size:13px;cursor:pointer;flex-shrink:0;margin-right:5px;}
 
 /* FILTER BAR */
@@ -633,7 +633,7 @@ let bulkData    = [];
 // ══════════════════════════════════════
 //  FILTROS
 // ══════════════════════════════════════
-var activeFilters = { status:'all', city:'all', type:'all', date:'all' };
+var activeFilters = { status:'all', city:'all', type:'all', date:'all', paid:'all' };
 
 function toggleFilters() {
   var wrap = document.getElementById('filterWrap');
@@ -668,7 +668,7 @@ function fmtChipDate(d) {
 
 function setFilter(type, val) {
   activeFilters[type] = val;
-  var prefix = {status:'fs-',city:'fc-',type:'ft-'}[type]||'';
+  var prefix = {status:'fs-',city:'fc-',type:'ft-',paid:'fp-'}[type]||'';
   if (prefix) {
     document.querySelectorAll('[id^="'+prefix+'"]').forEach(function(b){b.classList.remove('on');});
     var el = document.getElementById(prefix+val);
@@ -680,17 +680,27 @@ function setFilter(type, val) {
 
 function applyFilters(list) {
   return list.filter(function(s) {
+    // Status filter
     if (activeFilters.status==='done'    && !s.done)  return false;
     if (activeFilters.status==='pending' &&  s.done)  return false;
-    if (activeFilters.city!=='all' && (s.city||'')!==activeFilters.city) return false;
+    // City filter (com fallback)
+    if (activeFilters.city!=='all' && (s.city||'').toLowerCase()!==activeFilters.city.toLowerCase()) return false;
+    // Service type filter
     if (activeFilters.type!=='all' && (s.serviceType||'entrega')!==activeFilters.type) return false;
-    if (activeFilters.date!=='all' && (s.deliveryDate||'')!==activeFilters.date) return false;
+    // Date filter (com fallback para hoje se vazio)
+    if (activeFilters.date!=='all') {
+      const stopDate = s.deliveryDate || toDateStr(new Date());
+      if (stopDate !== activeFilters.date) return false;
+    }
+    // Paid filter (opcional)
+    if (activeFilters.paid==='received' && !s.paid) return false;
+    if (activeFilters.paid==='pending' && s.paid) return false;
     return true;
   });
 }
 
 let sortMode    = 'manual';
-let reportPeriod= 'week';
+let reportPeriod='week';
 let editingIdx  = -1;
 
 // Firebase state
@@ -857,11 +867,10 @@ function renderHome(){
           ${s.productValue>0?`<div><strong>PRODUTO</strong> R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')} <span class="paid-badge ${s.productPaid?'yes':'no'}">${s.productPaid?'✓ Pago':'💰 A cobrar'}</span></div>`:''}
         </div>
         <div class="stop-actions" onclick="event.stopPropagation()">
-          <button class="btn-copy-addr" onclick="copyAddress(${i})">📋 Copiar Endereço</button>
-          <button class="btn-quick-done" onclick="togDone(${i})">${s.done?'↩️ Reabrir':'✅ ENTREGUE'}</button>
+          <button class="btn-quick-done" onclick="togDone(${i})" style="margin-bottom:0;">${s.done?'↩️ Reabrir':'✅ ENTREGUE'}</button>
           <div style="display:flex;gap:7px;flex-wrap:wrap;">
+            <button class="btn-act ba-maps" onclick="openMapsWithAddress(${i})" style="flex:1;background:#4285f4;color:#fff;font-weight:800;padding:14px;font-size:14px;">🗺️ NAVEGAR</button>
             ${s.phone?`<button class="btn-act ba-wpp" onclick="openWpp(${i})">💬 WhatsApp</button>`:''}
-            <button class="btn-act ba-maps" onclick="openMapsWithAddress(${i})">🗺️ Navegar</button>
             ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''} " onclick="togPaid(${i})">${s.paid?'💸 Ok':'💰 Paga?'}</button>`:''}
             ${s.productValue>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''} " onclick="togProductPaid(${i})">${s.productPaid?'✅ Ok':'💳 Cobrar'}</button>`:''}
             <button class="btn-act ba-edit" onclick="goForm(${i})">✏️ Editar</button>
@@ -892,17 +901,6 @@ function togPaid(i)        { stops[i].paid=!stops[i].paid; saveStops(); renderHo
 function togProductPaid(i) { stops[i].productPaid=!stops[i].productPaid; saveStops(); renderHome(); }
 function delStop(i){ if(!confirm(`Remover ${stops[i].name}?`))return; stops.splice(i,1); saveStops(); renderHome(); }
 
-// Copiar endereço para clipboard
-function copyAddress(i){
-  const s = stops[i];
-  const addr = s.address + (s.complement ? ' - ' + s.complement : '');
-  navigator.clipboard.writeText(addr).then(()=>{
-    toast('📋 Endereço copiado!', 'success');
-  }).catch(()=>{
-    toast('Erro ao copiar', 'error');
-  });
-}
-
 // Abrir Google Maps com endereço pré-preenchido
 function openMapsWithAddress(i){
   const s = stops[i];
@@ -931,13 +929,19 @@ function saveStop(){
   if(!name||!address){ toast('Nome e endereço são obrigatórios!','error'); return; }
   const idx = parseInt(document.getElementById('editIdx').value);
   
+  // Validar índice se editando
+  if(idx >= 0 && (idx >= stops.length || idx < 0)) {
+    toast('Erro: Índice inválido', 'error');
+    return;
+  }
+  
   const rawDate = document.getElementById('fDelivDate').value;
   const delivDate = rawDate ? rawDate.split('-').reverse().join('/') : '';
   const s={
     name, address,
-    store:        document.getElementById('fStore').value,
-    city:         document.getElementById('fCity').value,
-    serviceType:  document.getElementById('fServiceType').value,
+    store:        document.getElementById('fStore').value || '',
+    city:         document.getElementById('fCity').value || '',
+    serviceType:  document.getElementById('fServiceType').value || 'entrega',
     deliveryDate: delivDate,
     complement:   document.getElementById('fComplement').value.trim(),
     timeFrom:     document.getElementById('fTimeFrom')?.value || '',
@@ -948,8 +952,8 @@ function saveStop(){
     productValue: parseMoney(document.getElementById('fProductValue').value),
     productPaid:  document.getElementById('fProductPaid').checked,
     notes:        document.getElementById('fNotes').value.trim(),
-    done:         idx>=0 ? stops[idx].done : false,
-    _order:       idx>=0 ? (stops[idx]._order||idx) : stops.length
+    done:         idx>=0 && idx<stops.length ? stops[idx].done : false,
+    _order:       idx>=0 && idx<stops.length ? (stops[idx]._order||idx) : stops.length
   };
   if(idx>=0) stops[idx]=s; else stops.push(s);
   saveStops();
@@ -1158,12 +1162,19 @@ function setPeriod(p){
   renderReport();
 }
 
+// Inicializar período como semanal
+window.addEventListener('DOMContentLoaded', function(){
+  setTimeout(()=>{
+    document.getElementById('tabW').classList.add('on');
+  }, 100);
+});
+
 function getReportData(){
   const todayStr=new Date().toLocaleDateString('pt-BR');
   const allDays=[{date:todayStr,stops},...history];
   const now=new Date();
   let cutoff;
-  if(reportPeriod==='week'){ cutoff=new Date(now); cutoff.setDate(now.getDate()-6); }
+  if(reportPeriod==='week'){ cutoff=new Date(now); cutoff.setDate(now.getDate()-7); }
   else cutoff=new Date(now.getFullYear(),now.getMonth(),1);
   const days=allDays.filter(d=>parseDate(d.date)>=cutoff);
   let total=0,received=0,deliveries=0; const allStops=[]; const sm={};
