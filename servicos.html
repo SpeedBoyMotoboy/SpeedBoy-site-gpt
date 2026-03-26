@@ -1,48 +1,48 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SPEEDBOY | Solicitação de Serviços Especializados</title>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #070709; --card: #13131a; --border: #252535;
-            --accent: #f5c518; --text: #f0f0f0; --muted: #888;
-            --radius: 12px; --shadow: 0 8px 32px rgba(0,0,0,0.5);
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Barlow', sans-serif; }
-        body { background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
-        .container { max-width: 500px; width: 100%; background: var(--card); padding: 30px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
-        
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { font-family: 'Barlow Condensed'; font-size: 28px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-        .header p { color: var(--muted); font-size: 14px; margin-top: 5px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPEEDBOY - Serviços Especializados</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #070709; --card: #13131a; --border: #252535;
+    --accent: #f5c518; --text: #f0f0f0; --muted: #888;
+    --radius: 12px; --shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Barlow', sans-serif; }
+body { background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
+.container { max-width: 500px; width: 100%; background: var(--card); padding: 30px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
 
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-size: 12px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px; }
-        
-        input, select, textarea {
-            width: 100%; background: #000; border: 1px solid var(--border); border-radius: 8px;
-            padding: 12px; color: #fff; font-size: 16px; transition: 0.3s;
-        }
-        input:focus, select:focus { border-color: var(--accent); outline: none; }
+.header { text-align: center; margin-bottom: 30px; }
+.header h1 { font-family: 'Barlow Condensed'; font-size: 28px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+.header p { color: var(--muted); font-size: 14px; margin-top: 5px; }
 
-        .service-card { 
-            background: #1a1a24; padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent); 
-            margin-top: 10px; animation: fadeIn 0.4s ease;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.form-group { margin-bottom: 20px; }
+label { display: block; font-size: 12px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px; }
 
-        .btn-submit {
-            width: 100%; background: var(--accent); color: #000; border: none; padding: 15px;
-            font-family: 'Barlow Condensed'; font-weight: 800; font-size: 18px; border-radius: 8px;
-            cursor: pointer; text-transform: uppercase; margin-top: 20px; transition: 0.3s;
-        }
-        .btn-submit:hover { transform: scale(1.02); filter: brightness(1.1); }
-        
-        .footer-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 20px; line-height: 1.4; }
-    </style>
+input, select, textarea {
+    width: 100%; background: #000; border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px; color: #fff; font-size: 16px; transition: 0.3s;
+}
+input:focus, select:focus { border-color: var(--accent); outline: none; }
+
+.service-card { 
+    background: #1a1a24; padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent); 
+    margin-top: 10px; animation: fadeIn 0.4s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.btn-submit {
+    width: 100%; background: var(--accent); color: #000; border: none; padding: 15px;
+    font-family: 'Barlow Condensed'; font-weight: 800; font-size: 18px; border-radius: 8px;
+    cursor: pointer; text-transform: uppercase; margin-top: 20px; transition: 0.3s;
+}
+.btn-submit:hover { transform: scale(1.02); filter: brightness(1.1); }
+
+.footer-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 20px; line-height: 1.4; }
+</style>
 </head>
 <body>
 
@@ -96,7 +96,19 @@ function toggleCampos() {
     const area = document.getElementById('areaDinamica');
     area.innerHTML = '';
 
-    if(tipo === 'cartorio') {
+    if(tipo === 'entrega') {
+        area.innerHTML = `
+            <div class="service-card">
+                <label>Descrição do que será entregue</label>
+                <input type="text" id="detalhe1" placeholder="Ex: Envelope, caixa pequena, documento...">
+                <label style="margin-top:10px">Urgência</label>
+                <select id="detalhe2">
+                    <option>Normal</option>
+                    <option>Urgente (até 1h)</option>
+                    <option>Expressa (até 30min)</option>
+                </select>
+            </div>`;
+    } else if(tipo === 'cartorio') {
         area.innerHTML = `
             <div class="service-card">
                 <label>Tipo de Ato</label>
@@ -116,6 +128,19 @@ function toggleCampos() {
                 <label style="margin-top:10px">Enviar fotos para:</label>
                 <input type="text" id="detalhe2" placeholder="Número do WhatsApp para envio">
             </div>`;
+    } else if(tipo === 'bancario') {
+        area.innerHTML = `
+            <div class="service-card">
+                <label>Tipo de Serviço Bancário</label>
+                <select id="detalhe1">
+                    <option>Pagamento de boleto</option>
+                    <option>Depósito em conta</option>
+                    <option>Saque / Transferência</option>
+                    <option>Outro</option>
+                </select>
+                <label style="margin-top:10px">Valor aproximado ou detalhes</label>
+                <input type="text" id="detalhe2" placeholder="Ex: Boleto de R$ 150,00 - CEMIG">
+            </div>`;
     } else if(tipo === 'exames') {
         area.innerHTML = `
             <div class="service-card">
@@ -128,25 +153,28 @@ function toggleCampos() {
 function enviarPedido() {
     const telefoneDestino = "5527999999999"; // SUBSTITUA PELO SEU NÚMERO
     const tipo = document.getElementById('tipoServico').options[document.getElementById('tipoServico').selectedIndex].text;
-    const nome = document.getElementById('clienteNome').value;
-    const origem = document.getElementById('origem').value;
-    const destino = document.getElementById('destino').value;
+    const nome = document.getElementById('clienteNome').value.trim();
+    const origem = document.getElementById('origem').value.trim();
+    const destino = document.getElementById('destino').value.trim();
     const d1 = document.getElementById('detalhe1')?.value || "";
     const d2 = document.getElementById('detalhe2')?.value || "";
-    const obs = document.getElementById('obs').value;
+    const obs = document.getElementById('obs').value.trim();
 
-    if(!nome || !origem) { alert("Por favor, preencha seu nome e o endereço de origem."); return; }
+    if(!nome || !origem || !destino) { 
+        alert("Por favor, preencha Nome, Origem e Destino."); 
+        return; 
+    }
 
-    const mensagem = `*NOVA SOLICITAÇÃO - SPEEDBOY*%0A%0A` +
-                     `*Serviço:* ${tipo}%0A` +
-                     `*Cliente:* ${nome}%0A` +
-                     `*Origem:* ${origem}%0A` +
-                     `*Destino:* ${destino}%0A` +
-                     (d1 ? `*Detalhe:* ${d1}%0A` : "") +
-                     (d2 ? `*Info Extra:* ${d2}%0A` : "") +
-                     `*Obs:* ${obs}`;
+    const mensagem = `*NOVA SOLICITAÇÃO - SPEEDBOY*\n\n` +
+                     `*Serviço:* ${tipo}\n` +
+                     `*Cliente:* ${nome}\n` +
+                     `*Origem:* ${origem}\n` +
+                     `*Destino:* ${destino}\n` +
+                     (d1 ? `*Detalhe:* ${d1}\n` : "") +
+                     (d2 ? `*Info Extra:* ${d2}\n` : "") +
+                     (obs ? `*Obs:* ${obs}` : "");
 
-    window.open(`https://wa.me/${telefoneDestino}?text=${mensagem}`, '_blank');
+    window.open(`https://wa.me/${telefoneDestino}?text=${encodeURIComponent(mensagem)}`, '_blank');
 }
 
 // Inicia com campo vazio
