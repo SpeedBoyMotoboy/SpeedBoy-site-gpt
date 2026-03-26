@@ -430,65 +430,105 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       <button class="back-btn" onclick="goNav('homeScreen','nav-home')">←</button>
       <span id="formTitle">Nova parada</span>
     </div>
-    <div class="flabel">Cole a mensagem do WhatsApp</div>
-    <div class="paste-box">
-      <textarea class="paste-area" id="pasteArea" placeholder="Cole aqui a mensagem com os dados do cliente..."></textarea>
-      <button class="btn-clear" onclick="document.getElementById('pasteArea').value=''">✕</button>
+    
+    <div class="field-group">
+      <div class="field-label">Cole a mensagem do WhatsApp</div>
+      <div class="paste-box">
+        <textarea class="paste-area" id="pasteArea" placeholder="Cole aqui a mensagem com os dados do cliente..."></textarea>
+        <button class="btn-clear" onclick="document.getElementById('pasteArea').value=''">✕</button>
+      </div>
     </div>
     <button class="btn-parse" id="parseBtn" onclick="doParse()">🤖 Processar automaticamente <span class="free-badge">GRÁTIS</span></button>
-    <div class="divider">dados da entrega</div>
-    <div class="field"><div class="flabel">🏪 Loja de origem</div><select class="fselect" id="fStore"><option value="">— Sem loja específica —</option></select></div>
-    <div class="field"><div class="flabel">Nome do cliente *</div><input class="finput" id="fName" placeholder="Ex: Pedro Santos" /></div>
-    <div class="field"><div class="flabel">Endereço completo *</div><input class="finput" id="fAddress" placeholder="Av. Central 890, Morada de Laranjeiras, Serra/ES" /></div>
-    <div class="frow">
-      <div class="field"><div class="flabel">Cidade</div>
-        <select class="fselect" id="fCity">
+    
+    <div class="sec-divider">📦 Dados da entrega</div>
+    
+    <div class="field-group">
+      <div class="field-label">🏪 Loja de origem</div>
+      <select class="field-input" id="fStore"><option value="">— Sem loja específica —</option></select>
+    </div>
+    
+    <div class="field-group">
+      <div class="field-label">Nome do cliente <span class="req">*</span></div>
+      <input class="field-input" id="fName" placeholder="Ex: Pedro Santos" />
+    </div>
+    
+    <div class="field-group">
+      <div class="field-label">Endereço completo <span class="req">*</span></div>
+      <input class="field-input" id="fAddress" placeholder="Av. Central 890, Morada de Laranjeiras, Serra/ES" />
+    </div>
+    
+    <div class="sec-divider">📍 Localização</div>
+    
+    <div class="field-row">
+      <div class="field-group">
+        <div class="field-label">Cidade</div>
+        <select class="field-input" id="fCity">
           <option value="">— Selecione —</option>
-          <option value="SRR">🏙️ Serra (SRR)</option>
-          <option value="VIX">🏙️ Vitória (VIX)</option>
-          <option value="VV">🏙️ Vila Velha (VV)</option>
-          <option value="CCA">🏙️ Cariacica (CCA)</option>
-          <option value="OUT">📍 Outra</option>
+          <option value="SRR">Serra (SRR)</option>
+          <option value="VIX">Vitória (VIX)</option>
+          <option value="VV">Vila Velha (VV)</option>
+          <option value="CCA">Cariacica (CCA)</option>
+          <option value="OUT">Outra</option>
         </select>
       </div>
-      <div class="field"><div class="flabel">Tipo</div>
-        <select class="fselect" id="fServiceType">
+      <div class="field-group">
+        <div class="field-label">Tipo de serviço</div>
+        <select class="field-input" id="fServiceType">
           <option value="entrega">🛵 Entrega</option>
           <option value="retirada">📦 Retirada</option>
           <option value="troca">🔄 Troca</option>
         </select>
       </div>
     </div>
-    <div class="field"><div class="flabel">Complemento / Referência</div><input class="finput" id="fComplement" placeholder="Apto, bloco, cor da casa..." /></div>
-    <div class="frow">
-      <div class="field"><div class="flabel">📅 Data da entrega</div><input class="finput" id="fDelivDate" type="date" style="color:var(--text)" /></div>
-      <div class="field"><div class="flabel">⏰ De</div><input class="finput" id="fTimeFrom" type="time" /></div>
+    
+    <div class="field-group">
+      <div class="field-label">Complemento / Referência</div>
+      <input class="field-input" id="fComplement" placeholder="Apto, bloco, cor da casa..." />
     </div>
-    <div class="frow">
-      <div class="field"><div class="flabel">⏰ Até</div><input class="finput" id="fTimeTo" type="time" /></div>
+    
+    <div class="sec-divider">⏰ Horário e data</div>
+    
+    <div class="field-group">
+      <div class="field-label">📅 Data da entrega</div>
+      <input class="field-input" id="fDelivDate" type="date" style="color:var(--text)" />
     </div>
-    <div class="field"><div class="flabel">Telefone (WhatsApp)</div><input class="finput" id="fPhone" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" /></div>
-    <div class="frow">
-      <div class="field">
-        <div class="flabel">🛵 Sua taxa (R$)</div>
-        <input class="finput" id="fValue" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" />
+    
+    <div class="field-row">
+      <div class="field-group">
+        <div class="field-label">De</div>
+        <input class="field-input" id="fTimeFrom" type="time" />
+      </div>
+      <div class="field-group">
+        <div class="field-label">Até</div>
+        <input class="field-input" id="fTimeTo" type="time" />
+      </div>
+    </div>
+    
+    <div class="sec-divider">💬 Contato</div>
+    
+    <div class="field-group">
+      <div class="field-label">Telefone (WhatsApp) <span class="req">*</span></div>
+      <input class="field-input" id="fPhone" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" />
+    </div>
+    
+    <div class="sec-divider">💰 Valores</div>
+    
+    <div class="field-row">
+      <div class="field-group">
+        <div class="field-label">🛵 Sua taxa (R$) <span class="req">*</span></div>
+        <div class="money-input-wrap">
+          <span class="money-prefix">R$</span>
+          <input class="field-input" id="fValue" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" />
+        </div>
         <div style="font-size:10px;color:var(--muted);margin-top:4px;">Entra no seu financeiro</div>
       </div>
-      <div class="field">
-        <div class="flabel">💰 Produto cliente (R$)</div>
-        <input class="finput" id="fProductValue" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" />
-        <div style="font-size:10px;color:var(--muted);margin-top:4px;">Cobrar do cliente</div>
-      </div>
     </div>
-    <div class="frow">
-      <div class="field"><div class="flabel">Status da taxa</div>
-        <label class="toggle-row"><input type="checkbox" id="fPaid" onchange="document.getElementById('paidLbl').textContent=this.checked?'Recebido ✓':'A receber'" /><div class="toggle-track"></div><span class="toggle-lbl" id="paidLbl">A receber</span></label>
-      </div>
-      <div class="field"><div class="flabel">Status do produto</div>
-        <label class="toggle-row"><input type="checkbox" id="fProductPaid" onchange="document.getElementById('prodPaidLbl').textContent=this.checked?'Pago ✓':'A cobrar'" /><div class="toggle-track"></div><span class="toggle-lbl" id="prodPaidLbl">A cobrar</span></label>
-      </div>
+    
+    <div class="field-group">
+      <div class="field-label">Observações</div>
+      <input class="field-input" id="fNotes" placeholder="Ex: Cuidado com o cachorro" />
     </div>
-    <div class="field"><div class="flabel">Observações</div><input class="finput" id="fNotes" placeholder="Ex: Cuidado com o cachorro" /></div>
+    
     <input type="hidden" id="editIdx" value="-1" />
     <button class="btn-save" onclick="saveStop()">✅ Salvar parada</button>
   </div>
@@ -796,11 +836,6 @@ function goForm(idx) {
     } else { document.getElementById('fDelivDate').value=''; }
     document.getElementById('fNotes').value       = s.notes      || '';
     document.getElementById('fValue').value          = s.value ? String(s.value).replace('.',',') : '';
-    document.getElementById('fPaid').checked          = !!s.paid;
-    document.getElementById('paidLbl').textContent    = s.paid ? 'Recebido ✓' : 'A receber';
-    document.getElementById('fProductValue').value    = s.productValue ? String(s.productValue).replace('.',',') : '';
-    document.getElementById('fProductPaid').checked   = !!s.productPaid;
-    document.getElementById('prodPaidLbl').textContent= s.productPaid ? 'Pago ✓' : 'A cobrar';
     const ph = document.getElementById('fPhone'); ph.value=s.phone||''; if(s.phone) maskPhone(ph);
   }
   document.getElementById('editIdx').value = editingIdx;
@@ -811,16 +846,11 @@ function goForm(idx) {
 }
 
 function resetForm(){
-  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes','fValue','fProductValue','fTimeFrom','fTimeTo','fDelivDate'].forEach(id=>document.getElementById(id).value='');
+  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes','fValue','fTimeFrom','fTimeTo','fDelivDate'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fCity').value='';
   document.getElementById('fServiceType').value='entrega';
   document.getElementById('fStore').value='';
-  document.getElementById('fPaid').checked=false;
-  document.getElementById('paidLbl').textContent='A receber';
-  document.getElementById('fProductPaid').checked=false;
-  document.getElementById('prodPaidLbl').textContent='A cobrar';
 }
-
 // ═══════════════════════════════════════════════════════
 //  HOME / STOPS
 // ═══════════════════════════════════════════════════════
@@ -954,9 +984,7 @@ function saveStop(){
     timeTo:       document.getElementById('fTimeTo')?.value   || '',
     phone:        document.getElementById('fPhone').value.replace(/\D/g,''),
     value:        parseMoney(document.getElementById('fValue').value),
-    paid:         document.getElementById('fPaid').checked,
-    productValue: parseMoney(document.getElementById('fProductValue').value),
-    productPaid:  document.getElementById('fProductPaid').checked,
+    paid:         false,
     notes:        document.getElementById('fNotes').value.trim(),
     done:         idx>=0 && idx<stops.length ? stops[idx].done : false,
     _order:       idx>=0 && idx<stops.length ? (stops[idx]._order||idx) : stops.length
