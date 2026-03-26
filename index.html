@@ -481,10 +481,10 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       </div>
     </div>
     <div class="frow">
-      <div class="field"><div class="flabel">Taxa paga?</div>
+      <div class="field"><div class="flabel">Status da taxa</div>
         <label class="toggle-row"><input type="checkbox" id="fPaid" onchange="document.getElementById('paidLbl').textContent=this.checked?'Recebido ✓':'A receber'" /><div class="toggle-track"></div><span class="toggle-lbl" id="paidLbl">A receber</span></label>
       </div>
-      <div class="field"><div class="flabel">Produto pago?</div>
+      <div class="field"><div class="flabel">Status do produto</div>
         <label class="toggle-row"><input type="checkbox" id="fProductPaid" onchange="document.getElementById('prodPaidLbl').textContent=this.checked?'Pago ✓':'A cobrar'" /><div class="toggle-track"></div><span class="toggle-lbl" id="prodPaidLbl">A cobrar</span></label>
       </div>
     </div>
@@ -503,6 +503,11 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       <input class="meta-inp" id="metaInp" type="number" placeholder="0" oninput="updateMeta()" />
     </div>
     <div class="meta-bar-wrap"><div class="meta-bar" id="metaBar" style="width:0%"></div></div>
+    <div class="meta-row" style="margin-top:16px;">
+      <div class="meta-lbl">META SEMANAL (R$)</div>
+      <input class="meta-inp" id="metaWeekInp" type="number" placeholder="0" oninput="updateMetaWeek()" />
+    </div>
+    <div class="meta-bar-wrap"><div class="meta-bar" id="metaBarWeek" style="width:0%;background:var(--blue);"></div></div>
     <div class="sum-grid" id="sumGrid"></div>
     <div class="chart-box"><div class="chart-lbl">Ganhos — últimos 7 dias</div><canvas id="chart" height="140"></canvas></div>
     <div class="store-break" id="storeBreak"></div>
@@ -528,6 +533,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <div id="reportContent"></div>
     <button class="btn-pdf"   id="btnPdf"   onclick="genPDF()">📄 Baixar PDF</button>
     <button class="btn-share" id="btnShare" onclick="shareReport()">💬 Compartilhar no WhatsApp</button>
+    <button class="btn-pdf" style="background:linear-gradient(135deg,#667eea,#764ba2);margin-top:8px;" id="btnStoreReport" onclick="downloadStoreReport()">🏪 Baixar por Loja (CSV)</button>
   </div>
 </div>
 
@@ -956,6 +962,13 @@ function saveStop(){
     _order:       idx>=0 && idx<stops.length ? (stops[idx]._order||idx) : stops.length
   };
   if(idx>=0) stops[idx]=s; else stops.push(s);
+  // Auto-salvar bairro se for novo
+  if(s.city && s.address) {
+    const bairro = s.address.split(',')[1]?.trim() || '';
+    if(bairro) {
+      addCustomBairro(s.city, bairro);
+    }
+  }
   saveStops();
   toast(idx>=0?'Parada atualizada!':'✅ Parada adicionada!','success');
   goNav('homeScreen','nav-home');
@@ -1089,6 +1102,11 @@ function renderFinance(){
   document.getElementById('metaInp').value=meta||'';
   if(meta>0){ const pct=Math.min(todayTotal/meta*100,100); document.getElementById('metaBar').style.width=pct+'%'; document.getElementById('metaBar').style.background=pct>=100?'var(--green)':'var(--accent)'; }
   else document.getElementById('metaBar').style.width='0%';
+  // Meta Semanal
+  const metaWeek=parseFloat(cfg.metaWeek)||0;
+  document.getElementById('metaWeekInp').value=metaWeek||'';
+  if(metaWeek>0){ const pctWeek=Math.min(wkTotal/metaWeek*100,100); document.getElementById('metaBarWeek').style.width=pctWeek+'%'; document.getElementById('metaBarWeek').style.background=pctWeek>=100?'var(--green)':'var(--blue)'; }
+  else document.getElementById('metaBarWeek').style.width='0%';
   // Summary
   document.getElementById('sumGrid').innerHTML=`
     <div class="sum-card ac"><div class="sum-lbl">Hoje — Total</div><div class="sum-val ac">${fmtMoney(todayTotal)}</div><div class="sum-sub">${todayDone} entrega(s)</div></div>
@@ -1104,6 +1122,33 @@ function renderFinance(){
 }
 
 function updateMeta(){ cfg.meta=parseFloat(document.getElementById('metaInp').value)||0; saveCfg(); renderFinance(); }
+function updateMetaWeek(){ cfg.metaWeek=parseFloat(document.getElementById('metaWeekInp').value)||0; saveCfg(); renderFinance(); }
+
+function downloadStoreReport(){
+  const d=getReportData();
+  if(!d.allStops.length){ toast('Sem dados para o período','error'); return; }
+  const stores={};
+  d.allStops.forEach(s=>{
+    const store=s.store||'Sem loja';
+    if(!stores[store]) stores[store]={stops:[],total:0,received:0};
+    stores[store].stops.push(s);
+    stores[store].total+=parseMoney(s.value);
+    if(s.paid) stores[store].received+=parseMoney(s.value);
+  });
+  let csv='Loja,Total,Recebido,Pendente,Entregas\n';
+  Object.entries(stores).forEach(([name,data])=>{
+    const pending=data.total-data.received;
+    csv+=`"${name}","R$ ${data.total.toFixed(2)}","R$ ${data.received.toFixed(2)}","R$ ${pending.toFixed(2)}",${data.stops.length}\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob);
+  link.download=`speedboy_lojas_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  toast('📄 Relatório por loja baixado!','success');
+}
 
 function drawChart(allDays){
   const canvas=document.getElementById('chart');
