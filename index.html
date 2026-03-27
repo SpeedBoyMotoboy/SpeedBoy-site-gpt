@@ -102,7 +102,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .stop-card{background:var(--card);border-radius:var(--radius);margin-bottom:8px;border:1px solid var(--border);overflow:hidden;transition:border-color .2s;}
 .stop-card.done{opacity:.45;}
 .stop-card.expanded{border-color:var(--accent);}
-.stop-header{display:flex;align-items:center;gap:10px;padding:14px 14px 12px;cursor:pointer;}
+.stop-header{display:flex;align-items:center;gap:10px;padding:14px 14px 12px;cursor:pointer;position:relative;}
 .stop-header-next{border:3px solid var(--green);background:rgba(0,230,118,.08);}
 .stop-header-next::before{content:'▶ PRÓXIMO';position:absolute;top:4px;right:8px;font-size:9px;font-weight:900;color:var(--green);letter-spacing:1px;}
 .stop-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;color:var(--accent);min-width:24px;}
@@ -114,7 +114,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .stop-val.unpaid{color:var(--accent);}
 .stop-dot{width:8px;height:8px;border-radius:50%;background:var(--border);}
 .stop-card.done .stop-dot{background:var(--green);}
-.stop-detail{display:block;padding:0 14px 12px;font-size:13px;color:var(--text);line-height:1.8;background:var(--card2);margin:0 -12px -12px -12px;padding:12px;border-radius:0 0 var(--radius) var(--radius);}
+.stop-detail{display:none;padding:0 14px 12px;font-size:13px;color:var(--text);line-height:1.8;background:var(--card2);margin:0 -12px -12px -12px;padding:12px;border-radius:0 0 var(--radius) var(--radius);}
 .stop-card.expanded .stop-detail{display:block;}
 .stop-detail strong{color:var(--text);font-size:11px;}
 .paid-badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;}
@@ -309,6 +309,21 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 /* DUAL VALUE CARD */
 .stop-product-val{font-size:11px;color:var(--muted);margin-top:2px;}
 .stop-product-val span{color:var(--accent);font-weight:700;}
+
+/* ══ FORM CLASSES (match HTML) ══ */
+.field-group{margin-bottom:12px;}
+.field-label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
+.field-input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 13px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;appearance:none;}
+.field-input:focus{border-color:var(--accent);}
+.field-input::placeholder{color:var(--muted);}
+.field-row{display:flex;gap:10px;}
+.field-row .field-group{flex:1;}
+.sec-divider{display:flex;align-items:center;gap:10px;margin:16px 0 14px;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:1px;}
+.sec-divider::before,.sec-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.money-input-wrap{position:relative;}
+.money-prefix{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;font-weight:600;pointer-events:none;}
+.money-input-wrap .field-input{padding-left:38px;}
+.req{color:var(--red);font-weight:900;}
 
 /* TOAST */
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:9px 18px;border-radius:30px;font-size:13px;font-weight:600;z-index:400;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;}
@@ -937,6 +952,11 @@ function togglePause(){
   btn.textContent = isPaused ? '▶️' : '⏸️';
   toast(isPaused ? '⏸️ Rota Pausada' : '▶️ Rota Retomada', 'success');
 }
+
+// Bairros customizados (localStorage)
+function getCustomBairros(){try{return JSON.parse(localStorage.getItem('sb_custom_bairros')||'{}');}catch(e){return {};}}
+function saveCustomBairros(cb){localStorage.setItem('sb_custom_bairros',JSON.stringify(cb));}
+function addCustomBairro(city,bairro){if(!city||!bairro)return;const cb=getCustomBairros();if(!cb[city])cb[city]=[];bairro=bairro.trim();if(!cb[city].includes(bairro)){cb[city].push(bairro);cb[city].sort();saveCustomBairros(cb);}}
 
 function saveStop(){
   const name    = document.getElementById('fName').value.trim();
