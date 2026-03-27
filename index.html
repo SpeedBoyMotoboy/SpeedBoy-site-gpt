@@ -404,48 +404,46 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       <button class="back-btn" onclick="goNav('homeScreen','nav-home')">←</button>
       <span id="formTitle">Nova parada</span>
     </div>
-    
-    <div class="field-group">
-      <div class="field-label">Cole a mensagem do WhatsApp</div>
-      <div class="paste-box">
-        <textarea class="paste-area" id="pasteArea" placeholder="Cole aqui a mensagem com os dados do cliente..."></textarea>
-        <button class="btn-clear" onclick="document.getElementById('pasteArea').value=''">✕</button>
+
+    <!-- ROW 1: Taxa + Pago + Horário + Data -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;align-items:flex-end;">
+      <div style="flex:1.2;">
+        <div class="field-label">Taxa (R$)</div>
+        <div class="money-input-wrap">
+          <span class="money-prefix">R$</span>
+          <input class="field-input" id="fValue" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" style="padding:10px 10px 10px 34px;font-size:13px;" />
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;justify-content:center;width:36px;height:42px;background:var(--card);border:1px solid var(--border);border-radius:10px;cursor:pointer;flex-shrink:0;" title="Pago?">
+        <input type="checkbox" id="fPaid" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;" />
+      </label>
+      <div style="flex:1;">
+        <div class="field-label">De</div>
+        <input class="field-input" id="fTimeFrom" type="time" style="padding:10px 4px;font-size:12px;text-align:center;" />
+      </div>
+      <div style="flex:1;">
+        <div class="field-label">Até</div>
+        <input class="field-input" id="fTimeTo" type="time" style="padding:10px 4px;font-size:12px;text-align:center;" />
+      </div>
+      <div style="flex:1.3;">
+        <div class="field-label">Data</div>
+        <input class="field-input" id="fDelivDate" type="date" style="padding:10px 4px;font-size:12px;color:var(--text);" />
       </div>
     </div>
-    <button class="btn-parse" id="parseBtn" onclick="doParse()">🤖 Processar automaticamente <span class="free-badge">GRÁTIS</span></button>
-    
-    <div class="sec-divider">📦 Dados da entrega</div>
-    
+
+    <!-- ROW 2: Loja (full) -->
     <div class="field-group">
       <div class="field-label">🏪 Loja de origem</div>
       <select class="field-input" id="fStore"><option value="">— Sem loja específica —</option></select>
     </div>
-    
-    <div class="field-group">
-      <div class="field-label">Nome do cliente <span class="req">*</span></div>
-      <input class="field-input" id="fName" placeholder="Ex: Pedro Santos" />
-    </div>
-    
-    <div class="field-group">
-      <div class="field-label">Endereço completo <span class="req">*</span></div>
-      <input class="field-input" id="fAddress" placeholder="Av. Central 890, Morada de Laranjeiras, Serra/ES" />
-    </div>
-    
-    <div class="sec-divider">📍 Localização</div>
-    
+
+    <!-- ROW 3: Nome + Tipo -->
     <div class="field-row">
-      <div class="field-group">
-        <div class="field-label">Cidade</div>
-        <select class="field-input" id="fCity">
-          <option value="">— Selecione —</option>
-          <option value="SRR">Serra (SRR)</option>
-          <option value="VIX">Vitória (VIX)</option>
-          <option value="VV">Vila Velha (VV)</option>
-          <option value="CCA">Cariacica (CCA)</option>
-          <option value="OUT">Outra</option>
-        </select>
+      <div class="field-group" style="flex:2;">
+        <div class="field-label">Nome do cliente <span class="req">*</span></div>
+        <input class="field-input" id="fName" placeholder="Pedro Santos" />
       </div>
-      <div class="field-group">
+      <div class="field-group" style="flex:1.2;">
         <div class="field-label">Tipo de serviço</div>
         <select class="field-input" id="fServiceType">
           <option value="entrega">🛵 Entrega</option>
@@ -454,54 +452,86 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
         </select>
       </div>
     </div>
-    
-    <div class="field-group">
-      <div class="field-label">Complemento / Referência</div>
-      <input class="field-input" id="fComplement" placeholder="Apto, bloco, cor da casa..." />
+
+    <!-- ROW 4: Telefone + Cobrança + check -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;align-items:flex-end;">
+      <div style="flex:2;">
+        <div class="field-label">Telefone <span class="req">*</span></div>
+        <input class="field-input" id="fPhone" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" />
+      </div>
+      <div style="flex:1.3;">
+        <div class="field-label">Cobrar (R$)</div>
+        <div class="money-input-wrap">
+          <span class="money-prefix">R$</span>
+          <input class="field-input" id="fProductValue" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" style="padding:10px 10px 10px 34px;font-size:13px;" />
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;justify-content:center;width:36px;height:42px;background:var(--card);border:1px solid var(--border);border-radius:10px;cursor:pointer;flex-shrink:0;" title="Produto pago?">
+        <input type="checkbox" id="fProductPaid" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;" />
+      </label>
     </div>
-    
-    <div class="sec-divider">⏰ Horário e data</div>
-    
-    <div class="field-group">
-      <div class="field-label">📅 Data da entrega</div>
-      <input class="field-input" id="fDelivDate" type="date" style="color:var(--text)" />
-    </div>
-    
+
+    <!-- ROW 5: Cidade + Bairro -->
     <div class="field-row">
       <div class="field-group">
-        <div class="field-label">De</div>
-        <input class="field-input" id="fTimeFrom" type="time" />
+        <div class="field-label">Cidade <span class="req">*</span></div>
+        <select class="field-input" id="fCity">
+          <option value="">— Selecione —</option>
+          <option value="SRR">Serra</option>
+          <option value="VIX">Vitória</option>
+          <option value="VV">Vila Velha</option>
+          <option value="CCA">Cariacica</option>
+          <option value="VIA">Viana</option>
+          <option value="OUT">Outra</option>
+        </select>
       </div>
       <div class="field-group">
-        <div class="field-label">Até</div>
-        <input class="field-input" id="fTimeTo" type="time" />
+        <div class="field-label">Bairro <span class="req">*</span></div>
+        <input class="field-input" id="fBairro" placeholder="Morada de Laranjeiras" />
       </div>
     </div>
-    
-    <div class="sec-divider">💬 Contato</div>
-    
-    <div class="field-group">
-      <div class="field-label">Telefone (WhatsApp) <span class="req">*</span></div>
-      <input class="field-input" id="fPhone" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" />
-    </div>
-    
-    <div class="sec-divider">💰 Valores</div>
-    
-    <div class="field-group">
-      <div class="field-label">🛵 Sua taxa (R$) <span class="req">*</span></div>
-      <div class="money-input-wrap">
-        <span class="money-prefix">R$</span>
-        <input class="field-input" id="fValue" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" />
+
+    <!-- ROW 6: Rua + Número -->
+    <div class="field-row">
+      <div class="field-group" style="flex:3;">
+        <div class="field-label">Rua / Avenida <span class="req">*</span></div>
+        <input class="field-input" id="fRua" placeholder="Av. Central" />
       </div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;">Entra no seu financeiro</div>
+      <div class="field-group" style="flex:1;">
+        <div class="field-label">Nº</div>
+        <input class="field-input" id="fNumero" placeholder="890" />
+      </div>
     </div>
-    
+
+    <!-- ROW 7: Complemento + Referência -->
+    <div class="field-row">
+      <div class="field-group">
+        <div class="field-label">Complemento</div>
+        <input class="field-input" id="fComplement" placeholder="Apto 42, bloco C" />
+      </div>
+      <div class="field-group">
+        <div class="field-label">Referência</div>
+        <input class="field-input" id="fReference" placeholder="Próx. à padaria" />
+      </div>
+    </div>
+
+    <!-- ROW 8: Observações -->
     <div class="field-group">
       <div class="field-label">Observações</div>
-      <input class="field-input" id="fNotes" placeholder="Ex: Cuidado com o cachorro" />
+      <input class="field-input" id="fNotes" placeholder="Cuidado com o cachorro..." />
     </div>
-    
+
+    <!-- ROW 9: Colar dados + Processar -->
+    <div style="display:flex;gap:6px;margin-top:6px;margin-bottom:10px;align-items:stretch;">
+      <div style="flex:1;position:relative;">
+        <textarea class="paste-area" id="pasteArea" placeholder="Cole dados da entrega..." style="min-height:44px;height:44px;padding:11px 32px 11px 12px;font-size:12px;resize:none;"></textarea>
+        <button class="btn-clear" onclick="document.getElementById('pasteArea').value=''" style="top:8px;right:6px;width:22px;height:22px;font-size:11px;">✕</button>
+      </div>
+      <button id="parseBtn" onclick="doParse()" style="flex-shrink:0;background:var(--accent);color:#000;border:none;border-radius:10px;padding:0 14px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;">🤖 Processar</button>
+    </div>
+
     <input type="hidden" id="editIdx" value="-1" />
+    <input type="hidden" id="fAddress" />
     <button class="btn-save" onclick="saveStop()">✅ Salvar parada</button>
   </div>
 </div>
@@ -718,20 +748,34 @@ function goForm(idx) {
     const s = stops[editingIdx];
     document.getElementById('fStore').value      = s.store      || '';
     document.getElementById('fName').value        = s.name       || '';
-    document.getElementById('fAddress').value     = s.address    || '';
-    document.getElementById('fComplement').value   = s.complement  || '';
     document.getElementById('fCity').value         = s.city        || '';
     document.getElementById('fServiceType').value  = s.serviceType || 'entrega';
     document.getElementById('fTimeFrom').value     = s.timeFrom    || '';
     document.getElementById('fTimeTo').value       = s.timeTo      || '';
-    // Convert dd/mm/yyyy → yyyy-mm-dd for date input
     if(s.deliveryDate){
       const dp = s.deliveryDate.split('/');
       if(dp.length===3) document.getElementById('fDelivDate').value = dp[2]+'-'+dp[1]+'-'+dp[0];
     } else { document.getElementById('fDelivDate').value=''; }
     document.getElementById('fNotes').value       = s.notes      || '';
-    document.getElementById('fValue').value          = s.value ? String(s.value).replace('.',',') : '';
+    document.getElementById('fValue').value       = s.value ? String(s.value).replace('.',',') : '';
+    document.getElementById('fPaid').checked      = !!s.paid;
+    document.getElementById('fProductValue').value= s.productValue ? String(s.productValue).replace('.',',') : '';
+    document.getElementById('fProductPaid').checked= !!s.productPaid;
+    document.getElementById('fComplement').value  = s.complement  || '';
+    document.getElementById('fReference').value   = s.reference   || '';
     const ph = document.getElementById('fPhone'); ph.value=s.phone||''; if(s.phone) maskPhone(ph);
+    // Split fields (new) or fallback from old address
+    if(s.street) {
+      document.getElementById('fRua').value     = s.street || '';
+      document.getElementById('fNumero').value  = s.number || '';
+      document.getElementById('fBairro').value  = s.neighborhood || '';
+    } else if(s.address) {
+      // Fallback: parse old "Rua X, 123, Bairro - Cidade" format
+      const parts = s.address.split(',').map(p=>p.trim());
+      document.getElementById('fRua').value    = parts[0] || '';
+      document.getElementById('fNumero').value = parts[1] || '';
+      document.getElementById('fBairro').value = (parts[2]||'').replace(/\s*-\s*.*/,'');
+    }
   }
   document.getElementById('editIdx').value = editingIdx;
   updateStoreSelect();
@@ -741,10 +785,12 @@ function goForm(idx) {
 }
 
 function resetForm(){
-  ['pasteArea','fName','fAddress','fComplement','fPhone','fNotes','fValue','fTimeFrom','fTimeTo','fDelivDate'].forEach(id=>document.getElementById(id).value='');
+  ['pasteArea','fName','fComplement','fReference','fPhone','fNotes','fValue','fProductValue','fTimeFrom','fTimeTo','fDelivDate','fRua','fNumero','fBairro'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('fCity').value='';
   document.getElementById('fServiceType').value='entrega';
   document.getElementById('fStore').value='';
+  document.getElementById('fPaid').checked=false;
+  document.getElementById('fProductPaid').checked=false;
 }
 // ═══════════════════════════════════════════════════════
 //  HOME / STOPS
@@ -814,7 +860,8 @@ function renderHome(){
         </div>
         <div class="stop-detail">
           ${s.phone?`<div><strong>TEL</strong> ${fmtPhone(s.phone)}</div>`:''}
-          ${s.complement?`<div><strong>REF</strong> ${s.complement}</div>`:''}
+          ${s.complement?`<div><strong>COMPL</strong> ${s.complement}</div>`:''}
+          ${s.reference?`<div><strong>REF</strong> ${s.reference}</div>`:''}
           ${(s.timeFrom||s.timeTo)?`<div><strong>HORÁRIO</strong> ⏰ ${s.timeFrom||'?'} até ${s.timeTo||'?'}</div>`:''}
           ${s.deliveryDate?`<div><strong>DATA</strong> 📅 ${s.deliveryDate}</div>`:''}
           ${s.serviceType?`<div><strong>TIPO</strong> ${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</div>`:''}
@@ -887,11 +934,18 @@ function addCustomBairro(city,bairro){if(!city||!bairro)return;const cb=getCusto
 
 function saveStop(){
   const name    = document.getElementById('fName').value.trim();
-  const address = document.getElementById('fAddress').value.trim();
-  if(!name||!address){ toast('Nome e endereço são obrigatórios!','error'); return; }
-  const idx = parseInt(document.getElementById('editIdx').value);
+  const rua     = document.getElementById('fRua').value.trim();
+  const numero  = document.getElementById('fNumero').value.trim();
+  const bairro  = document.getElementById('fBairro').value.trim();
+  const city    = document.getElementById('fCity').value;
+  if(!name){ toast('Nome é obrigatório!','error'); return; }
+  if(!rua||!bairro||!city){ toast('Rua, bairro e cidade são obrigatórios!','error'); return; }
   
-  // Validar índice se editando
+  // Compose full address
+  const cityNames={SRR:'Serra',VIX:'Vitória',VV:'Vila Velha',CCA:'Cariacica',VIA:'Viana',OUT:''};
+  const address = rua + (numero?', '+numero:'') + ', ' + bairro + (cityNames[city]?' - '+cityNames[city]:'');
+  
+  const idx = parseInt(document.getElementById('editIdx').value);
   if(idx >= 0 && (idx >= stops.length || idx < 0)) {
     toast('Erro: Índice inválido', 'error');
     return;
@@ -901,28 +955,28 @@ function saveStop(){
   const delivDate = rawDate ? rawDate.split('-').reverse().join('/') : '';
   const s={
     name, address,
+    street:       rua,
+    number:       numero,
+    neighborhood: bairro,
     store:        document.getElementById('fStore').value || '',
-    city:         document.getElementById('fCity').value || '',
+    city:         city,
     serviceType:  document.getElementById('fServiceType').value || 'entrega',
     deliveryDate: delivDate,
     complement:   document.getElementById('fComplement').value.trim(),
+    reference:    document.getElementById('fReference').value.trim(),
     timeFrom:     document.getElementById('fTimeFrom')?.value || '',
     timeTo:       document.getElementById('fTimeTo')?.value   || '',
     phone:        document.getElementById('fPhone').value.replace(/\D/g,''),
     value:        parseMoney(document.getElementById('fValue').value),
-    paid:         false,
+    paid:         document.getElementById('fPaid').checked,
+    productValue: parseMoney(document.getElementById('fProductValue').value),
+    productPaid:  document.getElementById('fProductPaid').checked,
     notes:        document.getElementById('fNotes').value.trim(),
     done:         idx>=0 && idx<stops.length ? stops[idx].done : false,
     _order:       idx>=0 && idx<stops.length ? (stops[idx]._order||idx) : stops.length
   };
   if(idx>=0) stops[idx]=s; else stops.push(s);
-  // Auto-salvar bairro se for novo
-  if(s.city && s.address) {
-    const bairro = s.address.split(',')[1]?.trim() || '';
-    if(bairro) {
-      addCustomBairro(s.city, bairro);
-    }
-  }
+  if(s.city && bairro) addCustomBairro(s.city, bairro);
   saveStops();
   toast(idx>=0?'Parada atualizada!':'✅ Parada adicionada!','success');
   goNav('homeScreen','nav-home');
@@ -1003,21 +1057,32 @@ async function doParse(){
   const text=document.getElementById('pasteArea').value.trim();
   if(!text){ toast('Cole uma mensagem primeiro','error'); return; }
   const btn=document.getElementById('parseBtn'); const orig=btn.innerHTML;
-  btn.innerHTML='⏳ Processando...'; btn.disabled=true;
+  btn.innerHTML='⏳...'; btn.disabled=true;
   let parsed;
   if(cfg.apiKey){ try{ parsed=await apiParse(text,cfg.apiKey); }catch(e){ parsed=smartParse(text); } }
   else parsed=smartParse(text);
   document.getElementById('fName').value       =parsed.name       ||'';
-  document.getElementById('fAddress').value    =parsed.address    ||'';
   document.getElementById('fComplement').value =parsed.complement ||'';
+  document.getElementById('fReference').value  =parsed.reference  ||'';
   document.getElementById('fNotes').value      =parsed.notes      ||'';
   const ph=document.getElementById('fPhone'); ph.value=parsed.phone||''; if(parsed.phone)maskPhone(ph);
-  const ok=[parsed.name,parsed.address].filter(Boolean).length>=2;
+  // Fill split address fields from parsed address
+  if(parsed.street)       document.getElementById('fRua').value    = parsed.street;
+  if(parsed.number)       document.getElementById('fNumero').value = parsed.number;
+  if(parsed.neighborhood) document.getElementById('fBairro').value = parsed.neighborhood;
+  // Fallback: try to split from full address
+  if(!parsed.street && parsed.address){
+    const parts=parsed.address.split(',').map(p=>p.trim());
+    document.getElementById('fRua').value    = parts[0]||'';
+    document.getElementById('fNumero').value = parts[1]||'';
+    document.getElementById('fBairro').value = (parts[2]||'').replace(/\s*-\s*.*/,'');
+  }
+  const ok=[parsed.name,(parsed.street||parsed.address)].filter(Boolean).length>=2;
   toast(ok?'✅ Dados extraídos! Revise e salve.':'⚠️ Revise os campos manualmente',ok?'success':'');
   btn.innerHTML=orig; btn.disabled=false;
 }
 async function apiParse(text,key){
-  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,system:'Extrai dados de mensagens de entrega. Responda APENAS JSON sem markdown: {"name":"","address":"","complement":"","phone":"","notes":""}. address deve incluir cidade e estado. NÃO inclua complemento no address.',messages:[{role:'user',content:`Extraia:\n\n${text}`}]})});
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,system:'Extrai dados de mensagens de entrega brasileiras. Responda APENAS JSON sem markdown: {"name":"","street":"","number":"","neighborhood":"","complement":"","reference":"","phone":"","notes":""}. street=rua/avenida, number=número, neighborhood=bairro. NÃO misture campos.',messages:[{role:'user',content:`Extraia:\n\n${text}`}]})});
   const data=await res.json(); if(data.error)throw new Error(data.error.message);
   return JSON.parse(data.content[0].text.trim());
 }
