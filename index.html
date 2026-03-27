@@ -375,7 +375,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   </div>
   <div class="home-top">
     <button class="btn-add" onclick="goForm()">＋ Adicionar parada</button>
-    <button class="btn-cfg-icon" id="btnFilter" onclick="toggleFilters()" title="Filtros">🔍</button>
     <button class="btn-cfg-icon" onclick="goNav('configScreen','nav-cfg')">⚙️</button>
   </div>
   <div class="pending-section" id="pendingSection">
@@ -386,36 +385,11 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <div id="pendingList"></div>
   </div>
   <div class="sort-bar" id="sortBar">
-    <span class="sort-label">Ordenar:</span>
-    <button class="btn-sort on" id="sortM" onclick="setSort('manual')">✋ Manual</button>
-    <button class="btn-sort"    id="sortR" onclick="setSort('region')">🗺️ Região</button>
-    <button class="btn-sort"    id="sortS" onclick="setSort('store')">🏪 Loja</button>
-  </div>
-  <!-- FILTER BAR -->
-  <div class="filter-wrap" id="filterWrap">
-    <div class="filter-section-lbl">Status</div>
-    <div class="filter-row">
-      <button class="filter-chip on" id="fs-all"     onclick="setFilter('status','all')">Todas</button>
-      <button class="filter-chip"    id="fs-pending" onclick="setFilter('status','pending')">⏳ Pendentes</button>
-      <button class="filter-chip"    id="fs-done"    onclick="setFilter('status','done')">✅ Feitas</button>
-    </div>
-    <div class="filter-section-lbl">Cidade</div>
-    <div class="filter-row">
-      <button class="filter-chip city on" id="fc-all" onclick="setFilter('city','all')">Todas</button>
-      <button class="filter-chip city" id="fc-SRR" onclick="setFilter('city','SRR')">SRR • Serra</button>
-      <button class="filter-chip city" id="fc-VIX" onclick="setFilter('city','VIX')">VIX • Vitória</button>
-      <button class="filter-chip city" id="fc-VV"  onclick="setFilter('city','VV')">VV • Vila Velha</button>
-      <button class="filter-chip city" id="fc-CCA" onclick="setFilter('city','CCA')">CCA • Cariacica</button>
-    </div>
-    <div class="filter-section-lbl">Tipo</div>
-    <div class="filter-row">
-      <button class="filter-chip type on"  id="ft-all"      onclick="setFilter('type','all')">Todos</button>
-      <button class="filter-chip type"     id="ft-entrega"  onclick="setFilter('type','entrega')">🛵 Entrega</button>
-      <button class="filter-chip type"     id="ft-retirada" onclick="setFilter('type','retirada')">📦 Retirada</button>
-      <button class="filter-chip type"     id="ft-troca"    onclick="setFilter('type','troca')">🔄 Troca</button>
-    </div>
-    <div class="filter-section-lbl">Data</div>
-    <div class="filter-row" id="dateFilterRow"></div>
+    <span class="sort-label">Agrupar:</span>
+    <button class="btn-sort on" id="grp-status"  onclick="setGroupBy('status')">📋 Status</button>
+    <button class="btn-sort"    id="grp-city"    onclick="setGroupBy('city')">🏙️ Cidade</button>
+    <button class="btn-sort"    id="grp-store"   onclick="setGroupBy('store')">🏪 Loja</button>
+    <button class="btn-sort"    id="grp-time"    onclick="setGroupBy('time')">⏰ Horário</button>
   </div>
   <div class="stops-list" id="stopsList"></div>
   <div class="route-bar">
@@ -552,13 +526,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   </div>
 </div>
 
-<!-- ══ HISTORY ══ -->
-<div class="screen" id="historyScreen">
-  <div class="history-body">
-    <div class="section-title">📋 Histórico</div>
-    <div id="historyList"></div>
-  </div>
-</div>
 
 <!-- ══ REPORT ══ -->
 <div class="screen" id="reportScreen">
@@ -573,12 +540,10 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <button class="btn-share" id="btnShare" onclick="shareReport()">💬 Compartilhar no WhatsApp</button>
     <div style="margin-top:14px;">
       <div style="font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Relatório por loja</div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <select id="storeSelectPDF" style="flex:1;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;">
-          <option value="">— Selecione a loja —</option>
-        </select>
-        <button class="btn-pdf" style="background:linear-gradient(135deg,#667eea,#764ba2);margin:0;padding:10px 14px;flex-shrink:0;" onclick="downloadStoreReportPDF()">📄 PDF</button>
-      </div>
+      <select id="storeSelectPDF" style="width:100%;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;margin-bottom:8px;">
+        <option value="">— Selecione a loja —</option>
+      </select>
+      <button style="width:100%;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;padding:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;" onclick="downloadStoreReportPDF()">📄 PDF da loja</button>
     </div>
   </div>
 </div>
@@ -602,18 +567,12 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       <button class="back-btn" onclick="goNav('homeScreen','nav-home')">←</button>
       Configurações
     </div>
-    <div class="cfg-section">
-      <div class="cfg-title">🏪 Ponto de partida <button class="btn-gps" onclick="getGPS()">📍 GPS</button></div>
-      <div class="field"><div class="flabel">Endereço da loja / início da rota</div><input class="finput" id="cfgOrigin" placeholder="Ex: Rua da Loja 500, Serra/ES" /></div>
-    </div>
+    <input type="hidden" id="cfgOrigin" />
+    <input type="hidden" id="cfgWpp" />
     <div class="cfg-section">
       <div class="cfg-title">🏬 Minhas lojas</div>
       <div class="stores-list" id="storesList"></div>
       <div class="store-add-row"><input class="finput" id="newStore" placeholder="Nome da loja (ex: KS)" maxlength="30" /><button class="btn-store-add" onclick="addStore()">+ Adicionar</button></div>
-    </div>
-    <div class="cfg-section">
-      <div class="cfg-title">💬 Mensagem WhatsApp</div>
-      <div class="field"><div class="flabel">Use {nome} para o nome do cliente</div><input class="finput" id="cfgWpp" placeholder="Olá {nome}! Estou a caminho 🚀" /></div>
     </div>
     <div class="cfg-section">
       <div class="cfg-title">🔥 Firebase (sincronização)</div>
@@ -650,7 +609,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 <nav class="bottom-nav">
   <button class="nav-btn active" id="nav-home"    onclick="goNav('homeScreen','nav-home')"><span class="icon">📦</span>Entregas</button>
   <button class="nav-btn"        id="nav-finance" onclick="goNav('financeScreen','nav-finance')"><span class="icon">💰</span>Ganhos</button>
-  <button class="nav-btn"        id="nav-history" onclick="goNav('historyScreen','nav-history')"><span class="icon">📋</span>Histórico</button>
   <button class="nav-btn"        id="nav-report"  onclick="goNav('reportScreen','nav-report')"><span class="icon">📄</span>Relatório</button>
   <button class="nav-btn"        id="nav-links"   onclick="goNav('linkgenScreen','nav-links')"><span class="icon">🔗</span>Links</button>
   <button class="nav-btn"        id="nav-cfg"     onclick="goNav('configScreen','nav-cfg')"><span class="icon">⚙️</span>Config</button>
@@ -671,72 +629,16 @@ let wppStop     = null;
 let bulkData    = [];
 
 // ══════════════════════════════════════
-//  FILTROS
+//  AGRUPAMENTO
 // ══════════════════════════════════════
-var activeFilters = { status:'all', city:'all', type:'all', date:'all', paid:'all' };
+var groupByMode = 'status';
 
-function toggleFilters() {
-  var wrap = document.getElementById('filterWrap');
-  var isVisible = wrap.classList.contains('visible');
-  wrap.classList.toggle('visible', !isVisible);
-  document.getElementById('btnFilter').style.color = isVisible ? '' : 'var(--accent)';
-  if (!isVisible) buildDateChips();
-}
-
-function buildDateChips() {
-  var row = document.getElementById('dateFilterRow');
-  if (!row) return;
-  var today = new Date();
-  var chips = [
-    { label:'Todas', val:'all' },
-    { label: fmtChipDate(new Date(today.getTime() - 86400000)), val: toDateStr(new Date(today.getTime() - 86400000)) },
-    { label: 'Hoje ' + fmtChipDate(today), val: toDateStr(today) },
-    { label: fmtChipDate(new Date(today.getTime() + 86400000)), val: toDateStr(new Date(today.getTime() + 86400000)) },
-  ];
-  row.innerHTML = chips.map(function(ch) {
-    var on = activeFilters.date === ch.val ? ' on' : '';
-    return '<button class="filter-chip' + on + '" onclick="setFilter(&quot;date&quot;,&quot;' + ch.val + '&quot;)">' + ch.label + '</button>';
-  }).join('');
-}
-
-function toDateStr(d) {
-  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
-}
-function fmtChipDate(d) {
-  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
-}
-
-function setFilter(type, val) {
-  activeFilters[type] = val;
-  var prefix = {status:'fs-',city:'fc-',type:'ft-',paid:'fp-'}[type]||'';
-  if (prefix) {
-    document.querySelectorAll('[id^="'+prefix+'"]').forEach(function(b){b.classList.remove('on');});
-    var el = document.getElementById(prefix+val);
-    if (el) el.classList.add('on');
-  }
-  if (type==='date') buildDateChips();
+function setGroupBy(mode){
+  groupByMode = mode;
+  document.querySelectorAll('[id^="grp-"]').forEach(function(b){b.classList.remove('on');});
+  var el = document.getElementById('grp-'+mode);
+  if(el) el.classList.add('on');
   renderHome();
-}
-
-function applyFilters(list) {
-  return list.filter(function(s) {
-    // Status filter
-    if (activeFilters.status==='done'    && !s.done)  return false;
-    if (activeFilters.status==='pending' &&  s.done)  return false;
-    // City filter (com fallback)
-    if (activeFilters.city!=='all' && (s.city||'').toLowerCase()!==activeFilters.city.toLowerCase()) return false;
-    // Service type filter
-    if (activeFilters.type!=='all' && (s.serviceType||'entrega')!==activeFilters.type) return false;
-    // Date filter (com fallback para hoje se vazio)
-    if (activeFilters.date!=='all') {
-      const stopDate = s.deliveryDate || toDateStr(new Date());
-      if (stopDate !== activeFilters.date) return false;
-    }
-    // Paid filter (opcional)
-    if (activeFilters.paid==='received' && !s.paid) return false;
-    if (activeFilters.paid==='pending' && s.paid) return false;
-    return true;
-  });
 }
 
 let sortMode    = 'manual';
@@ -803,7 +705,6 @@ function goNav(screenId, navId) {
   // render hooks
   if(screenId==='homeScreen')    renderHome();
   if(screenId==='financeScreen') renderFinance();
-  if(screenId==='historyScreen') renderHistory();
   if(screenId==='reportScreen')  renderReport();
   if(screenId==='linkgenScreen') renderLinks();
   if(screenId==='configScreen')  loadConfig();
@@ -856,24 +757,51 @@ function renderHome(){
   badge.classList.toggle('full', false);
   document.getElementById('routeBtn').disabled = total===0;
   document.getElementById('sortBar').classList.toggle('visible', total>1);
-  document.getElementById('filterWrap').classList.toggle('visible',
-    total>0 && document.getElementById('filterWrap').classList.contains('visible'));
 
   if(!total){
     list.innerHTML=`<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Nenhuma parada ainda</div><div class="empty-sub">Adicione clientes ou importe a lista da loja</div></div>`;
     return;
   }
-  const filtered = applyFilters(stops.map(function(s,i){return Object.assign({},s,{_idx:i});}));
-  const groups={};
-  filtered.forEach(function(s){ const k=s.store||'__'; if(!groups[k])groups[k]=[]; groups[k].push({s,i:s._idx}); });
+
+  // Build indexed list
+  const indexed = stops.map(function(s,i){return Object.assign({},s,{_idx:i});});
+
+  // Group items based on groupByMode
+  const groups = [];
+  if(groupByMode==='status'){
+    const pending = indexed.filter(s=>!s.done);
+    const done    = indexed.filter(s=>s.done);
+    if(pending.length) groups.push({label:'⏳ Pendentes ('+pending.length+')',items:pending,color:'var(--accent)'});
+    if(done.length)    groups.push({label:'✅ Finalizadas ('+done.length+')',items:done,color:'var(--green)'});
+  } else if(groupByMode==='city'){
+    const map={};
+    indexed.forEach(function(s){const k=s.city||'Sem cidade';if(!map[k])map[k]=[];map[k].push(s);});
+    Object.keys(map).sort().forEach(function(k){groups.push({label:'🏙️ '+k+' ('+map[k].length+')',items:map[k],color:'var(--blue)'});});
+  } else if(groupByMode==='store'){
+    const map={};
+    indexed.forEach(function(s){const k=s.store||'Sem loja';if(!map[k])map[k]=[];map[k].push(s);});
+    Object.keys(map).sort().forEach(function(k){groups.push({label:'🏪 '+k+' ('+map[k].length+')',items:map[k],color:'var(--accent)'});});
+  } else if(groupByMode==='time'){
+    const withTime=[], noTime=[];
+    indexed.forEach(function(s){(s.timeFrom||s.timeTo)?withTime.push(s):noTime.push(s);});
+    withTime.sort(function(a,b){return(a.timeFrom||'99:99').localeCompare(b.timeFrom||'99:99');});
+    // Sub-group by time ranges
+    const slots={};
+    withTime.forEach(function(s){const t=s.timeFrom||'?';const k='⏰ '+t+(s.timeTo?' – '+s.timeTo:'');if(!slots[k])slots[k]=[];slots[k].push(s);});
+    Object.keys(slots).forEach(function(k){groups.push({label:k+' ('+slots[k].length+')',items:slots[k],color:'var(--accent2)'});});
+    if(noTime.length) groups.push({label:'🕐 Sem horário ('+noTime.length+')',items:noTime,color:'var(--muted)'});
+  }
+
   let html='';
   let nextIdx = -1;
-  Object.entries(groups).forEach(([k,items])=>{
-    if(k!=='__') html+=`<div class="store-label">🏪 ${k}</div>`;
-    items.forEach(({s,i},idx)=>{
+  groups.forEach(function(grp){
+    html+=`<div class="store-label" style="color:${grp.color}">${grp.label}</div>`;
+    grp.items.forEach(function(s){
+      const i=s._idx;
       if(nextIdx === -1 && !s.done) nextIdx = i;
       const val=parseMoney(s.value);
-      const valStr=val>0?fmtMoney(val):'';      html+=`<div class="stop-card ${s.done?'done':''} " id="sc${i}" onclick="toggleCard(${i})">
+      const valStr=val>0?fmtMoney(val):'';
+      html+=`<div class="stop-card ${s.done?'done':''}" id="sc${i}" onclick="toggleCard(${i})">
         <div class="stop-header ${nextIdx === i ? 'stop-header-next' : ''}">
           <div class="stop-num">${i+1}</div>
           <div class="stop-info"><div class="stop-name">${s.name||'Sem nome'}</div><div class="stop-addr">${s.address||'Sem endereço'}</div>
@@ -901,8 +829,8 @@ function renderHome(){
           <div style="display:flex;gap:7px;flex-wrap:wrap;">
             <button class="btn-act ba-maps" onclick="openMapsWithAddress(${i})" style="flex:1;background:#4285f4;color:#fff;font-weight:800;padding:14px;font-size:14px;">🗺️ NAVEGAR</button>
             ${s.phone?`<button class="btn-act ba-wpp" onclick="openWpp(${i})">💬 WhatsApp</button>`:''}
-            ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''} " onclick="togPaid(${i})">${s.paid?'💸 Ok':'💰 Paga?'}</button>`:''}
-            ${s.productValue>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''} " onclick="togProductPaid(${i})">${s.productPaid?'✅ Ok':'💳 Cobrar'}</button>`:''}
+            ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togPaid(${i})">${s.paid?'💸 Ok':'💰 Paga?'}</button>`:''}
+            ${s.productValue>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''}" onclick="togProductPaid(${i})">${s.productPaid?'✅ Ok':'💳 Cobrar'}</button>`:''}
             <button class="btn-act ba-edit" onclick="goForm(${i})">✏️ Editar</button>
             <button class="btn-act ba-del"  onclick="delStop(${i})">🗑️ Remover</button>
           </div>
@@ -911,7 +839,6 @@ function renderHome(){
     });
   });
   list.innerHTML=html;
-  // Destacar próximo pedido
   if(nextIdx !== -1) {
     setTimeout(()=>{
       const nextCard = document.getElementById('sc'+nextIdx);
@@ -1020,18 +947,8 @@ function openRoute(){
 function openMaps(addr){ window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`,'_blank'); }
 
 // ═══════════════════════════════════════════════════════
-//  SORT
+//  SORT (helper)
 // ═══════════════════════════════════════════════════════
-function setSort(mode){
-  sortMode=mode;
-  ['M','R','S'].forEach(k=>document.getElementById('sort'+k).classList.remove('on'));
-  document.getElementById('sort'+mode[0].toUpperCase()).classList.add('on');
-  if(mode==='manual')  stops.sort((a,b)=>(a._order||0)-(b._order||0));
-  else if(mode==='region') stops.sort((a,b)=>region(a.address).localeCompare(region(b.address),'pt-BR'));
-  else stops.sort((a,b)=>{ const sa=a.store||'zzz',sb=b.store||'zzz'; return sa!==sb?sa.localeCompare(sb,'pt-BR'):region(a.address).localeCompare(region(b.address),'pt-BR'); });
-  if(mode!=='manual') toast(mode==='region'?'🗺️ Ordenado por região!':'🏪 Ordenado por loja!','success');
-  saveStops(); renderHome();
-}
 function region(addr){ if(!addr)return'zzz'; const p=addr.split(',').map(x=>x.trim()).filter(Boolean); return(p.length>=3?(p[2]+(p[3]||'')):p[1]||addr.substring(0,15)).toLowerCase(); }
 
 // ═══════════════════════════════════════════════════════
