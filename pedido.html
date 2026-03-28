@@ -131,10 +131,12 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
 .hist-empty{padding:16px;text-align:center;color:var(--muted);font-size:12px;}
 
 /* STATUS BADGE */
-.status-badge{display:inline-block;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;margin-top:6px;}
-.status-pending{background:rgba(245,197,24,.15);color:var(--accent);}
-.status-viewed{background:rgba(0,230,118,.15);color:var(--green);}
-.status-delivered{background:rgba(0,230,118,.2);color:var(--green);}
+.status-badge{display:inline-block;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;margin-top:6px;transition:all .3s;}
+.status-pending{background:rgba(245,197,24,.15);color:var(--accent);border:1px solid rgba(245,197,24,.3);}
+.status-aceito{background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3);}
+.status-acaminho{background:rgba(255,107,0,.15);color:var(--accent2);border:1px solid rgba(255,107,0,.3);}
+.status-entregue{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3);}
+.status-recusado{background:rgba(255,69,96,.15);color:var(--red);border:1px solid rgba(255,69,96,.3);}
 
 /* TOAST */
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;z-index:600;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center;}
@@ -255,7 +257,9 @@ var LUAN_PHONE = params.get('phone') || '5527999999999'; // Número do Luan para
 
 var db         = null;
 var stopCount  = 0;
-var lastSubmittedStops = []; // Armazena os últimos pedidos para WhatsApp
+var lastSubmittedStops = [];
+var lastSubmittedKeys = [];
+var trackingListeners = [];
 
 // ═══════════════════════════════════════════════════
 //  BAIRROS CUSTOMIZADOS (localStorage por loja)
@@ -671,8 +675,11 @@ window.submitPedido = function() {
   document.getElementById('btnSubmit').disabled = true;
 
   var pendingRef = db.ref('rooms/' + ROOM + '/pending');
-  var promises   = newStops.map(function(s) {
-    return pendingRef.push(JSON.stringify(s));
+  var pushRefs = [];
+  var promises = newStops.map(function(s) {
+    var ref = pendingRef.push(JSON.stringify(s));
+    pushRefs.push(ref);
+    return ref;
   });
 
   Promise.all(promises)
@@ -681,8 +688,9 @@ window.submitPedido = function() {
       document.getElementById('mainWrap').style.display = 'none';
       
       lastSubmittedStops = newStops;
+      lastSubmittedKeys = pushRefs.map(function(r){ return r.key; });
 
-      // Resumo
+      // Resumo com status badge
       var html = newStops.map(function(s, i) {
         var valStr  = s.productValue > 0
           ? ' · R$ ' + s.productValue.toFixed(2).replace('.',',') + ' (' + (s.productPaid ? '✅ pago' : '💰 a cobrar') + ')'
@@ -692,9 +700,12 @@ window.submitPedido = function() {
           : '';
         var typeIcon = s.serviceType === 'retirada' ? '📦 Retirada' : s.serviceType === 'troca' ? '🔄 Troca' : '🛵 Entrega';
         var dateStr  = s.deliveryDate ? ' · 📅 ' + s.deliveryDate : '';
+        var key = lastSubmittedKeys[i] || '';
         return '<div class="success-item">' +
           '<strong>' + typeIcon + ' ' + (i+1) + '. ' + s.name + '</strong>' + dateStr + '<br>' +
-          '<span style="font-size:11px;color:var(--muted)">' + s.address + timeStr + valStr + '</span></div>';
+          '<span style="font-size:11px;color:var(--muted)">' + s.address + timeStr + valStr + '</span><br>' +
+          '<span class="status-badge status-pending" id="track_' + key + '">⏳ Aguardando confirmação</span>' +
+          '</div>';
       }).join('');
 
       document.getElementById('successList').innerHTML =
@@ -703,8 +714,10 @@ window.submitPedido = function() {
       addToClientHistory(newStops);
       document.getElementById('successWrap').classList.add('show');
       
-      // Mostra botão de WhatsApp
       document.getElementById('btnWhatsApp').style.display = 'inline-block';
+      
+      // Start tracking each order
+      startTracking(lastSubmittedKeys);
     })
     .catch(function(e) {
       document.getElementById('loading').classList.remove('show');
@@ -714,12 +727,56 @@ window.submitPedido = function() {
     });
 };
 
+// ═══════════════════════════════════════════════════
+//  TRACKING — status em tempo real
+// ═══════════════════════════════════════════════════
+var STATUS_LABELS = {
+  'pending':   { text: '⏳ Aguardando confirmação', css: 'status-pending' },
+  'aceito':    { text: '✅ Confirmado pelo motoboy', css: 'status-aceito' },
+  'a caminho': { text: '🏍️ Motoboy a caminho!', css: 'status-acaminho' },
+  'entregue':  { text: '📦 Entregue!', css: 'status-entregue' },
+  'recusado':  { text: '❌ Recusado', css: 'status-recusado' }
+};
+
+function startTracking(keys) {
+  stopTracking();
+  if (!db || !keys || !keys.length) return;
+  keys.forEach(function(key) {
+    if (!key) return;
+    var ref = db.ref('rooms/' + ROOM + '/tracking/' + key);
+    var unsub = ref.on('value', function(snap) {
+      var raw = snap.val();
+      if (!raw) return;
+      try {
+        var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        var status = data.status || 'pending';
+        var info = STATUS_LABELS[status] || STATUS_LABELS['pending'];
+        var badge = document.getElementById('track_' + key);
+        if (badge) {
+          badge.textContent = info.text;
+          badge.className = 'status-badge ' + info.css;
+        }
+      } catch(e) { console.error('tracking parse error:', e); }
+    });
+    trackingListeners.push({ ref: ref, cb: unsub });
+  });
+}
+
+function stopTracking() {
+  trackingListeners.forEach(function(t) {
+    try { t.ref.off('value', t.cb); } catch(e) {}
+  });
+  trackingListeners = [];
+}
+
 window.resetForm = function() {
+  stopTracking();
   document.getElementById('successWrap').classList.remove('show');
   document.getElementById('stopsWrap').innerHTML = '';
   document.getElementById('mainWrap').style.display = 'block';
   document.getElementById('btnSubmit').disabled = false;
   document.getElementById('btnWhatsApp').style.display = 'none';
+  lastSubmittedKeys = [];
   stopCount = 0;
   window.addStop();
   window.scrollTo(0,0);
