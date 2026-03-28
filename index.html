@@ -557,7 +557,9 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <div id="metaWeekPct" style="text-align:right;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;color:var(--blue);margin:-8px 0 12px;"></div>
     <div class="sum-grid" id="sumGrid"></div>
     <div class="chart-box"><div class="chart-lbl">Ganhos — últimos 7 dias</div><canvas id="chart" height="140"></canvas></div>
+    <div class="chart-box"><div class="chart-lbl">Proporção por loja — hoje</div><canvas id="donutChart" height="200"></canvas></div>
     <div class="store-break" id="storeBreak"></div>
+    <div class="chart-box"><div class="chart-lbl">Proporção por loja — hoje</div><canvas id="donutChart" height="200"></canvas></div>
   </div>
 </div>
 
@@ -605,9 +607,24 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       <div class="field-label">Nome do motoboy</div>
       <input class="field-input" id="repassName" placeholder="Ex: João Silva" />
     </div>
+    <div class="field-group">
+      <div class="field-label">Telefone do motoboy (opcional)</div>
+      <input class="field-input" id="repassPhone" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" />
+    </div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Selecione as entregas e ajuste o valor que vai pagar:</div>
     <div id="repassList"></div>
-    <button class="btn-save" onclick="genRepassPDF()" id="btnRepassPDF" disabled style="margin-top:14px;">📄 Gerar PDF para o motoboy</button>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn-save" onclick="sendRepassLink()" id="btnRepassLink" disabled style="flex:1;background:var(--accent);">🔗 Gerar link</button>
+      <button class="btn-save" onclick="genRepassPDF()" id="btnRepassPDF" disabled style="flex:1;background:linear-gradient(135deg,#c0392b,#e74c3c);">📄 PDF</button>
+    </div>
+    <div id="repassLinkResult" style="display:none;margin-top:12px;background:var(--card);border:1px solid var(--accent);border-radius:var(--radius);padding:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;">Link gerado</div>
+      <div id="repassLinkUrl" style="font-size:11px;color:var(--blue);word-break:break-all;line-height:1.5;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="copyRepassLink()" style="flex:1;background:var(--blue);color:#fff;border:none;border-radius:9px;padding:10px;font-weight:700;font-size:13px;cursor:pointer;">📋 Copiar</button>
+        <button onclick="shareRepassWpp()" style="flex:1;background:#25d366;color:#fff;border:none;border-radius:9px;padding:10px;font-weight:700;font-size:13px;cursor:pointer;">💬 WhatsApp</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1298,10 +1315,53 @@ function renderFinance(){
   stops.forEach(s=>{ const k=s.store||'Sem loja'; if(!sm[k])sm[k]={t:0,c:0}; sm[k].t+=parseMoney(s.value); sm[k].c++; });
   document.getElementById('storeBreak').innerHTML='<div class="chart-lbl" style="margin-bottom:10px">Por loja — hoje</div>'+
     (Object.keys(sm).length?Object.entries(sm).map(([n,v])=>`<div class="break-row"><div class="break-name">🏪 ${n}</div><div><div class="break-val">${fmtMoney(v.t)}</div><div class="break-cnt">${v.c} parada(s)</div></div></div>`).join(''):'<div style="color:var(--muted);font-size:13px">Nenhuma parada hoje</div>');
+  drawDonut(sm);
 }
 
 function updateMeta(){ cfg.meta=parseFloat(document.getElementById('metaInp').value)||0; saveCfg(); renderFinance(); }
 function updateMetaWeek(){ cfg.metaWeek=parseFloat(document.getElementById('metaWeekInp').value)||0; saveCfg(); renderFinance(); }
+
+
+function drawDonut(storeMap){
+  const canvas=document.getElementById('donutChart');
+  if(!canvas)return;
+  const entries=Object.entries(storeMap).filter(([,v])=>v.t>0);
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-28, H=200;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  if(!entries.length){ctx.fillStyle='#555';ctx.font='500 13px Barlow';ctx.textAlign='center';ctx.fillText('Sem dados',W/2,H/2);return;}
+  const total=entries.reduce((a,[,v])=>a+v.t,0);
+  const colors=['#f5c518','#00e676','#3b82f6','#ff6b00','#e74c3c','#9b59b6','#1abc9c','#e67e22','#2ecc71','#e91e63'];
+  const cx=W/2, cy=90, r=70, rInner=42;
+  let angle=-Math.PI/2;
+  entries.forEach(([name,v],i)=>{
+    const slice=v.t/total*Math.PI*2;
+    const color=colors[i%colors.length];
+    ctx.beginPath();ctx.moveTo(cx+Math.cos(angle)*rInner,cy+Math.sin(angle)*rInner);
+    ctx.arc(cx,cy,r,angle,angle+slice);
+    const endOuter=angle+slice;
+    ctx.lineTo(cx+Math.cos(endOuter)*rInner,cy+Math.sin(endOuter)*rInner);
+    ctx.arc(cx,cy,rInner,angle+slice,angle,true);
+    ctx.closePath();ctx.fillStyle=color;ctx.fill();
+    angle+=slice;
+  });
+  // Center text
+  ctx.fillStyle='#f0f0f0';ctx.font='800 16px "Barlow Condensed"';ctx.textAlign='center';ctx.fillText(fmtMoney(total),cx,cy-2);
+  ctx.fillStyle='#888';ctx.font='500 10px Barlow';ctx.fillText('TOTAL',cx,cy+12);
+  // Legend
+  let ly=H-28;const lx=8;const colW=Math.floor(W/2);
+  entries.forEach(([name,v],i)=>{
+    const col=i%2, row=Math.floor(i/2);
+    const x=lx+col*colW, y=ly+row*16;
+    if(y>H-4)return;
+    ctx.fillStyle=colors[i%colors.length];ctx.fillRect(x,y-6,8,8);
+    ctx.fillStyle='#ccc';ctx.font='600 10px Barlow';ctx.textAlign='left';
+    const pct=Math.round(v.t/total*100);
+    ctx.fillText(name+' '+pct+'%',x+12,y+1);
+  });
+}
 
 async function downloadStoreReportPDF(){
   const storeSelect=document.getElementById('storeSelectPDF');
@@ -1556,12 +1616,14 @@ function renderRepassList(){
 function updateRepassBtn(){
   const checked=document.querySelectorAll('.repass-chk:checked').length;
   document.getElementById('btnRepassPDF').disabled=checked===0;
-  document.getElementById('btnRepassPDF').textContent=checked?`📄 Gerar PDF (${checked} entrega${checked>1?'s':''})`:'📄 Gerar PDF para o motoboy';
+  document.getElementById('btnRepassLink').disabled=checked===0;
+  document.getElementById('btnRepassPDF').textContent=checked?`📄 PDF (${checked})`:'📄 PDF';
+  document.getElementById('btnRepassLink').textContent=checked?`🔗 Link (${checked})`:'🔗 Gerar link';
+  document.getElementById('repassLinkResult').style.display='none';
 }
-async function genRepassPDF(){
-  const motoName=document.getElementById('repassName').value.trim()||'Motoboy';
+function getRepassItems(){
   const checked=document.querySelectorAll('.repass-chk:checked');
-  if(!checked.length){toast('Selecione entregas','error');return;}
+  if(!checked.length)return[];
   const items=[];
   checked.forEach(chk=>{
     const idx=parseInt(chk.dataset.idx);
@@ -1569,6 +1631,46 @@ async function genRepassPDF(){
     const taxa=parseMoney(valInput?.value||'0');
     items.push({stop:stops[idx],taxa,idx});
   });
+  return items;
+}
+let lastRepassLink='';
+async function sendRepassLink(){
+  const motoName=document.getElementById('repassName').value.trim()||'Motoboy';
+  const motoPhone=document.getElementById('repassPhone').value.replace(/\D/g,'')||'';
+  const items=getRepassItems();
+  if(!items.length){toast('Selecione entregas','error');return;}
+  if(!fbDb||!localStorage.getItem('sb_room_code')){toast('Configure Firebase primeiro','error');return;}
+  const btn=document.getElementById('btnRepassLink');btn.innerHTML='⏳...';btn.disabled=true;
+  try{
+    const room=localStorage.getItem('sb_room_code');
+    const code='RP-'+Date.now().toString(36).toUpperCase();
+    const payload={motoboy:motoName,phone:motoPhone,createdAt:new Date().toISOString(),
+      deliveries:items.map(x=>({name:x.stop.name||'',address:x.stop.address||'',complement:x.stop.complement||'',reference:x.stop.reference||'',phone:x.stop.phone||'',store:x.stop.store||'',city:cityName(resolveCityCode(x.stop.city||'')),neighborhood:x.stop.neighborhood||'',serviceType:x.stop.serviceType||'entrega',deliveryDate:x.stop.deliveryDate||'',timeFrom:x.stop.timeFrom||'',timeTo:x.stop.timeTo||'',taxa:x.taxa,notes:x.stop.notes||'',done:false}))
+    };
+    const {ref:r,set:s}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    await s(r(fbDb,'rooms/'+room+'/repass/'+code),JSON.stringify(payload));
+    const base='https://speedboymotoboy.github.io/SpeedBoy-APP/motoboy.html';
+    lastRepassLink=base+'?room='+encodeURIComponent(room)+'&code='+encodeURIComponent(code);
+    document.getElementById('repassLinkUrl').textContent=lastRepassLink;
+    document.getElementById('repassLinkResult').style.display='block';
+    toast('✅ Link gerado!','success');
+  }catch(e){console.error(e);toast('Erro: '+e.message,'error');}
+  finally{updateRepassBtn();}
+}
+function copyRepassLink(){navigator.clipboard?.writeText(lastRepassLink).then(()=>toast('📋 Link copiado!','success')).catch(()=>toast(lastRepassLink,''));}
+function shareRepassWpp(){
+  const name=document.getElementById('repassName').value.trim()||'Motoboy';
+  const phone=document.getElementById('repassPhone').value.replace(/\D/g,'')||'';
+  const items=getRepassItems();
+  const total=items.reduce((a,x)=>a+x.taxa,0);
+  const msg=`🏍️ *SPEEDBOY — Entregas para ${name}*\n\n📦 ${items.length} entrega(s)\n💰 Total: *${fmtMoney(total)}*\n\n🔗 Acesse seu painel:\n${lastRepassLink}`;
+  const url=phone?`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`:`https://wa.me/?text=${encodeURIComponent(msg)}`;
+  window.open(url,'_blank');
+}
+async function genRepassPDF(){
+  const motoName=document.getElementById('repassName').value.trim()||'Motoboy';
+  const items=getRepassItems();
+  if(!items.length){toast('Selecione entregas','error');return;}
   const total=items.reduce((a,x)=>a+x.taxa,0);
   const btn=document.getElementById('btnRepassPDF');btn.innerHTML='⏳...';btn.disabled=true;
   try{
@@ -1594,12 +1696,11 @@ async function genRepassPDF(){
       styles:{fontSize:9,cellPadding:3,textColor:[220,220,220],fillColor:[24,24,24]},
       headStyles:{fillColor:[30,30,30],textColor:[150,150,150],fontStyle:'bold',fontSize:8},
       alternateRowStyles:{fillColor:[20,20,20]},margin:{left:14,right:14}});
-    y=doc.lastAutoTable.finalY+8;
     doc.setFontSize(8);doc.setTextColor(80,80,80);doc.text('SPEEDBOY — Gerado em '+new Date().toLocaleString('pt-BR'),14,doc.internal.pageSize.getHeight()-8);
     doc.save(`speedboy_repass_${motoName.replace(/\s/g,'_')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
-    toast('✅ PDF gerado para '+motoName+'!','success');
+    toast('✅ PDF gerado!','success');
   }catch(e){console.error(e);toast('Erro: '+e.message,'error');}
-  finally{btn.innerHTML='📄 Gerar PDF';btn.disabled=false;updateRepassBtn();}
+  finally{btn.innerHTML='📄 PDF';btn.disabled=false;updateRepassBtn();}
 }
 
 function loadJS(src){ return new Promise((res,rej)=>{ if(document.querySelector(`script[src="${src}"]`)){res();return;} const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
