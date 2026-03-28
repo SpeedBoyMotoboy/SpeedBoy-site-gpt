@@ -1614,7 +1614,6 @@ function updateRepassBtn(){
   const checked=document.querySelectorAll('.repass-chk:checked').length;
   document.getElementById('btnRepassLink').disabled=checked===0;
   document.getElementById('btnRepassLink').textContent=checked?`🔗 Gerar link (${checked} entrega${checked>1?'s':''})`:'🔗 Gerar link para o motoboy';
-  document.getElementById('repassLinkResult').style.display='none';
 }
 function getRepassItems(){
   const checked=document.querySelectorAll('.repass-chk:checked');
@@ -1645,7 +1644,7 @@ async function sendRepassLink(){
     const {ref:r,set:s}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
     await s(r(fbDb,'rooms/'+room+'/repass/'+code),JSON.stringify(payload));
     const base='https://speedboymotoboy.github.io/SpeedBoy-APP/motoboy.html';
-    lastRepassLink=base+'?room='+encodeURIComponent(room)+'&code='+encodeURIComponent(code);
+    lastRepassLink=base+'?room='+encodeURIComponent(room)+'&id='+encodeURIComponent(code);
     document.getElementById('repassLinkUrl').textContent=lastRepassLink;
     document.getElementById('repassLinkResult').style.display='block';
     toast('✅ Link gerado!','success');
