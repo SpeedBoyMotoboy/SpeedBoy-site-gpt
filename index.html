@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+: <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -375,6 +375,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   </div>
   <div class="home-top">
     <button class="btn-add" onclick="goForm()">＋ Adicionar parada</button>
+    <button class="btn-cfg-icon" onclick="goRepass()" title="Repassar">🏍️</button>
     <button class="btn-cfg-icon" onclick="goNav('configScreen','nav-cfg')">⚙️</button>
   </div>
   <div class="pending-section" id="pendingSection">
@@ -548,6 +549,12 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     </div>
     <div class="meta-bar-wrap"><div class="meta-bar" id="metaBar" style="width:0%"></div></div>
     <div id="metaPct" style="text-align:right;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;color:var(--accent);margin:-8px 0 12px;"></div>
+    <div class="meta-row">
+      <div class="meta-lbl">META SEMANAL (R$)</div>
+      <input class="meta-inp" id="metaWeekInp" type="number" placeholder="0" oninput="updateMetaWeek()" />
+    </div>
+    <div class="meta-bar-wrap"><div class="meta-bar" id="metaBarWeek" style="width:0%;background:var(--blue);"></div></div>
+    <div id="metaWeekPct" style="text-align:right;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;color:var(--blue);margin:-8px 0 12px;"></div>
     <div class="sum-grid" id="sumGrid"></div>
     <div class="chart-box"><div class="chart-lbl">Ganhos — últimos 7 dias</div><canvas id="chart" height="140"></canvas></div>
     <div class="store-break" id="storeBreak"></div>
@@ -582,6 +589,25 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">Gere um link por loja. Mande pelo WhatsApp — elas abrem e fazem pedidos sem configurar nada.</div>
     <div id="linksList"></div>
     <button class="btn-new-link" onclick="genLink()">🔗 Gerar link para nova loja</button>
+  </div>
+</div>
+
+
+
+<!-- ══ REPASSAR ══ -->
+<div class="screen" id="repassScreen">
+  <div class="config-body">
+    <div class="screen-title">
+      <button class="back-btn" onclick="goNav('homeScreen','nav-home')">←</button>
+      🏍️ Repassar entregas
+    </div>
+    <div class="field-group">
+      <div class="field-label">Nome do motoboy</div>
+      <input class="field-input" id="repassName" placeholder="Ex: João Silva" />
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Selecione as entregas e ajuste o valor que vai pagar:</div>
+    <div id="repassList"></div>
+    <button class="btn-save" onclick="genRepassPDF()" id="btnRepassPDF" disabled style="margin-top:14px;">📄 Gerar PDF para o motoboy</button>
   </div>
 </div>
 
@@ -734,6 +760,7 @@ function goNav(screenId, navId) {
   if(screenId==='financeScreen') renderFinance();
   if(screenId==='reportScreen')  renderReport();
   if(screenId==='linkgenScreen') renderLinks();
+  if(screenId==='repassScreen')  renderRepassList();
   if(screenId==='configScreen')  loadConfig();
 }
 
@@ -899,7 +926,10 @@ function toggleCard(i){
   if(!was) c.classList.add('expanded');
 }
 
-function togDone(i)        { stops[i].done=!stops[i].done; saveStops(); renderHome(); }
+function togDone(i){
+  stops[i].done=!stops[i].done; saveStops(); renderHome();
+  if(stops[i]._trackKey) updateTracking(stops[i]._trackKey, stops[i].done?'entregue':'a caminho');
+}
 function togPaid(i)        { stops[i].paid=!stops[i].paid; saveStops(); renderHome(); }
 function togProductPaid(i) { stops[i].productPaid=!stops[i].productPaid; saveStops(); renderHome(); }
 function delStop(i){ if(!confirm(`Remover ${stops[i].name}?`))return; stops.splice(i,1); saveStops(); renderHome(); }
@@ -1241,6 +1271,21 @@ function renderFinance(){
     document.getElementById('metaBar').style.width='0%';
     pctEl.textContent='';
   }
+  // Meta Semanal
+  const metaWeek=parseFloat(cfg.metaWeek)||0;
+  document.getElementById('metaWeekInp').value=metaWeek||'';
+  const pctWkEl=document.getElementById('metaWeekPct');
+  if(metaWeek>0){
+    const pctWk=Math.min(wkTotal/metaWeek*100,100);
+    const pctWkRaw=(wkTotal/metaWeek*100);
+    document.getElementById('metaBarWeek').style.width=pctWk+'%';
+    document.getElementById('metaBarWeek').style.background=pctWk>=100?'var(--green)':'var(--blue)';
+    pctWkEl.textContent=pctWkRaw.toFixed(0)+'% da meta semanal';
+    pctWkEl.style.color=pctWk>=100?'var(--green)':'var(--blue)';
+  } else {
+    document.getElementById('metaBarWeek').style.width='0%';
+    pctWkEl.textContent='';
+  }
   // Summary
   document.getElementById('sumGrid').innerHTML=`
     <div class="sum-card ac"><div class="sum-lbl">Hoje — Total</div><div class="sum-val ac">${fmtMoney(todayTotal)}</div><div class="sum-sub">${todayDone} entrega(s)</div></div>
@@ -1256,6 +1301,7 @@ function renderFinance(){
 }
 
 function updateMeta(){ cfg.meta=parseFloat(document.getElementById('metaInp').value)||0; saveCfg(); renderFinance(); }
+function updateMetaWeek(){ cfg.metaWeek=parseFloat(document.getElementById('metaWeekInp').value)||0; saveCfg(); renderFinance(); }
 
 async function downloadStoreReportPDF(){
   const storeSelect=document.getElementById('storeSelectPDF');
@@ -1477,6 +1523,85 @@ async function genPDF(){
 }
 
 
+// ═══════════════════════════════════════════════════════
+//  REPASSAR ENTREGAS
+// ═══════════════════════════════════════════════════════
+function goRepass(){
+  const pending=stops.filter(s=>!s.done);
+  if(!pending.length){toast('Nenhuma entrega pendente','error');return;}
+  goNav('repassScreen','');
+}
+function renderRepassList(){
+  const list=document.getElementById('repassList');
+  const pending=stops.map((s,i)=>({s,i})).filter(({s})=>!s.done);
+  if(!pending.length){list.innerHTML='<div style="color:var(--muted);text-align:center;padding:20px;">Nenhuma entrega pendente</div>';return;}
+  list.innerHTML=pending.map(({s,i})=>{
+    const val=parseMoney(s.value);
+    return`<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="checkbox" class="repass-chk" data-idx="${i}" onchange="updateRepassBtn()" style="width:20px;height:20px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;" />
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.name||'Sem nome'}</div>
+          <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.address||''}</div>
+          <div style="font-size:10px;color:var(--accent);margin-top:2px;">${s.store?'🏪 '+s.store:''} ${s.city?'· '+cityName(resolveCityCode(s.city)):''}</div>
+        </div>
+        <div style="flex-shrink:0;width:80px;">
+          <div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px;">PAGAR R$</div>
+          <input class="field-input repass-val" data-idx="${i}" value="${val?String(val).replace('.',','):''}" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" style="padding:8px;font-size:13px;text-align:center;" />
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function updateRepassBtn(){
+  const checked=document.querySelectorAll('.repass-chk:checked').length;
+  document.getElementById('btnRepassPDF').disabled=checked===0;
+  document.getElementById('btnRepassPDF').textContent=checked?`📄 Gerar PDF (${checked} entrega${checked>1?'s':''})`:'📄 Gerar PDF para o motoboy';
+}
+async function genRepassPDF(){
+  const motoName=document.getElementById('repassName').value.trim()||'Motoboy';
+  const checked=document.querySelectorAll('.repass-chk:checked');
+  if(!checked.length){toast('Selecione entregas','error');return;}
+  const items=[];
+  checked.forEach(chk=>{
+    const idx=parseInt(chk.dataset.idx);
+    const valInput=document.querySelector(`.repass-val[data-idx="${idx}"]`);
+    const taxa=parseMoney(valInput?.value||'0');
+    items.push({stop:stops[idx],taxa,idx});
+  });
+  const total=items.reduce((a,x)=>a+x.taxa,0);
+  const btn=document.getElementById('btnRepassPDF');btn.innerHTML='⏳...';btn.disabled=true;
+  try{
+    if(!window.jsPDF){
+      await loadJS('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+      await loadJS('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+    }
+    const{jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});const W=doc.internal.pageSize.getWidth();
+    doc.setFillColor(10,10,10);doc.rect(0,0,W,28,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(245,197,24);doc.text('SPEEDBOY',14,17);
+    doc.setFontSize(10);doc.setTextColor(150,150,150);doc.text('Entregas para: '+motoName,14,24);
+    doc.text(new Date().toLocaleDateString('pt-BR'),W-14,24,{align:'right'});
+    let y=36;
+    const bw=(W-28-3)/2;
+    [{lbl:'MOTOBOY',val:motoName,c:[245,197,24]},{lbl:'TOTAL A PAGAR',val:fmtMoney(total),c:[0,230,118]}].forEach((b,i)=>{
+      const x=14+i*(bw+3);doc.setFillColor(24,24,24);doc.roundedRect(x,y,bw,20,3,3,'F');
+      doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(120,120,120);doc.text(b.lbl,x+bw/2,y+7,{align:'center'});
+      doc.setFontSize(14);doc.setTextColor(...b.c);doc.text(b.val,x+bw/2,y+16,{align:'center'});
+    });
+    y+=28;
+    doc.autoTable({startY:y,head:[['#','Cliente','Endereço','Loja','Cidade','Taxa']],
+      body:items.map((x,i)=>[i+1,x.stop.name||'—',(x.stop.address||'').substring(0,30),x.stop.store||'—',cityName(resolveCityCode(x.stop.city||''))||'—',fmtMoney(x.taxa)]),
+      styles:{fontSize:9,cellPadding:3,textColor:[220,220,220],fillColor:[24,24,24]},
+      headStyles:{fillColor:[30,30,30],textColor:[150,150,150],fontStyle:'bold',fontSize:8},
+      alternateRowStyles:{fillColor:[20,20,20]},margin:{left:14,right:14}});
+    y=doc.lastAutoTable.finalY+8;
+    doc.setFontSize(8);doc.setTextColor(80,80,80);doc.text('SPEEDBOY — Gerado em '+new Date().toLocaleString('pt-BR'),14,doc.internal.pageSize.getHeight()-8);
+    doc.save(`speedboy_repass_${motoName.replace(/\s/g,'_')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
+    toast('✅ PDF gerado para '+motoName+'!','success');
+  }catch(e){console.error(e);toast('Erro: '+e.message,'error');}
+  finally{btn.innerHTML='📄 Gerar PDF';btn.disabled=false;updateRepassBtn();}
+}
+
 function loadJS(src){ return new Promise((res,rej)=>{ if(document.querySelector(`script[src="${src}"]`)){res();return;} const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
 
 // ═══════════════════════════════════════════════════════
@@ -1697,16 +1822,25 @@ function renderPending(){
 }
 async function acceptPending(key){
   const s=pendingData[key]; if(!s)return;
-  // Normalize city code from pedido.html format
   s.city=resolveCityCode(s.city||s.cityId||'');
   s.status='confirmed'; s._order=stops.length; s.done=false;
+  s._trackKey=key;
   stops.push(s); saveStops();
+  await updateTracking(key,'aceito');
   await rmPending(key);
   toast('✅ Entrega de '+s.name+' adicionada!','success'); renderHome();
 }
-async function rejectPending(key){const s=pendingData[key];if(!confirm('Recusar entrega de '+(s?.name||'cliente')+'?'))return;await rmPending(key);}
-async function rejectAll(){const keys=Object.keys(pendingData);if(!keys.length)return;if(!confirm('Recusar todos os '+keys.length+' pedido(s)?'))return;for(const k of keys)await rmPending(k);}
+async function rejectPending(key){const s=pendingData[key];if(!confirm('Recusar entrega de '+(s?.name||'cliente')+'?'))return;await updateTracking(key,'recusado');await rmPending(key);}
+async function rejectAll(){const keys=Object.keys(pendingData);if(!keys.length)return;if(!confirm('Recusar todos os '+keys.length+' pedido(s)?'))return;for(const k of keys){await updateTracking(k,'recusado');await rmPending(k);}}
 async function rmPending(key){if(!fbDb)return;try{const room=localStorage.getItem('sb_room_code')||'';const {ref:r,remove}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');await remove(r(fbDb,'rooms/'+room+'/pending/'+key));}catch(e){console.error(e);}}
+async function updateTracking(key,status){
+  if(!fbDb)return;
+  try{
+    const room=localStorage.getItem('sb_room_code')||'';
+    const {ref:r,set:s}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    await s(r(fbDb,'rooms/'+room+'/tracking/'+key),JSON.stringify({status,updatedAt:new Date().toISOString()}));
+  }catch(e){console.error('tracking error:',e);}
+}
 
 // ═══════════════════════════════════════════════════════
 //  BACKUP
