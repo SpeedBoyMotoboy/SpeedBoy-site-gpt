@@ -385,7 +385,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <button class="btn-add" onclick="goForm()">＋ Adicionar parada</button>
     <button class="btn-cfg-icon" onclick="goNav('configScreen','nav-cfg')">⚙️</button>
   </div>
-  <div id="quickBtns" style="display:none;gap:8px;overflow-x:auto;padding:0 14px 8px;scrollbar-width:none;"></div>
   <div class="pending-section" id="pendingSection">
     <div class="pending-header">
       <div class="pending-title">🔔 Pedidos da loja <span class="pending-badge" id="pendingBadge">0</span></div>
@@ -400,6 +399,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <button class="btn-sort"    id="grp-store"   onclick="setGroupBy('store')">🏪 Loja</button>
     <button class="btn-sort"    id="grp-time"    onclick="setGroupBy('time')">⏰ Horário</button>
   </div>
+  <div id="quickBtns" style="display:none;flex-wrap:wrap;gap:8px;padding:4px 14px 10px;"></div>
   <div class="stops-list" id="stopsList"></div>
   <div class="route-bar">
     <button class="btn-route" id="routeBtn" onclick="openRoute()" disabled>🗺️ Abrir rota completa no Maps</button>
@@ -839,7 +839,7 @@ function renderHome(){
     if(done.length)    groups.push({label:'✅ Finalizadas ('+done.length+')',items:done,color:'var(--green)'});
   } else if(groupByMode==='city'){
     const map={};
-    indexed.forEach(function(s){const k=s.city||'Sem cidade';if(!map[k])map[k]=[];map[k].push(s);});
+    indexed.forEach(function(s){const k=cityName(resolveCityCode(s.city||s.cityId))||'Sem cidade';if(!map[k])map[k]=[];map[k].push(s);});
     Object.keys(map).sort().forEach(function(k){groups.push({label:'🏙️ '+k+' ('+map[k].length+')',items:map[k],color:'var(--blue)'});});
   } else if(groupByMode==='store'){
     const map={};
@@ -869,7 +869,7 @@ function renderHome(){
         <div class="stop-header ${nextIdx === i ? 'stop-header-next' : ''}">
           <div class="stop-num">${i+1}</div>
           <div class="stop-info"><div class="stop-name">${s.name||'Sem nome'}</div><div class="stop-addr">${s.address||'Sem endereço'}</div>
-          ${(s.city||s.deliveryDate||s.serviceType)?`<div style="font-size:10px;color:var(--accent);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${[s.serviceType==='retirada'?'📦':s.serviceType==='troca'?'🔄':'🛵',s.city||'',s.deliveryDate||''].filter(Boolean).join(' · ')}</div>`:''}</div>
+          ${(s.city||s.deliveryDate||s.serviceType)?`<div style="font-size:10px;color:var(--accent);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${[s.serviceType==='retirada'?'📦':s.serviceType==='troca'?'🔄':'🛵',cityName(resolveCityCode(s.city||s.cityId))||'',s.deliveryDate||''].filter(Boolean).join(' · ')}</div>`:''}</div>
           <div class="stop-right">
             ${valStr?`<div class="stop-val ${s.paid?'':'unpaid'}">${valStr}</div>`:''}
             ${s.productValue>0?`<div class="stop-product-val">cobrar: <span>R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')}</span></div>`:''}
@@ -883,7 +883,7 @@ function renderHome(){
           ${(s.timeFrom||s.timeTo)?`<div><strong>HORÁRIO</strong> ⏰ ${s.timeFrom||'?'} até ${s.timeTo||'?'}</div>`:''}
           ${s.deliveryDate?`<div><strong>DATA</strong> 📅 ${s.deliveryDate}</div>`:''}
           ${s.serviceType?`<div><strong>TIPO</strong> ${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</div>`:''}
-          ${s.city?`<div><strong>CIDADE</strong> 🏙️ ${s.city}</div>`:''}
+          ${s.city?`<div><strong>CIDADE</strong> 🏙️ ${cityName(resolveCityCode(s.city||s.cityId))}</div>`:''}
           ${s.arrivedAt?`<div><strong>CHEGOU</strong> 📨 ${s.arrivedAt}</div>`:''}
           ${s.notes?`<div><strong>OBS</strong> ${s.notes}</div>`:''}
           ${valStr?`<div><strong>TAXA</strong> <span class="paid-badge ${s.paid?'yes':'no'}">${s.paid?'✓ Recebida':'⏳ A receber'}</span></div>`:''}
@@ -1032,13 +1032,16 @@ function setPaidBtnState(btnId, hiddenId, val){
 
 // City name ↔ code mapping
 const CITY_MAP={SRR:'Serra',VIX:'Vitória',VV:'Vila Velha',CCA:'Cariacica',VIA:'Viana',OUT:'Outra'};
-const CITY_REVERSE={'serra':'SRR','vitoria':'VIX','vitória':'VIX','vila velha':'VV','vilavelha':'VV','cariacica':'CCA','viana':'VIA'};
+const CITY_REVERSE={'serra':'SRR','vitoria':'VIX','vitória':'VIX','vila velha':'VV','vilavelha':'VV','cariacica':'CCA','viana':'VIA','srr':'SRR','vix':'VIX','vv':'VV','cca':'CCA','via':'VIA'};
 function resolveCityCode(val){
   if(!val)return'';
-  if(CITY_MAP[val])return val; // already a code
+  val=String(val).trim();
+  if(CITY_MAP[val])return val; // already a code like SRR
+  if(CITY_MAP[val.toUpperCase()])return val.toUpperCase(); // "srr" → "SRR"
   const low=val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   return CITY_REVERSE[low]||CITY_REVERSE[low.replace(/\s/g,'')]||'';
 }
+function cityName(code){ return CITY_MAP[code]||code||''; }
 
 // ═══════════════ QUICK STORES ═══════════════
 function getQuickStores(){try{return JSON.parse(localStorage.getItem('sb_quick_stores')||'[]');}catch(e){return[];}}
@@ -1047,12 +1050,13 @@ function saveQuickStores(list){localStorage.setItem('sb_quick_stores',JSON.strin
 function addQuickStore(){
   const name=prompt('Nome da loja (ex: Farmácia ABC):');
   if(!name||!name.trim())return;
+  const taxa=prompt('Sua taxa de entrega (R$):');
   const city=prompt('Cidade? (Serra, Vitória, Vila Velha, Cariacica, Viana):');
   const bairro=prompt('Bairro da loja:');
   const rua=prompt('Rua/Avenida da loja:');
   const numero=prompt('Número:');
   const qs=getQuickStores();
-  qs.push({name:name.trim(),city:resolveCityCode(city||''),bairro:bairro?.trim()||'',rua:rua?.trim()||'',numero:numero?.trim()||''});
+  qs.push({name:name.trim(),taxa:parseMoney(taxa||'0'),city:resolveCityCode(city||''),bairro:bairro?.trim()||'',rua:rua?.trim()||'',numero:numero?.trim()||''});
   saveQuickStores(qs);
   renderQuickStoresConfig();
   toast('⚡ Loja rápida "'+name.trim()+'" adicionada!','success');
@@ -1063,23 +1067,23 @@ function renderQuickStoresConfig(){
   if(!el)return;
   const qs=getQuickStores();
   if(!qs.length){el.innerHTML='<div style="font-size:12px;color:var(--muted)">Nenhuma loja rápida.</div>';return;}
-  el.innerHTML=qs.map((s,i)=>`<div class="store-chip">⚡ ${s.name} <span style="font-size:10px;color:var(--muted)">${CITY_MAP[s.city]||''}</span><button class="store-chip-del" onclick="rmQuickStore(${i})">×</button></div>`).join('');
+  el.innerHTML=qs.map((s,i)=>`<div class="store-chip">⚡ ${s.name} <span style="font-size:10px;color:var(--green)">${s.taxa?fmtMoney(s.taxa):''}</span> <span style="font-size:10px;color:var(--muted)">${CITY_MAP[s.city]||''}</span><button class="store-chip-del" onclick="rmQuickStore(${i})">×</button></div>`).join('');
 }
 function quickAddStop(i){
   const qs=getQuickStores();
   const s=qs[i];
   if(!s)return;
-  const cityName=CITY_MAP[s.city]||'';
-  const address=s.rua+(s.numero?', '+s.numero:'')+(s.bairro?', '+s.bairro:'')+(cityName?' - '+cityName:'');
+  const cName=cityName(s.city);
+  const address=s.rua+(s.numero?', '+s.numero:'')+(s.bairro?', '+s.bairro:'')+(cName?' - '+cName:'');
   stops.push({
     name:'',address,street:s.rua,number:s.numero,neighborhood:s.bairro,
     store:s.name,city:s.city,serviceType:'entrega',deliveryDate:'',
     complement:'',reference:'',timeFrom:'',timeTo:'',phone:'',
-    value:0,paid:false,productValue:0,productPaid:false,
+    value:s.taxa||0,paid:false,productValue:0,productPaid:false,
     notes:'',done:false,_order:stops.length
   });
   saveStops();
-  toast('⚡ Entrega de '+s.name+' adicionada!','success');
+  toast('⚡ '+s.name+(s.taxa?' · '+fmtMoney(s.taxa):'')+' adicionada!','success');
   renderHome();
 }
 function renderQuickButtons(){
@@ -1088,7 +1092,7 @@ function renderQuickButtons(){
   const qs=getQuickStores();
   if(!qs.length){el.style.display='none';return;}
   el.style.display='flex';
-  el.innerHTML=qs.map((s,i)=>`<button onclick="quickAddStop(${i})" style="flex-shrink:0;padding:8px 14px;border-radius:20px;border:1.5px solid var(--accent);background:rgba(245,197,24,.1);color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">⚡ ${s.name}</button>`).join('');
+  el.innerHTML=qs.map((s,i)=>`<button onclick="quickAddStop(${i})" style="flex-shrink:0;padding:8px 14px;border-radius:20px;border:1.5px solid var(--accent);background:rgba(245,197,24,.1);color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">⚡ ${s.name} ${s.taxa?fmtMoney(s.taxa):''}</button>`).join('');
 }
 
 function saveStop(){
@@ -1101,8 +1105,7 @@ function saveStop(){
   if(!rua||!bairro||!city){ toast('Rua, bairro e cidade são obrigatórios!','error'); return; }
   
   // Compose full address
-  const cityNames={SRR:'Serra',VIX:'Vitória',VV:'Vila Velha',CCA:'Cariacica',VIA:'Viana',OUT:''};
-  const address = rua + (numero?', '+numero:'') + ', ' + bairro + (cityNames[city]?' - '+cityNames[city]:'');
+  const address = rua + (numero?', '+numero:'') + ', ' + bairro + (cityName(city)?' - '+cityName(city):'');
   
   const idx = parseInt(document.getElementById('editIdx').value);
   if(idx >= 0 && (idx >= stops.length || idx < 0)) {
@@ -1775,7 +1778,8 @@ function renderPending(){
 }
 async function acceptPending(key){
   const s=pendingData[key]; if(!s)return;
-  
+  // Normalize city code from pedido.html format
+  s.city=resolveCityCode(s.city||s.cityId||'');
   s.status='confirmed'; s._order=stops.length; s.done=false;
   stops.push(s); saveStops();
   await rmPending(key);
