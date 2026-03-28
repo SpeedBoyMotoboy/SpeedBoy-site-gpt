@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+: <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -375,7 +375,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   </div>
   <div class="home-top">
     <button class="btn-add" onclick="goForm()">＋ Adicionar parada</button>
-    <button class="btn-cfg-icon" onclick="goRepass()" title="Repassar">🏍️</button>
     <button class="btn-cfg-icon" onclick="goNav('configScreen','nav-cfg')">⚙️</button>
   </div>
   <div class="pending-section" id="pendingSection">
@@ -581,6 +580,9 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       </select>
       <button style="width:100%;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;padding:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;" onclick="downloadStoreReportPDF()">📄 PDF da loja</button>
     </div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+      <button style="width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#000;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18px;padding:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="goRepass()">🏍️ Repassar entregas para outro motoboy</button>
+    </div>
   </div>
 </div>
 
@@ -613,12 +615,9 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     </div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Selecione as entregas e ajuste o valor que vai pagar:</div>
     <div id="repassList"></div>
-    <div style="display:flex;gap:8px;margin-top:14px;">
-      <button class="btn-save" onclick="sendRepassLink()" id="btnRepassLink" disabled style="flex:1;background:var(--accent);">🔗 Gerar link</button>
-      <button class="btn-save" onclick="genRepassPDF()" id="btnRepassPDF" disabled style="flex:1;background:linear-gradient(135deg,#c0392b,#e74c3c);">📄 PDF</button>
-    </div>
+    <button class="btn-save" onclick="sendRepassLink()" id="btnRepassLink" disabled style="margin-top:14px;background:var(--accent);">🔗 Gerar link para o motoboy</button>
     <div id="repassLinkResult" style="display:none;margin-top:12px;background:var(--card);border:1px solid var(--accent);border-radius:var(--radius);padding:14px;">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;">Link gerado</div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;">Link gerado ✅</div>
       <div id="repassLinkUrl" style="font-size:11px;color:var(--blue);word-break:break-all;line-height:1.5;margin-bottom:10px;"></div>
       <div style="display:flex;gap:8px;">
         <button onclick="copyRepassLink()" style="flex:1;background:var(--blue);color:#fff;border:none;border-radius:9px;padding:10px;font-weight:700;font-size:13px;cursor:pointer;">📋 Copiar</button>
@@ -1587,8 +1586,6 @@ async function genPDF(){
 //  REPASSAR ENTREGAS
 // ═══════════════════════════════════════════════════════
 function goRepass(){
-  const pending=stops.filter(s=>!s.done);
-  if(!pending.length){toast('Nenhuma entrega pendente','error');return;}
   goNav('repassScreen','');
 }
 function renderRepassList(){
@@ -1615,10 +1612,8 @@ function renderRepassList(){
 }
 function updateRepassBtn(){
   const checked=document.querySelectorAll('.repass-chk:checked').length;
-  document.getElementById('btnRepassPDF').disabled=checked===0;
   document.getElementById('btnRepassLink').disabled=checked===0;
-  document.getElementById('btnRepassPDF').textContent=checked?`📄 PDF (${checked})`:'📄 PDF';
-  document.getElementById('btnRepassLink').textContent=checked?`🔗 Link (${checked})`:'🔗 Gerar link';
+  document.getElementById('btnRepassLink').textContent=checked?`🔗 Gerar link (${checked} entrega${checked>1?'s':''})`:'🔗 Gerar link para o motoboy';
   document.getElementById('repassLinkResult').style.display='none';
 }
 function getRepassItems(){
@@ -1667,42 +1662,6 @@ function shareRepassWpp(){
   const url=phone?`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`:`https://wa.me/?text=${encodeURIComponent(msg)}`;
   window.open(url,'_blank');
 }
-async function genRepassPDF(){
-  const motoName=document.getElementById('repassName').value.trim()||'Motoboy';
-  const items=getRepassItems();
-  if(!items.length){toast('Selecione entregas','error');return;}
-  const total=items.reduce((a,x)=>a+x.taxa,0);
-  const btn=document.getElementById('btnRepassPDF');btn.innerHTML='⏳...';btn.disabled=true;
-  try{
-    if(!window.jsPDF){
-      await loadJS('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-      await loadJS('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
-    }
-    const{jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});const W=doc.internal.pageSize.getWidth();
-    doc.setFillColor(10,10,10);doc.rect(0,0,W,28,'F');
-    doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(245,197,24);doc.text('SPEEDBOY',14,17);
-    doc.setFontSize(10);doc.setTextColor(150,150,150);doc.text('Entregas para: '+motoName,14,24);
-    doc.text(new Date().toLocaleDateString('pt-BR'),W-14,24,{align:'right'});
-    let y=36;
-    const bw=(W-28-3)/2;
-    [{lbl:'MOTOBOY',val:motoName,c:[245,197,24]},{lbl:'TOTAL A PAGAR',val:fmtMoney(total),c:[0,230,118]}].forEach((b,i)=>{
-      const x=14+i*(bw+3);doc.setFillColor(24,24,24);doc.roundedRect(x,y,bw,20,3,3,'F');
-      doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(120,120,120);doc.text(b.lbl,x+bw/2,y+7,{align:'center'});
-      doc.setFontSize(14);doc.setTextColor(...b.c);doc.text(b.val,x+bw/2,y+16,{align:'center'});
-    });
-    y+=28;
-    doc.autoTable({startY:y,head:[['#','Cliente','Endereço','Loja','Cidade','Taxa']],
-      body:items.map((x,i)=>[i+1,x.stop.name||'—',(x.stop.address||'').substring(0,30),x.stop.store||'—',cityName(resolveCityCode(x.stop.city||''))||'—',fmtMoney(x.taxa)]),
-      styles:{fontSize:9,cellPadding:3,textColor:[220,220,220],fillColor:[24,24,24]},
-      headStyles:{fillColor:[30,30,30],textColor:[150,150,150],fontStyle:'bold',fontSize:8},
-      alternateRowStyles:{fillColor:[20,20,20]},margin:{left:14,right:14}});
-    doc.setFontSize(8);doc.setTextColor(80,80,80);doc.text('SPEEDBOY — Gerado em '+new Date().toLocaleString('pt-BR'),14,doc.internal.pageSize.getHeight()-8);
-    doc.save(`speedboy_repass_${motoName.replace(/\s/g,'_')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
-    toast('✅ PDF gerado!','success');
-  }catch(e){console.error(e);toast('Erro: '+e.message,'error');}
-  finally{btn.innerHTML='📄 PDF';btn.disabled=false;updateRepassBtn();}
-}
-
 function loadJS(src){ return new Promise((res,rej)=>{ if(document.querySelector(`script[src="${src}"]`)){res();return;} const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
 
 // ═══════════════════════════════════════════════════════
