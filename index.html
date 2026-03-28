@@ -325,6 +325,14 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .money-input-wrap .field-input{padding-left:38px;}
 .req{color:var(--red);font-weight:900;}
 
+/* BAIRRO SEARCH */
+.bairro-wrap{position:relative;}
+.bairro-list{display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1.5px solid var(--accent);border-top:none;border-radius:0 0 12px 12px;max-height:180px;overflow-y:auto;z-index:50;}
+.bairro-list.show{display:block;}
+.bairro-item{padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);border-bottom:1px solid var(--border);}
+.bairro-item:active{background:var(--accent);color:#000;}
+.bairro-item:last-child{border-bottom:none;}
+
 /* TOAST */
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:9px 18px;border-radius:30px;font-size:13px;font-weight:600;z-index:400;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -377,6 +385,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <button class="btn-add" onclick="goForm()">＋ Adicionar parada</button>
     <button class="btn-cfg-icon" onclick="goNav('configScreen','nav-cfg')">⚙️</button>
   </div>
+  <div id="quickBtns" style="display:none;gap:8px;overflow-x:auto;padding:0 14px 8px;scrollbar-width:none;"></div>
   <div class="pending-section" id="pendingSection">
     <div class="pending-header">
       <div class="pending-title">🔔 Pedidos da loja <span class="pending-badge" id="pendingBadge">0</span></div>
@@ -414,9 +423,8 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
           <input class="field-input" id="fValue" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" style="padding:10px 10px 10px 34px;font-size:13px;" />
         </div>
       </div>
-      <label style="display:flex;align-items:center;justify-content:center;width:36px;height:42px;background:var(--card);border:1px solid var(--border);border-radius:10px;cursor:pointer;flex-shrink:0;" title="Pago?">
-        <input type="checkbox" id="fPaid" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;" />
-      </label>
+      <button type="button" id="fPaidBtn" onclick="toggleFormPaid()" style="flex-shrink:0;width:42px;height:42px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Pago?">✓</button>
+      <input type="hidden" id="fPaid" value="0" />
       <div style="flex:1;">
         <div class="field-label">De</div>
         <input class="field-input" id="fTimeFrom" type="time" style="padding:10px 4px;font-size:12px;text-align:center;" />
@@ -466,16 +474,15 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
           <input class="field-input" id="fProductValue" placeholder="0,00" type="text" inputmode="decimal" oninput="maskMoney(this)" style="padding:10px 10px 10px 34px;font-size:13px;" />
         </div>
       </div>
-      <label style="display:flex;align-items:center;justify-content:center;width:36px;height:42px;background:var(--card);border:1px solid var(--border);border-radius:10px;cursor:pointer;flex-shrink:0;" title="Produto pago?">
-        <input type="checkbox" id="fProductPaid" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;" />
-      </label>
+      <button type="button" id="fProductPaidBtn" onclick="toggleFormProductPaid()" style="flex-shrink:0;width:42px;height:42px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Produto pago?">✓</button>
+      <input type="hidden" id="fProductPaid" value="0" />
     </div>
 
     <!-- ROW 5: Cidade + Bairro -->
     <div class="field-row">
       <div class="field-group">
         <div class="field-label">Cidade <span class="req">*</span></div>
-        <select class="field-input" id="fCity">
+        <select class="field-input" id="fCity" onchange="onCityChange()">
           <option value="">— Selecione —</option>
           <option value="SRR">Serra</option>
           <option value="VIX">Vitória</option>
@@ -487,7 +494,10 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       </div>
       <div class="field-group">
         <div class="field-label">Bairro <span class="req">*</span></div>
-        <input class="field-input" id="fBairro" placeholder="Morada de Laranjeiras" />
+        <div class="bairro-wrap">
+          <input class="field-input" id="fBairro" placeholder="Digite para buscar..." autocomplete="off" oninput="filterBairros()" onfocus="filterBairros()" />
+          <div class="bairro-list" id="fBairroList"></div>
+        </div>
       </div>
     </div>
 
@@ -603,6 +613,12 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       <div class="cfg-title">🏬 Minhas lojas</div>
       <div class="stores-list" id="storesList"></div>
       <div class="store-add-row"><input class="finput" id="newStore" placeholder="Nome da loja (ex: KS)" maxlength="30" /><button class="btn-store-add" onclick="addStore()">+ Adicionar</button></div>
+    </div>
+    <div class="cfg-section">
+      <div class="cfg-title">⚡ Lojas rápidas (1 clique)</div>
+      <div class="info-box">Configure lojas que você atende sempre. Na tela de entregas, basta 1 toque para adicionar.</div>
+      <div class="stores-list" id="quickStoresList"></div>
+      <button class="btn-store-add" onclick="addQuickStore()" style="width:100%;margin-top:6px;">⚡ Adicionar loja rápida</button>
     </div>
     <div class="cfg-section">
       <div class="cfg-title">🔥 Firebase (sincronização)</div>
@@ -748,7 +764,8 @@ function goForm(idx) {
     const s = stops[editingIdx];
     document.getElementById('fStore').value      = s.store      || '';
     document.getElementById('fName').value        = s.name       || '';
-    document.getElementById('fCity').value         = s.city        || '';
+    // Resolve city code from any format
+    document.getElementById('fCity').value         = resolveCityCode(s.city||s.cityId||'');
     document.getElementById('fServiceType').value  = s.serviceType || 'entrega';
     document.getElementById('fTimeFrom').value     = s.timeFrom    || '';
     document.getElementById('fTimeTo').value       = s.timeTo      || '';
@@ -758,13 +775,13 @@ function goForm(idx) {
     } else { document.getElementById('fDelivDate').value=''; }
     document.getElementById('fNotes').value       = s.notes      || '';
     document.getElementById('fValue').value       = s.value ? String(s.value).replace('.',',') : '';
-    document.getElementById('fPaid').checked      = !!s.paid;
+    setPaidBtnState('fPaidBtn','fPaid',!!s.paid);
     document.getElementById('fProductValue').value= s.productValue ? String(s.productValue).replace('.',',') : '';
-    document.getElementById('fProductPaid').checked= !!s.productPaid;
+    setPaidBtnState('fProductPaidBtn','fProductPaid',!!s.productPaid);
     document.getElementById('fComplement').value  = s.complement  || '';
     document.getElementById('fReference').value   = s.reference   || '';
     const ph = document.getElementById('fPhone'); ph.value=s.phone||''; if(s.phone) maskPhone(ph);
-    // Split fields (new) or fallback from old address
+    // Populate split address fields
     if(s.street) {
       document.getElementById('fRua').value     = s.street || '';
       document.getElementById('fNumero').value  = s.number || '';
@@ -789,8 +806,8 @@ function resetForm(){
   document.getElementById('fCity').value='';
   document.getElementById('fServiceType').value='entrega';
   document.getElementById('fStore').value='';
-  document.getElementById('fPaid').checked=false;
-  document.getElementById('fProductPaid').checked=false;
+  setPaidBtnState('fPaidBtn','fPaid',false);
+  setPaidBtnState('fProductPaidBtn','fProductPaid',false);
 }
 // ═══════════════════════════════════════════════════════
 //  HOME / STOPS
@@ -803,6 +820,7 @@ function renderHome(){
   badge.classList.toggle('full', false);
   document.getElementById('routeBtn').disabled = total===0;
   document.getElementById('sortBar').classList.toggle('visible', total>1);
+  renderQuickButtons();
 
   if(!total){
     list.innerHTML=`<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Nenhuma parada ainda</div><div class="empty-sub">Adicione clientes ou importe a lista da loja</div></div>`;
@@ -932,6 +950,147 @@ function getCustomBairros(){try{return JSON.parse(localStorage.getItem('sb_custo
 function saveCustomBairros(cb){localStorage.setItem('sb_custom_bairros',JSON.stringify(cb));}
 function addCustomBairro(city,bairro){if(!city||!bairro)return;const cb=getCustomBairros();if(!cb[city])cb[city]=[];bairro=bairro.trim();if(!cb[city].includes(bairro)){cb[city].push(bairro);cb[city].sort();saveCustomBairros(cb);}}
 
+// ═══════════════════════════════════════════════════════
+//  BAIRROS POR CIDADE
+// ═══════════════════════════════════════════════════════
+const CIDADE_BAIRROS={
+  SRR:["Alterosas","André Carloni","Bairro das Laranjeiras","Bairro de Fátima","Bairro Novo","Balneário Carapebus","Barcelona","Barro Branco","Belvedere","Bicanga","Boa Vista","Caçaroca","Câmara","Campinho da Serra I","Campinho da Serra II","Cantinho do Céu","Carapina Grande","Carapina I","Castelândia","Central Carapina","Centro","Chácara Parreiral","Cidade Continental","Cidade Pomar","CIVIT I","CIVIT II","Colina da Serra","Conjunto Jacaraípe","Costa Dourada","Costabella","Diamantina","Divinópolis","Eldorado","Enseada de Jacaraípe","Eurico Salles","Feu Rosa","Guaraciaba","Hélio Ferraz","Jardim Atlântico","Jardim Bela Vista","Jardim Carapina","Jardim da Serra","Jardim Guanabara","Jardim Limoeiro","Jardim Primavera","Jardim Tropical","José de Anchieta","Laranjeiras Velha","Manguinhos","Manoel Plaza","Marbella","Maringá","Mata da Serra","Morada de Laranjeiras","Nova Carapina I","Nova Carapina II","Nova Zelândia","Novo Horizonte","Novo Porto Canoa","Ourimar","Parque das Gaivotas","Parque Jacaraípe","Parque Residencial Laranjeiras","Parque Residencial Mestre Álvaro","Pitanga","Planalto de Carapina","Planalto Serrano","Planície da Serra","Portal dos Laranjais","Porto Canoa","Praia de Carapebus","Praiamar","Reis Magos","Residencial Centro da Serra","Residencial Jacaraípe","Rosário de Fátima","Santa Luzia","Santa Rita de Cássia","Santo Antônio","São Diogo I","São Diogo II","São Domingos","São Francisco","São Geraldo","São João","São Judas Tadeu","São Lourenço","São Marcos","São Pedro","Serra Dourada I","Serra Dourada II","Serra Dourada III","Serramar","Taquara I","Taquara II","Valparaíso","Vila Nova de Colares","Vista da Serra I","Vista da Serra II"],
+  VIX:["Aeroporto","Andorinhas","Antônio Honório","Barro Vermelho","Bela Vista","Bento Ferreira","Boa Vista","Bonfim","Centro","Conquista","Consolação","Cruzamento","Da Penha","De Lourdes","Do Moscoso","Enseada do Suá","Fonte Grande","Forte São João","Fradinhos","Goiabeiras","Gurigica","Ilha das Caieiras","Ilha de Monte Belo","Ilha de Santa Maria","Ilha do Boi","Ilha do Frade","Ilha do Príncipe","Inhanguetá","Itararé","Jabour","Jardim Camburi","Jardim da Penha","Jesus de Nazareth","Joana D'arc","Jucutuquara","Maria Ortiz","Mário Cypreste","Maruípe","Mata da Praia","Monte Belo","Morada de Camburi","Nazareth","Nova Palestina","Parque Moscoso","Piedade","Pontal de Camburi","Praia do Canto","Praia do Suá","Redenção","República","Resistência","Romão","Santa Cecília","Santa Clara","Santa Helena","Santa Lúcia","Santa Luíza","Santa Martha","Santa Teresa","Santo André","Santo Antônio","Santos Dumont","Santos Reis","São Benedito","São Cristóvão","São José","São Pedro","Tabuazeiro","Universitário","Vila Rubim"],
+  VV:["Alecrim","Alvorada","Araçás","Argolas","Aribiri","Ataíde","Atalaia","Barra do Jucú","Barramares","Boa Vista 01","Boa Vista 02","Brisamar","Capuaba","Cavalieri","Chácara do Conde","Cidade da Barra","Cobilândia","Cocal","Coqueiral de Itaparica","Cristóvão Colombo","Divino Espírito Santo","Garoto","Glória","Guadalupe","Guaranhuns","Ibes","Ilha da Conceição","Ilha das Flores","Ilha dos Ayres","Ilha dos Bentos","Interlagos","Itapoã","Jaburuna","Jardim Colorado","Jardim Guadalajara","Jardim Guaranhuns","Jardim Marilândia","Jockey de Itaparica","Morada da Barra","Morada do Sol","Nova América","Nova Itaparica","Novo México","Olaria","Parque das Gaivotas","Paul","Planalto","Ponta da Fruta","Pontal das Garças","Praia da Costa","Praia de Itaparica","Prainha da Glória","Primeiro de Maio","Residencial Coqueiral","Rio Marinho","Riviera da Barra","Sagrada Família","Santa Clara","Santa Inês","Santa Mônica","Santa Paula I","Santa Paula II","Santa Rita","Santos Dumont","São Torquato","Soteco","Terra Vermelha","Vale Encantado","Vila Batista","Vila Garrido","Vila Nova","Vila Velha - Centro","Vista da Penha","Zumbi dos Palmares"],
+  CCA:["Alice Coutinho","Alto Boa Vista","Alto Lage","Bandeirantes","Bela Aurora","Bela Vista","Bubu","Campina Grande","Campo Belo","Campo Grande","Campo Verde","Cariacica Sede","Castelo Branco","Cruzeiro do Sul","Flexal I","Flexal II","Formate","Graúna","Itacibá","Itanguá","Jardim América","Jardim Botânico","Jardim Campo Grande","Jardim de Alah","Morada de Santa Fé","Nova Brasília","Nova Campo Grande","Nova Canaã","Nova Esperança","Nova Rosa da Penha","Nova Valverde","Novo Brasil","Novo Horizonte","Padre Gabriel","Porto de Cariacica","Porto de Santana","Porto Novo","Prolar","Rio Branco","Rio Marinho","Rosa da Penha","Santa Bárbara","Santa Cecília","Santana","Santo André","Santo Antônio","São Conrado","São Francisco","São Geraldo I","São Geraldo II","São João Batista","Sotelândia","Tabajara","Vale dos Reis","Valparaíso","Vera Cruz","Vila Capixaba","Vila Progresso","Vista Dourada","Vista Mar"],
+  VIA:["Areinha","Arlindo Villaschi","Bom Pastor","Campo Verde","Canaã","Caxias do Sul","Industrial","Ipanema","Jucu","Marcílio de Noronha","Morada de Bethânia","Nova Belém","Nova Bethânia","Nova Viana","Primavera","Ribeira","Santa Terezinha","Santo Agostinho","Soteco","Universal","Verona","Vila Bethânia","Vila Nova"]
+};
+
+function getAllFormBairros(cityCode){
+  const official=CIDADE_BAIRROS[cityCode]||[];
+  const custom=getCustomBairros()[cityCode]||[];
+  const seen={};const result=[];
+  official.concat(custom).forEach(function(b){const k=b.toLowerCase();if(!seen[k]){seen[k]=true;result.push(b);}});
+  return result.sort();
+}
+
+function onCityChange(){
+  document.getElementById('fBairro').value='';
+  document.getElementById('fBairroList').classList.remove('show');
+}
+
+function filterBairros(){
+  const city=document.getElementById('fCity').value;
+  const input=document.getElementById('fBairro');
+  const listEl=document.getElementById('fBairroList');
+  if(!city||!CIDADE_BAIRROS[city]){listEl.classList.remove('show');return;}
+  const search=input.value.toLowerCase().trim();
+  const all=getAllFormBairros(city);
+  const filtered=search?all.filter(function(b){return b.toLowerCase().includes(search);}):all;
+  if(!filtered.length){listEl.classList.remove('show');return;}
+  listEl.innerHTML=filtered.map(function(b){
+    return '<div class="bairro-item" onmousedown="selectFormBairro(\''+b.replace(/'/g,"\\'")+'\')">' + b + '</div>';
+  }).join('');
+  listEl.classList.add('show');
+}
+
+function selectFormBairro(b){
+  document.getElementById('fBairro').value=b;
+  document.getElementById('fBairroList').classList.remove('show');
+}
+
+// Fechar sugestões ao clicar fora
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.bairro-wrap')){
+    const l=document.getElementById('fBairroList');
+    if(l)l.classList.remove('show');
+  }
+});
+
+// Toggle paid buttons
+function toggleFormPaid(){
+  const h=document.getElementById('fPaid');
+  const b=document.getElementById('fPaidBtn');
+  const on=h.value!=='1';
+  h.value=on?'1':'0';
+  b.style.background=on?'var(--green)':'var(--card)';
+  b.style.borderColor=on?'var(--green)':'var(--border)';
+  b.style.color=on?'#000':'var(--muted)';
+}
+function toggleFormProductPaid(){
+  const h=document.getElementById('fProductPaid');
+  const b=document.getElementById('fProductPaidBtn');
+  const on=h.value!=='1';
+  h.value=on?'1':'0';
+  b.style.background=on?'var(--green)':'var(--card)';
+  b.style.borderColor=on?'var(--green)':'var(--border)';
+  b.style.color=on?'#000':'var(--muted)';
+}
+function setPaidBtnState(btnId, hiddenId, val){
+  const h=document.getElementById(hiddenId);
+  const b=document.getElementById(btnId);
+  h.value=val?'1':'0';
+  b.style.background=val?'var(--green)':'var(--card)';
+  b.style.borderColor=val?'var(--green)':'var(--border)';
+  b.style.color=val?'#000':'var(--muted)';
+}
+
+// City name ↔ code mapping
+const CITY_MAP={SRR:'Serra',VIX:'Vitória',VV:'Vila Velha',CCA:'Cariacica',VIA:'Viana',OUT:'Outra'};
+const CITY_REVERSE={'serra':'SRR','vitoria':'VIX','vitória':'VIX','vila velha':'VV','vilavelha':'VV','cariacica':'CCA','viana':'VIA'};
+function resolveCityCode(val){
+  if(!val)return'';
+  if(CITY_MAP[val])return val; // already a code
+  const low=val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return CITY_REVERSE[low]||CITY_REVERSE[low.replace(/\s/g,'')]||'';
+}
+
+// ═══════════════ QUICK STORES ═══════════════
+function getQuickStores(){try{return JSON.parse(localStorage.getItem('sb_quick_stores')||'[]');}catch(e){return[];}}
+function saveQuickStores(list){localStorage.setItem('sb_quick_stores',JSON.stringify(list));}
+
+function addQuickStore(){
+  const name=prompt('Nome da loja (ex: Farmácia ABC):');
+  if(!name||!name.trim())return;
+  const city=prompt('Cidade? (Serra, Vitória, Vila Velha, Cariacica, Viana):');
+  const bairro=prompt('Bairro da loja:');
+  const rua=prompt('Rua/Avenida da loja:');
+  const numero=prompt('Número:');
+  const qs=getQuickStores();
+  qs.push({name:name.trim(),city:resolveCityCode(city||''),bairro:bairro?.trim()||'',rua:rua?.trim()||'',numero:numero?.trim()||''});
+  saveQuickStores(qs);
+  renderQuickStoresConfig();
+  toast('⚡ Loja rápida "'+name.trim()+'" adicionada!','success');
+}
+function rmQuickStore(i){const qs=getQuickStores();if(!confirm('Remover '+qs[i]?.name+'?'))return;qs.splice(i,1);saveQuickStores(qs);renderQuickStoresConfig();}
+function renderQuickStoresConfig(){
+  const el=document.getElementById('quickStoresList');
+  if(!el)return;
+  const qs=getQuickStores();
+  if(!qs.length){el.innerHTML='<div style="font-size:12px;color:var(--muted)">Nenhuma loja rápida.</div>';return;}
+  el.innerHTML=qs.map((s,i)=>`<div class="store-chip">⚡ ${s.name} <span style="font-size:10px;color:var(--muted)">${CITY_MAP[s.city]||''}</span><button class="store-chip-del" onclick="rmQuickStore(${i})">×</button></div>`).join('');
+}
+function quickAddStop(i){
+  const qs=getQuickStores();
+  const s=qs[i];
+  if(!s)return;
+  const cityName=CITY_MAP[s.city]||'';
+  const address=s.rua+(s.numero?', '+s.numero:'')+(s.bairro?', '+s.bairro:'')+(cityName?' - '+cityName:'');
+  stops.push({
+    name:'',address,street:s.rua,number:s.numero,neighborhood:s.bairro,
+    store:s.name,city:s.city,serviceType:'entrega',deliveryDate:'',
+    complement:'',reference:'',timeFrom:'',timeTo:'',phone:'',
+    value:0,paid:false,productValue:0,productPaid:false,
+    notes:'',done:false,_order:stops.length
+  });
+  saveStops();
+  toast('⚡ Entrega de '+s.name+' adicionada!','success');
+  renderHome();
+}
+function renderQuickButtons(){
+  const el=document.getElementById('quickBtns');
+  if(!el)return;
+  const qs=getQuickStores();
+  if(!qs.length){el.style.display='none';return;}
+  el.style.display='flex';
+  el.innerHTML=qs.map((s,i)=>`<button onclick="quickAddStop(${i})" style="flex-shrink:0;padding:8px 14px;border-radius:20px;border:1.5px solid var(--accent);background:rgba(245,197,24,.1);color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">⚡ ${s.name}</button>`).join('');
+}
+
 function saveStop(){
   const name    = document.getElementById('fName').value.trim();
   const rua     = document.getElementById('fRua').value.trim();
@@ -968,9 +1127,9 @@ function saveStop(){
     timeTo:       document.getElementById('fTimeTo')?.value   || '',
     phone:        document.getElementById('fPhone').value.replace(/\D/g,''),
     value:        parseMoney(document.getElementById('fValue').value),
-    paid:         document.getElementById('fPaid').checked,
+    paid:         document.getElementById('fPaid').value==='1',
     productValue: parseMoney(document.getElementById('fProductValue').value),
-    productPaid:  document.getElementById('fProductPaid').checked,
+    productPaid:  document.getElementById('fProductPaid').value==='1',
     notes:        document.getElementById('fNotes').value.trim(),
     done:         idx>=0 && idx<stops.length ? stops[idx].done : false,
     _order:       idx>=0 && idx<stops.length ? (stops[idx]._order||idx) : stops.length
@@ -1459,6 +1618,7 @@ function loadConfig(){
   document.getElementById('roomCode').textContent=room;
   document.getElementById('cfgRoom').value=room;
   renderStores();
+  renderQuickStoresConfig();
 }
 function saveConfig(){
   cfg.origin=document.getElementById('cfgOrigin').value.trim();
