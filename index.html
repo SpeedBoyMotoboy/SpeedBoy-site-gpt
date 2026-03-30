@@ -1474,9 +1474,13 @@ function renderFinance(){
   const seen={};
   const flatStops=[];
   allDays.forEach(day=>day.stops.forEach(s=>{
-    const key=s._trackKey?('tk_'+s._trackKey):('c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||''));
+    // _trackKey (Firebase) é único — dedup direto.
+    // Sem trackKey: inclui a data efetiva no fingerprint para não mesclar
+    // entregas diferentes do mesmo cliente em dias diferentes.
+    const effDate=s.deliveryDate||day.date;
+    const key=s._trackKey?('tk_'+s._trackKey):('c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||'')+'|'+effDate);
     if(seen[key])return; seen[key]=true;
-    flatStops.push({...s,_effDate:s.deliveryDate||day.date});
+    flatStops.push({...s,_effDate:effDate});
   }));
   const tryDt=s=>{try{return parseDate(s._effDate);}catch(e){return new Date(0);}};
 
@@ -1651,6 +1655,7 @@ function drawDonut(storeMap){
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
   const W=canvas.parentElement.clientWidth-28, H=200;
+  if(W<=0)return;
   canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
   ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
   if(!entries.length){ctx.fillStyle='#555';ctx.font='500 13px Barlow';ctx.textAlign='center';ctx.fillText('Sem dados',W/2,H/2);return;}
@@ -1769,6 +1774,7 @@ function drawChart(flatStops){
   if(!canvas)return;
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1, W=canvas.parentElement.clientWidth-28, H=140;
+  if(W<=0)return;
   canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.width=W+'px'; canvas.style.height=H+'px';
   ctx.scale(dpr,dpr);
   const days=[];
@@ -1847,8 +1853,9 @@ function getReportData(){
   let total=0,received=0,deliveries=0; const allStops=[]; const sm={};
   const seenKeys={};let dupCount=0;
   days.forEach(day=>day.stops.forEach(s=>{
-    // Chave de deduplicação: _trackKey tem prioridade; senão usa combo nome+endereço+valor
-    const dedupKey=s._trackKey?('tk_'+s._trackKey):('c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||''));
+    // Chave de deduplicação: _trackKey tem prioridade; senão inclui a data para não mesclar pedidos iguais de dias diferentes
+    const _ed2=s.deliveryDate||day.date;
+    const dedupKey=s._trackKey?('tk_'+s._trackKey):('c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||'')+'|'+_ed2);
     if(seenKeys[dedupKey]){dupCount++;return;}
     seenKeys[dedupKey]=true;
     const v=parseMoney(s.value); total+=v; if(s.paid)received+=v; if(s.done)deliveries++;
