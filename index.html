@@ -793,6 +793,18 @@ function fmtPhone(p) {
 }
 function esc(s){ return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 function parseDate(str){ const [d,m,y]=str.split('/'); return new Date(`${y}-${m}-${d}`); }
+// Converte deliveryDate (DD/MM/YYYY) em nome do dia para exibição na tela inicial
+function delivDateLabel(dateStr){
+  if(!dateStr)return '';
+  const todayStr=new Date().toLocaleDateString('pt-BR');
+  if(dateStr===todayStr)return 'HOJE';
+  try{
+    const dt=parseDate(dateStr);
+    const tom=new Date(); tom.setDate(tom.getDate()+1);
+    if(dt.toDateString()===tom.toDateString())return 'AMANHÃ';
+    return['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][dt.getDay()];
+  }catch(e){return dateStr;}
+}
 
 let toastTimer;
 function toast(msg,type=''){
@@ -934,7 +946,7 @@ function renderHome(){
         <div class="stop-header ${nextIdx === i ? 'stop-header-next' : ''}">
           <div class="stop-num">${i+1}</div>
           <div class="stop-info"><div class="stop-name">${s.name||'Sem nome'}</div><div class="stop-addr">${s.address||'Sem endereço'}</div>
-          ${(s.city||s.deliveryDate||s.serviceType)?`<div style="font-size:10px;color:var(--accent);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${[s.serviceType==='retirada'?'📦':s.serviceType==='troca'?'🔄':'🛵',cityName(resolveCityCode(s.city||s.cityId))||'',s.deliveryDate||''].filter(Boolean).join(' · ')}</div>`:''}</div>
+          ${(s.city||s.deliveryDate||s.serviceType)?`<div style="font-size:10px;color:var(--accent);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${[s.serviceType==='retirada'?'📦':s.serviceType==='troca'?'🔄':'🛵',cityName(resolveCityCode(s.city||s.cityId))||'',delivDateLabel(s.deliveryDate)].filter(Boolean).join(' · ')}</div>`:''}</div>
           <div class="stop-right">
             ${valStr?`<div class="stop-val ${s.paid?'':'unpaid'}">${valStr}</div>`:''}
             ${s.productValue>0?`<div class="stop-product-val">cobrar: <span>R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')}</span></div>`:''}
@@ -1449,20 +1461,32 @@ async function doParse(){
 // ═══════════════════════════════════════════════════════
 function renderFinance(){
   const todayStr=new Date().toLocaleDateString('pt-BR');
-  const allDays=[{date:todayStr,stops},...history];
   const now=new Date();
-  const w7=new Date(now); w7.setDate(now.getDate()-6);
+
+  // Semana calendário: Segunda → Domingo atual
+  const dow=now.getDay(); // 0=Dom, 1=Seg...
+  const wkStart=new Date(now); wkStart.setDate(now.getDate()-((dow===0)?6:dow-1)); wkStart.setHours(0,0,0,0);
   const m1=new Date(now.getFullYear(),now.getMonth(),1);
-  function sum(arr,field){ return arr.reduce((a,s)=>a+(field==='val'?parseMoney(s.value):0),0); }
-  const todayTotal=stops.reduce((a,s)=>a+parseMoney(s.value),0);
-  const todayRec  =stops.filter(s=>s.paid).reduce((a,s)=>a+parseMoney(s.value),0);
-  const todayDone =stops.filter(s=>s.done).length;
-  let wkTotal=todayTotal, mTotal=todayTotal;
-  history.forEach(d=>{
-    const dt=parseDate(d.date), v=d.stops.reduce((a,s)=>a+parseMoney(s.value),0);
-    if(dt>=w7) wkTotal+=v;
-    if(dt>=m1) mTotal+=v;
-  });
+  const r7=new Date(now); r7.setDate(now.getDate()-6); r7.setHours(0,0,0,0);
+
+  // Lista plana deduplicada — usa deliveryDate como data efetiva se disponível
+  const allDays=[{date:todayStr,stops},...history];
+  const seen={};
+  const flatStops=[];
+  allDays.forEach(day=>day.stops.forEach(s=>{
+    const key=s._trackKey?('tk_'+s._trackKey):('c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||''));
+    if(seen[key])return; seen[key]=true;
+    flatStops.push({...s,_effDate:s.deliveryDate||day.date});
+  }));
+  const tryDt=s=>{try{return parseDate(s._effDate);}catch(e){return new Date(0);}};
+
+  const todayStops=flatStops.filter(s=>s._effDate===todayStr);
+  const todayTotal=todayStops.reduce((a,s)=>a+parseMoney(s.value),0);
+  const todayRec  =todayStops.filter(s=>s.paid).reduce((a,s)=>a+parseMoney(s.value),0);
+  const todayDone =todayStops.filter(s=>s.done).length;
+  const wkTotal   =flatStops.filter(s=>tryDt(s)>=wkStart).reduce((a,s)=>a+parseMoney(s.value),0);
+  const mTotal    =flatStops.filter(s=>tryDt(s)>=m1).reduce((a,s)=>a+parseMoney(s.value),0);
+  const r7Total   =flatStops.filter(s=>tryDt(s)>=r7).reduce((a,s)=>a+parseMoney(s.value),0);
   // Meta
   const meta=parseFloat(cfg.meta)||0;
   document.getElementById('metaInp').value=meta||'';
@@ -1497,11 +1521,11 @@ function renderFinance(){
   const todayExps=getTodayExpenses();
   const todayExpTotal=getExpenseTotal(todayExps);
   const todayProfit=todayTotal-todayExpTotal;
-  // Projeção mensal: média dos últimos 7 dias × dias restantes no mês
+  // Projeção mensal: média dos últimos 7 dias corridos × dias restantes
   const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
   const dayOfMonth=now.getDate();
   const daysLeft=daysInMonth-dayOfMonth;
-  const avg7=wkTotal/Math.min(7,dayOfMonth)||0;
+  const avg7=r7Total/Math.min(7,dayOfMonth)||0;
   const projection=mTotal+(avg7*daysLeft);
 
   // Summary grid 1
@@ -1515,7 +1539,7 @@ function renderFinance(){
     <div class="sum-card" style="border-color:var(--red)"><div class="sum-lbl">Despesas hoje</div><div class="sum-val" style="color:var(--red);">${fmtMoney(todayExpTotal)}</div><div class="sum-sub">${todayExps.length} item(ns)</div></div>
     <div class="sum-card ${todayProfit>=0?'gr':''}" style="${todayProfit<0?'border-color:var(--red)':''}"><div class="sum-lbl">Lucro Líquido</div><div class="sum-val ${todayProfit>=0?'gr':''}" style="${todayProfit<0?'color:var(--red)':''};">${fmtMoney(todayProfit)}</div><div class="sum-sub">hoje</div></div>
     <div class="sum-card ac" style="grid-column:span 2"><div class="sum-lbl">Projeção do mês</div><div class="sum-val ac">${fmtMoney(projection)}</div><div class="sum-sub">Baseado na média dos últimos 7 dias — ${daysLeft} dias restantes</div></div>`;
-  drawChart(allDays);
+  drawChart(flatStops);
   // Expenses
   renderExpenses(todayExps);
   renderMotoboyBreak();
@@ -1740,7 +1764,7 @@ async function downloadStoreReportPDF(){
   }
 }
 
-function drawChart(allDays){
+function drawChart(flatStops){
   const canvas=document.getElementById('chart');
   if(!canvas)return;
   const ctx=canvas.getContext('2d');
@@ -1750,10 +1774,11 @@ function drawChart(allDays){
   const days=[];
   for(let i=6;i>=0;i--){
     const d=new Date(); d.setDate(d.getDate()-i);
+    const dateStr=d.toLocaleDateString('pt-BR');
     const lbl=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-    const found=allDays.find(x=>x.date===d.toLocaleDateString('pt-BR'));
-    const rec=found?found.stops.filter(s=>s.paid).reduce((a,s)=>a+parseMoney(s.value),0):0;
-    const pend=found?found.stops.filter(s=>!s.paid).reduce((a,s)=>a+parseMoney(s.value),0):0;
+    const dayStops=(flatStops||[]).filter(s=>s._effDate===dateStr);
+    const rec=dayStops.filter(s=>s.paid).reduce((a,s)=>a+parseMoney(s.value),0);
+    const pend=dayStops.filter(s=>!s.paid).reduce((a,s)=>a+parseMoney(s.value),0);
     days.push({lbl,v:rec+pend,rec,pend});
   }
   const mx=Math.max(...days.map(d=>d.v),1);
