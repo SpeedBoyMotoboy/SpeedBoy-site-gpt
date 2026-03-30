@@ -396,10 +396,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   <div class="route-bar">
     <div style="display:flex;gap:8px;">
       <button class="btn-route" id="routeBtn" onclick="openRoute()" disabled style="flex:1.2;">🗺️ Rota no Maps</button>
-      <button class="btn-route" id="optimizeBtn" onclick="optimizeAndOpenRoute()" disabled style="flex:1;background:linear-gradient(135deg,#1a3a1a,#2d7a2d);box-shadow:0 4px 18px rgba(0,200,100,.3);">⚡ Otimizar Rota</button>
-    </div>
-    <div style="margin-top:8px;">
-      <button class="btn-route" onclick="goRepass()" style="width:100%;background:rgba(255,107,0,.12);border-color:var(--accent2);color:var(--accent2);font-size:13px;padding:10px;">🏍️ Repassar entregas para outro motoboy</button>
+      <button class="btn-route" onclick="goRepass()" style="flex:1;background:rgba(255,107,0,.12);border-color:var(--accent2);color:var(--accent2);">🏍️ Repassar</button>
     </div>
   </div>
 </div>
@@ -887,7 +884,6 @@ function renderHome(){
   badge.textContent = total+' parada(s)';
   badge.classList.toggle('full', false);
   document.getElementById('routeBtn').disabled = total===0;
-  const optBtn=document.getElementById('optimizeBtn');if(optBtn)optBtn.disabled=total===0;
   document.getElementById('sortBar').classList.toggle('visible', total>1);
   renderQuickButtons();
 
