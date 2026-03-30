@@ -792,7 +792,7 @@ function fmtPhone(p) {
   return d.length===11?`(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`:p;
 }
 function esc(s){ return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
-function parseDate(str){ const [d,m,y]=str.split('/'); return new Date(`${y}-${m}-${d}`); }
+function parseDate(str){ const [d,m,y]=str.split('/'); return new Date(+y, +m-1, +d); }
 // Converte deliveryDate (DD/MM/YYYY) em nome do dia para exibição na tela inicial
 function delivDateLabel(dateStr){
   if(!dateStr)return '';
@@ -2236,7 +2236,8 @@ function buildLink(storeName){
   if(!room)return null;
   // Link curto — Firebase config fica hardcoded no pedido.html
   const base  = 'https://speedboymotoboy.github.io/SpeedBoy-APP/pedido.html';
-  const params= new URLSearchParams({room, store:storeName});
+  const phone = (cfg.prestTel||'').replace(/\D/g,'');
+  const params= new URLSearchParams({room, store:storeName, ...(phone?{phone:'55'+phone}:{})});
   return base+'?'+params.toString();
 }
 
