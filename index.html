@@ -396,7 +396,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   <div class="route-bar">
     <div style="display:flex;gap:8px;">
       <button class="btn-route" id="routeBtn" onclick="openRoute()" disabled style="flex:1.2;">🗺️ Rota no Maps</button>
-      <button class="btn-route" id="optimizeBtn" onclick="optimizeAndOpenRoute()" disabled style="flex:1;background:linear-gradient(135deg,#1a3a1a,#2d7a2d);box-shadow:0 4px 18px rgba(0,200,100,.3);">⚡ Otimizar Rota</button>
+      <button class="btn-route" onclick="goRepass()" style="flex:1;background:rgba(255,107,0,.12);border-color:var(--accent2);color:var(--accent2);">🏍️ Repassar</button>
     </div>
   </div>
 </div>
@@ -616,9 +616,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
         <option value="">— Selecione a loja —</option>
       </select>
       <button style="width:100%;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;padding:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;" onclick="downloadStoreReportPDF()">📄 PDF da loja</button>
-    </div>
-    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
-      <button style="width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#000;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18px;padding:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="goRepass()">🏍️ Repassar entregas para outro motoboy</button>
     </div>
   </div>
 </div>
@@ -887,7 +884,6 @@ function renderHome(){
   badge.textContent = total+' parada(s)';
   badge.classList.toggle('full', false);
   document.getElementById('routeBtn').disabled = total===0;
-  const optBtn=document.getElementById('optimizeBtn');if(optBtn)optBtn.disabled=total===0;
   document.getElementById('sortBar').classList.toggle('visible', total>1);
   renderQuickButtons();
 
@@ -1220,18 +1216,17 @@ function saveStop(){
 // ═══════════════════════════════════════════════════════
 //  ROUTE
 // ═══════════════════════════════════════════════════════
+function buildMapsUrl(addrs){
+  if(!addrs.length)return null;
+  // /dir/ path format funciona universalmente — web e app mobile
+  const all=cfg.origin?[cfg.origin,...addrs]:addrs;
+  return 'https://www.google.com/maps/dir/'+all.map(a=>encodeURIComponent(a)).join('/');
+}
 function openRoute(){
   const active=stops.filter(s=>!s.done);
   if(!active.length){ toast('Nenhuma parada pendente','error'); return; }
-  const dests=active.map(s=>encodeURIComponent(s.address));
-  let url;
-  if(dests.length===1){
-    url=cfg.origin?`https://www.google.com/maps/dir/${encodeURIComponent(cfg.origin)}/${dests[0]}`:`https://www.google.com/maps/dir/?api=1&destination=${dests[0]}`;
-  } else {
-    const last=dests[dests.length-1], mid=dests.slice(0,-1).join('/');
-    url=cfg.origin?`https://www.google.com/maps/dir/${encodeURIComponent(cfg.origin)}/${mid}/${last}`:`https://www.google.com/maps/dir/${mid}/${last}`;
-  }
-  window.open(url,'_blank');
+  const url=buildMapsUrl(active.map(s=>s.address));
+  if(url)window.open(url,'_blank');
 }
 function openMaps(addr){ window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`,'_blank'); }
 
@@ -1264,14 +1259,15 @@ async function geocodeAddress(address){
   return null;
 }
 
+// Fallback TSP por distância em linha reta (Haversine)
 function nearestNeighborTSP(items,originCoords){
-  const unvisited=items.map((s,i)=>({...s,_gi:i}));
+  const unvisited=items.map(s=>({...s}));
   const route=[];
   let cur=originCoords;
   while(unvisited.length){
     let bestIdx=0,bestDist=Infinity;
     unvisited.forEach((s,i)=>{
-      if(!s._coords){bestDist=Infinity;return;}
+      if(!s._coords)return;
       const d=haversine(cur,s._coords);
       if(d<bestDist){bestDist=d;bestIdx=i;}
     });
@@ -1282,56 +1278,86 @@ function nearestNeighborTSP(items,originCoords){
   return route;
 }
 
+// ─────────────────────────────────────────────────────────
+//  OSRM Trip — otimização real por estradas (gratuito, sem API key)
+//  https://router.project-osrm.org
+// ─────────────────────────────────────────────────────────
+async function osrmTripOptimize(items, originCoords){
+  const withCoords=items.filter(s=>s._coords);
+  if(withCoords.length<2) return null;
+  try{
+    const pts=originCoords?[originCoords,...withCoords.map(s=>s._coords)]:withCoords.map(s=>s._coords);
+    const coordStr=pts.map(c=>`${c.lng},${c.lat}`).join(';');
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),8000);
+    const resp=await fetch(
+      `https://router.project-osrm.org/trip/v1/driving/${coordStr}?roundtrip=false&source=first&destination=last`,
+      {signal:ctrl.signal}
+    );
+    clearTimeout(timer);
+    if(!resp.ok) return null;
+    const data=await resp.json();
+    if(data.code!=='Ok'||!data.waypoints) return null;
+    // Reconstruir ordem: data.waypoints[i].waypoint_index = posição na rota ótima
+    const offset=originCoords?1:0;
+    const order=new Array(withCoords.length);
+    data.waypoints.forEach((wp,inputIdx)=>{
+      const itemIdx=inputIdx-offset;
+      if(itemIdx>=0&&itemIdx<withCoords.length) order[wp.waypoint_index-offset]=withCoords[itemIdx];
+    });
+    return order.filter(Boolean);
+  }catch(e){
+    console.warn('OSRM trip fail:',e);
+    return null;
+  }
+}
+
 async function optimizeAndOpenRoute(){
   const active=stops.map((s,i)=>({...s,_si:i})).filter(s=>!s.done);
   if(!active.length){toast('Nenhuma parada pendente','error');return;}
   const btn=document.getElementById('optimizeBtn');
   btn.disabled=true; btn.textContent='⏳ Calculando...';
-  toast('🗺️ Geocodificando endereços...','');
   try{
-    // Geocodificar em paralelo (máx 3 por vez para não bater limite do Nominatim)
+    // 1. Geocodificar (máx 3 por vez — respeita rate limit Nominatim)
+    toast('📍 Geocodificando endereços...','');
     for(let i=0;i<active.length;i+=3){
-      const batch=active.slice(i,i+3);
-      await Promise.all(batch.map(async s=>{
+      await Promise.all(active.slice(i,i+3).map(async s=>{
         s._coords=await geocodeAddress(s.address);
-        await new Promise(r=>setTimeout(r,300));// respeitar rate limit Nominatim
+        await new Promise(r=>setTimeout(r,250));
       }));
     }
     const withCoords=active.filter(s=>s._coords);
     const withoutCoords=active.filter(s=>!s._coords);
+
     if(!withCoords.length){
-      toast('⚠️ Não foi possível geocodificar os endereços. Usando rota padrão.','error');
-      openRoute(); return;
+      // Geocoding falhou em tudo — abre na ordem atual mas como rota completa
+      toast('🗺️ Abrindo rota completa (sem otimização)','');
+      window.open(buildMapsUrl(active.map(s=>s.address)),'_blank');
+      return;
     }
-    // Origem: cfg.origin geocodificado, ou primeira com coords
-    let originCoords=withCoords[0]._coords;
-    if(cfg.origin){
-      const og=await geocodeAddress(cfg.origin);
-      if(og)originCoords=og;
-    }
-    // Aplicar TSP
-    const ordered=nearestNeighborTSP(withCoords,originCoords);
-    // Paradas sem coords vão no final
+
+    // 2. Origem
+    let originCoords=null;
+    if(cfg.origin){ const og=await geocodeAddress(cfg.origin); if(og)originCoords=og; }
+    if(!originCoords) originCoords=withCoords[0]._coords;
+
+    // 3. Otimizar: OSRM primeiro, Haversine como fallback
+    toast('⚡ Otimizando via OSRM...','');
+    let ordered=await osrmTripOptimize(withCoords,originCoords);
+    const method=ordered?'OSRM':'Haversine';
+    if(!ordered) ordered=nearestNeighborTSP(withCoords,originCoords);
+
+    // 4. Reordenar array de paradas
     const finalOrder=[...ordered,...withoutCoords];
-    // Reordenar stops array
     const newStops=[];
     finalOrder.forEach((s,ni)=>{const orig=stops[s._si];if(orig){orig._order=ni;newStops.push(orig);}});
-    // Paradas que não eram pendentes (já feitas) ficam no final
     stops.filter(s=>s.done).forEach(s=>{s._order=newStops.length;newStops.push(s);});
-    stops=newStops;
-    saveStops();renderHome();
-    // Abrir Google Maps com nova ordem
-    const dests=ordered.map(s=>encodeURIComponent(s.address));
-    let url;
-    if(dests.length===1){
-      url=cfg.origin?`https://www.google.com/maps/dir/${encodeURIComponent(cfg.origin)}/${dests[0]}`:`https://www.google.com/maps/dir/?api=1&destination=${dests[0]}`;
-    }else{
-      const last=dests[dests.length-1],mid=dests.slice(0,-1).join('/');
-      url=cfg.origin?`https://www.google.com/maps/dir/${encodeURIComponent(cfg.origin)}/${mid}/${last}`:`https://www.google.com/maps/dir/${mid}/${last}`;
-    }
-    window.open(url,'_blank');
+    stops=newStops; saveStops(); renderHome();
+
+    // 5. Abrir no Maps com /dir/ format (funciona em web e app mobile)
+    window.open(buildMapsUrl(finalOrder.map(s=>s.address)),'_blank');
     const skipped=withoutCoords.length;
-    toast(`✅ Rota otimizada! ${ordered.length} paradas ordenadas${skipped?' ('+skipped+' sem coords)':''}`, 'success');
+    toast(`✅ Rota otimizada via ${method}! ${ordered.length} paradas${skipped?' (+'+skipped+' sem coords)':''}`, 'success');
   }catch(e){
     console.error(e);
     toast('Erro ao otimizar rota','error');
@@ -1796,10 +1822,14 @@ function getReportData(){
   let total=0,received=0,deliveries=0; const allStops=[]; const sm={};
   const seenKeys={};let dupCount=0;
   days.forEach(day=>day.stops.forEach(s=>{
-    // Deduplicação no relatório
-    if(s._trackKey){if(seenKeys[s._trackKey]){dupCount++;return;}seenKeys[s._trackKey]=true;}
+    // Chave de deduplicação: _trackKey tem prioridade; senão usa combo nome+endereço+valor
+    const dedupKey=s._trackKey?('tk_'+s._trackKey):('c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||''));
+    if(seenKeys[dedupKey]){dupCount++;return;}
+    seenKeys[dedupKey]=true;
     const v=parseMoney(s.value); total+=v; if(s.paid)received+=v; if(s.done)deliveries++;
-    allStops.push({...s,_date:day.date});
+    // Usa deliveryDate como data de referência no relatório (se disponível)
+    const reportDate=s.deliveryDate||day.date;
+    allStops.push({...s,_date:reportDate});
     const k=s.store||'Sem loja'; if(!sm[k])sm[k]={t:0,c:0,r:0}; sm[k].t+=v; sm[k].c++; if(s.paid)sm[k].r+=v;
   }));
   const range=days.length?days[days.length-1].date+' — '+days[0].date:'Sem dados';
@@ -2337,6 +2367,7 @@ function startSync(code){
   },err=>{setSyncUI('error','❌ Erro de conexão');console.error(err);});
   toast('🔥 Sala '+code+' ativa!','success');
   setTimeout(listenPending,500);
+  startLocationWatch();
 }
 
 function fbPush(){
@@ -2410,20 +2441,36 @@ async function acceptPending(key){
   s.status='confirmed'; s._order=stops.length; s.done=false;
   s._trackKey=key;
   stops.push(s); saveStops();
-  await updateTracking(key,'aceito');
+  await updateTracking(key,'aceito',{name:s.name||'',address:s.address||'',store:s.store||''});
   await rmPending(key);
   toast('✅ Entrega de '+s.name+' adicionada!','success'); renderHome();
 }
 async function rejectPending(key){const s=pendingData[key];if(!confirm('Recusar entrega de '+(s?.name||'cliente')+'?'))return;await updateTracking(key,'recusado');await rmPending(key);}
 async function rejectAll(){const keys=Object.keys(pendingData);if(!keys.length)return;if(!confirm('Recusar todos os '+keys.length+' pedido(s)?'))return;for(const k of keys){await updateTracking(k,'recusado');await rmPending(k);}}
 async function rmPending(key){if(!fbDb)return;try{const room=localStorage.getItem('sb_room_code')||'';const {ref:r,remove}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');await remove(r(fbDb,'rooms/'+room+'/pending/'+key));}catch(e){console.error(e);}}
-async function updateTracking(key,status){
+async function updateTracking(key,status,stopInfo=null){
   if(!fbDb)return;
   try{
     const room=localStorage.getItem('sb_room_code')||'';
     const {ref:r,set:s}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
-    await s(r(fbDb,'rooms/'+room+'/tracking/'+key),JSON.stringify({status,updatedAt:new Date().toISOString()}));
+    const data={status,updatedAt:new Date().toISOString()};
+    if(stopInfo)data.info=stopInfo;
+    await s(r(fbDb,'rooms/'+room+'/tracking/'+key),JSON.stringify(data));
   }catch(e){console.error('tracking error:',e);}
+}
+
+let _locWatchId=null;
+function startLocationWatch(){
+  if(!fbDb||!navigator.geolocation||_locWatchId!==null)return;
+  const pushLoc=(pos)=>{
+    const room=localStorage.getItem('sb_room_code')||'';
+    if(!room||!fbDb)return;
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(({ref,set})=>{
+      set(ref(fbDb,'rooms/'+room+'/location'),JSON.stringify({lat:pos.coords.latitude,lng:pos.coords.longitude,updatedAt:new Date().toISOString()}));
+    }).catch(()=>{});
+  };
+  _locWatchId=navigator.geolocation.watchPosition(pushLoc,()=>{},
+    {enableHighAccuracy:true,maximumAge:30000,timeout:15000});
 }
 
 // ═══════════════════════════════════════════════════════

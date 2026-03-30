@@ -701,17 +701,19 @@ window.submitPedido = function() {
         var typeIcon = s.serviceType === 'retirada' ? '📦 Retirada' : s.serviceType === 'troca' ? '🔄 Troca' : '🛵 Entrega';
         var dateStr  = s.deliveryDate ? ' · 📅 ' + s.deliveryDate : '';
         var key = lastSubmittedKeys[i] || '';
+        var trackUrl = key ? 'rastreio.html?room=' + encodeURIComponent(ROOM) + '&key=' + encodeURIComponent(key) : '';
         return '<div class="success-item">' +
           '<strong>' + typeIcon + ' ' + (i+1) + '. ' + s.name + '</strong>' + dateStr + '<br>' +
           '<span style="font-size:11px;color:var(--muted)">' + s.address + timeStr + valStr + '</span><br>' +
           '<span class="status-badge status-pending" id="track_' + key + '">⏳ Aguardando confirmação</span>' +
+          (trackUrl ? ' <a href="' + trackUrl + '" target="_blank" class="status-badge" style="background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.3);text-decoration:none;margin-left:4px;">📍 Rastrear entrega</a>' : '') +
           '</div>';
       }).join('');
 
       document.getElementById('successList').innerHTML =
         '<div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">' +
         newStops.length + ' entrega(s) enviada(s)</div>' + html;
-      addToClientHistory(newStops);
+      addToClientHistory(newStops, lastSubmittedKeys);
       document.getElementById('successWrap').classList.add('show');
       
       document.getElementById('btnWhatsApp').style.display = 'inline-block';
@@ -861,12 +863,13 @@ function saveClientHistory(list) {
   var key = 'sb_client_hist_' + (STORE_NAME||'default');
   localStorage.setItem(key, JSON.stringify(list.slice(0,30))); // keeps last 30
 }
-function addToClientHistory(stops) {
+function addToClientHistory(stops, keys) {
   var hist = getClientHistory();
   var entry = {
     date: new Date().toLocaleDateString('pt-BR'),
     time: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
-    stops: stops.map(function(s){ return {name:s.name, address:s.address, serviceType:s.serviceType, city:s.city, deliveryDate:s.deliveryDate, reference:s.reference}; })
+    room: ROOM,
+    stops: stops.map(function(s, i){ return {name:s.name, address:s.address, serviceType:s.serviceType, city:s.city, deliveryDate:s.deliveryDate, reference:s.reference, key:(keys&&keys[i])||''}; })
   };
   hist.unshift(entry);
   saveClientHistory(hist);
@@ -885,13 +888,52 @@ function renderClientHistory() {
   var list = document.getElementById('histList');
   if (!hist.length) { list.innerHTML = '<div class="hist-empty">Nenhum pedido ainda.</div>'; return; }
   list.innerHTML = hist.map(function(entry) {
-    var stops = entry.stops.map(function(s,i) {
-      var type = s.serviceType==='retirada'?'📦':s.serviceType==='troca'?'🔄':'🛵';
-      var refStr = s.reference ? ' · 🔍 ' + s.reference : '';
-      return '<div style="margin-top:4px">' + type + ' ' + (i+1) + '. <strong>' + s.name + '</strong> — ' + (s.city||'') + (s.deliveryDate?' · 📅 '+s.deliveryDate:'') + refStr + '</div>';
+    var stopsHtml = entry.stops.map(function(s, i) {
+      var type    = s.serviceType==='retirada'?'📦':s.serviceType==='troca'?'🔄':'🛵';
+      var refStr  = s.reference ? ' · 🔍 ' + s.reference : '';
+      var trackUrl = (s.key && entry.room) ? 'rastreio.html?room=' + encodeURIComponent(entry.room) + '&key=' + encodeURIComponent(s.key) : '';
+      var trackBtn = trackUrl
+        ? ' <a href="' + trackUrl + '" target="_blank" style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.3);text-decoration:none;">📍 Rastrear</a>'
+        : '';
+      var badge = s.key ? '<span class="status-badge status-pending" id="hist_track_'+s.key+'" style="margin-top:4px;display:inline-block;">⏳</span>' : '';
+      return '<div style="margin-top:6px">' +
+        type + ' ' + (i+1) + '. <strong>' + s.name + '</strong> — ' + (s.city||'') +
+        (s.deliveryDate?' · 📅 '+s.deliveryDate:'') + refStr +
+        trackBtn + '<br>' + badge +
+        '</div>';
     }).join('');
-    return '<div class="hist-item"><div class="hist-item-name">📅 ' + entry.date + ' às ' + entry.time + '</div><div class="hist-item-info">' + stops + '</div></div>';
+    return '<div class="hist-item"><div class="hist-item-name">📅 ' + entry.date + ' às ' + entry.time + '</div><div class="hist-item-info">' + stopsHtml + '</div></div>';
   }).join('');
+  // Atualizar status em tempo real para pedidos com key
+  startHistoryTracking(hist);
+}
+
+var histTrackListeners = [];
+function startHistoryTracking(hist) {
+  histTrackListeners.forEach(function(t){ try{t.ref.off('value',t.cb);}catch(e){} });
+  histTrackListeners = [];
+  if (!db) return;
+  hist.forEach(function(entry) {
+    if (!entry.room) return;
+    (entry.stops || []).forEach(function(s) {
+      if (!s.key) return;
+      var ref = db.ref('rooms/' + entry.room + '/tracking/' + s.key);
+      var cb = ref.on('value', function(snap) {
+        var badge = document.getElementById('hist_track_' + s.key);
+        if (!badge) return;
+        var raw = snap.val();
+        if (!raw) return;
+        try {
+          var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          var status = data.status || 'pending';
+          var info = STATUS_LABELS[status] || STATUS_LABELS['pending'];
+          badge.textContent = info.text;
+          badge.className = 'status-badge ' + info.css;
+        } catch(e) {}
+      });
+      histTrackListeners.push({ref: ref, cb: cb});
+    });
+  });
 }
 function initClientHistory() {
   var hist = getClientHistory();
