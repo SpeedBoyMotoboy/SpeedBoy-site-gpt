@@ -98,7 +98,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .stop-card.expanded{border-color:var(--accent);}
 .stop-header{display:flex;align-items:center;gap:10px;padding:14px 14px 12px;cursor:pointer;position:relative;}
 .stop-header-next{border:3px solid var(--green);background:rgba(0,230,118,.08);}
-.stop-header-next::before{content:'▶ PRÓXIMO';position:absolute;top:4px;right:8px;font-size:9px;font-weight:900;color:var(--green);letter-spacing:1px;}
 .stop-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;color:var(--accent);min-width:24px;}
 .stop-info{flex:1;min-width:0;}
 .stop-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -327,6 +326,8 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 
 /* TOAST */
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:9px 18px;border-radius:30px;font-size:13px;font-weight:600;z-index:400;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;}
+.quick-fab{position:fixed;bottom:84px;right:16px;z-index:50;width:50px;height:50px;border-radius:25px;background:var(--accent);border:none;font-size:22px;cursor:pointer;box-shadow:0 4px 14px rgba(245,197,24,.45);display:flex;align-items:center;justify-content:center;transition:transform .15s;-webkit-tap-highlight-color:transparent;}
+.quick-fab:active{transform:scale(.92);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.success{border-color:var(--green);color:var(--green);}
 .toast.error{border-color:var(--red);color:var(--red);}
@@ -391,7 +392,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <button class="btn-sort"    id="grp-store"   onclick="setGroupBy('store')">🏪 Loja</button>
     <button class="btn-sort"    id="grp-time"    onclick="setGroupBy('time')">⏰ Horário</button>
   </div>
-  <div id="quickBtns" style="display:none;flex-wrap:wrap;gap:8px;padding:4px 14px 10px;"></div>
+  <div id="quickFab" style="display:none;"></div>
   <div class="stops-list" id="stopsList"></div>
   <div class="route-bar">
     <div style="display:flex;gap:8px;">
@@ -541,6 +542,18 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   </div>
 </div>
 
+<!-- MODAL ADIÇÃO RÁPIDA -->
+<div class="modal-overlay hidden" id="quickPanel">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-name">⚡ Adição rápida</div>
+      <button class="modal-close" onclick="closeQuickPanel()">✕</button>
+    </div>
+    <div id="quickPanelBody"></div>
+    <button onclick="saveQuickPanel()" style="width:100%;margin-top:14px;padding:14px;background:var(--green);color:#000;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;cursor:pointer;letter-spacing:.5px;">✅ OK — Adicionar paradas</button>
+  </div>
+</div>
+
 <!-- MODAL DESPESA -->
 <div class="modal-overlay hidden" id="expenseModal">
   <div class="modal-sheet">
@@ -550,7 +563,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <button class="pay-btn" id="expType_fuel"    onclick="setExpType('fuel')"   style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;">⛽ Comb.</button>
-      <button class="pay-btn" id="expType_toll"    onclick="setExpType('toll')"   style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;">🛣️ Pedágio</button>
+      <button class="pay-btn" id="expType_toll"    onclick="setExpType('toll')"   style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;">🍔 Aliment.</button>
       <button class="pay-btn" id="expType_maint"   onclick="setExpType('maint')"  style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;">🔧 Manutenção</button>
       <button class="pay-btn" id="expType_other"   onclick="setExpType('other')"  style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;">📦 Outro</button>
     </div>
@@ -942,16 +955,26 @@ function renderHome(){
       if(nextIdx === -1 && !s.done) nextIdx = i;
       const val=parseMoney(s.value);
       const valStr=val>0?fmtMoney(val):'';
+      const cityLabel=cityName(resolveCityCode(s.city||s.cityId))||'';
+      const valInput=val>0?`<input type="text" value="${valStr}" onclick="event.stopPropagation()" onblur="updateStopValue(${i},this.value)" style="width:72px;text-align:right;background:transparent;border:none;border-bottom:1px solid var(--border);color:${s.paid?'var(--green)':'var(--accent)'};font-weight:800;font-size:13px;font-family:'Barlow Condensed',sans-serif;outline:none;padding:1px 2px;" inputmode="decimal" />`:'';
       html+=`<div class="stop-card ${s.done?'done':''}" id="sc${i}" onclick="toggleCard(${i})">
-        <div class="stop-header ${nextIdx === i ? 'stop-header-next' : ''}">
+        <div class="stop-header ${nextIdx === i ? 'stop-header-next' : ''}" style="align-items:flex-start;padding:12px 14px 10px;">
           <div class="stop-num">${i+1}</div>
-          <div class="stop-info"><div class="stop-name">${s.name||'Sem nome'}</div><div class="stop-addr">${s.address||'Sem endereço'}</div>
-          ${(s.city||s.deliveryDate||s.serviceType)?`<div style="font-size:10px;color:var(--accent);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${[s.serviceType==='retirada'?'📦':s.serviceType==='troca'?'🔄':'🛵',cityName(resolveCityCode(s.city||s.cityId))||'',delivDateLabel(s.deliveryDate)].filter(Boolean).join(' · ')}</div>`:''}</div>
-          <div class="stop-right">
-            ${valStr?`<div class="stop-val ${s.paid?'':'unpaid'}">${valStr}</div>`:''}
-            ${s.productValue>0?`<div class="stop-product-val">cobrar: <span>R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')}</span></div>`:''}
-            <div class="stop-dot"></div>
+          <div class="stop-info" style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <div class="stop-name">${s.name||'Sem nome'}</div>
+              ${valInput}
+            </div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
+              ${cityLabel?`<span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;">${cityLabel}</span>`:''}
+              <span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(255,107,0,.15);color:#ff6b00;">${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</span>
+              ${val>0?`<span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:${s.paid?'rgba(0,230,118,.15)':'rgba(245,197,24,.12)'};color:${s.paid?'var(--green)':'var(--accent)'};">${s.paid?'✓ Pago':'⏳ A receber'}</span>`:''}
+              ${s.deliveryDate?`<span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(161,100,220,.15);color:#a164dc;">${delivDateLabel(s.deliveryDate)}</span>`:''}
+            </div>
+            ${(s.street||s.number||s.complement)?`<div style="font-size:11px;color:var(--muted);margin-bottom:2px;">${[s.street,s.number,s.complement].filter(Boolean).join(' ')}</div>`:''}
+            ${(s.reference||s.notes)?`<div style="font-size:10px;color:var(--muted);opacity:.75;">${[s.reference,s.notes].filter(Boolean).join(' · ')}</div>`:''}
           </div>
+          <div class="stop-dot" style="margin-top:4px;flex-shrink:0;"></div>
         </div>
         <div class="stop-detail">
           ${s.phone?`<div><strong>TEL</strong> ${fmtPhone(s.phone)}</div>`:''}
@@ -1168,12 +1191,65 @@ function quickAddStop(i){
   renderHome();
 }
 function renderQuickButtons(){
-  const el=document.getElementById('quickBtns');
-  if(!el)return;
+  const fab=document.getElementById('quickFab');
+  if(!fab)return;
   const qs=getQuickStores();
-  if(!qs.length){el.style.display='none';return;}
-  el.style.display='flex';
-  el.innerHTML=qs.map((s,i)=>`<button onclick="quickAddStop(${i})" style="flex-shrink:0;padding:8px 14px;border-radius:20px;border:1.5px solid var(--accent);background:rgba(245,197,24,.1);color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">⚡ ${s.name} ${s.taxa?fmtMoney(s.taxa):''}</button>`).join('');
+  if(!qs.length){fab.style.display='none';return;}
+  fab.style.display='block';
+  fab.innerHTML=`<button class="quick-fab" onclick="openQuickPanel()">⚡</button>`;
+}
+
+let _qCounts={};
+function openQuickPanel(){
+  const qs=getQuickStores();
+  if(!qs.length){toast('Configure lojas rápidas em ⚙️ Configurações','');return;}
+  _qCounts={};
+  _renderQuickPanelBody();
+  document.getElementById('quickPanel').classList.remove('hidden');
+}
+function closeQuickPanel(){document.getElementById('quickPanel').classList.add('hidden');}
+document.getElementById('quickPanel').addEventListener('click',e=>{if(e.target===e.currentTarget)closeQuickPanel();});
+function _renderQuickPanelBody(){
+  const qs=getQuickStores();
+  document.getElementById('quickPanelBody').innerHTML=qs.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:15px;">${esc(s.name)}</div>
+        ${s.taxa?`<div style="font-size:12px;color:var(--green);">${fmtMoney(s.taxa)}</div>`:''}
+      </div>
+      <div style="display:flex;align-items:center;">
+        <button onclick="qAdj(${i},-1)" style="width:36px;height:36px;border-radius:8px 0 0 8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:20px;font-weight:700;cursor:pointer;">−</button>
+        <div id="qCount_${i}" style="min-width:44px;height:36px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;">${_qCounts[i]||0}</div>
+        <button onclick="qAdj(${i},1)" style="width:36px;height:36px;border-radius:0 8px 8px 0;border:1px solid var(--border);background:var(--accent);color:#000;font-size:20px;font-weight:700;cursor:pointer;">+</button>
+      </div>
+    </div>`).join('');
+}
+function qAdj(i,delta){
+  _qCounts[i]=Math.max(0,(_qCounts[i]||0)+delta);
+  const el=document.getElementById('qCount_'+i);
+  if(el)el.textContent=_qCounts[i];
+}
+function saveQuickPanel(){
+  const qs=getQuickStores();
+  let added=0;
+  qs.forEach((s,i)=>{
+    const count=_qCounts[i]||0;
+    for(let j=0;j<count;j++){
+      stops.push({name:s.name,store:s.name,address:[s.rua,s.bairro,CITY_MAP[s.city]||s.city].filter(Boolean).join(', '),street:s.rua,neighborhood:s.bairro,city:s.city,value:s.taxa||0,paid:false,done:false,_order:stops.length,serviceType:'entrega'});
+      added++;
+    }
+  });
+  if(!added){toast('Selecione ao menos uma loja','error');return;}
+  saveStops();
+  closeQuickPanel();
+  toast(`⚡ ${added} parada(s) adicionada(s)!`,'success');
+}
+
+function updateStopValue(i, rawVal){
+  const v=parseMoney(rawVal);
+  if(isNaN(v))return;
+  stops[i].value=v;
+  saveStops();
 }
 
 function saveStop(){
@@ -1563,7 +1639,7 @@ function updateMetaWeek(){ cfg.metaWeek=parseFloat(document.getElementById('meta
 // ═══════════════════════════════════════════════════════
 function getExpenses(){try{return JSON.parse(localStorage.getItem('sb_expenses')||'[]');}catch(e){return [];}}
 function saveExpenses(arr){localStorage.setItem('sb_expenses',JSON.stringify(arr));}
-const EXP_LABELS={fuel:'⛽ Combustível',toll:'🛣️ Pedágio',maint:'🔧 Manutenção',other:'📦 Outro'};
+const EXP_LABELS={fuel:'⛽ Combustível',toll:'🍔 Alimentação',maint:'🔧 Manutenção',other:'📦 Outro'};
 let _expType='fuel';
 
 function openExpenseModal(){
@@ -2078,17 +2154,18 @@ async function genPDF(){
       // Tabela de entregas da loja
       doc.autoTable({
         startY:sy,
-        head:[['Nº','Data','Cliente','Endereço / Bairro','Tipo','Valor','Pago']],
+        head:[['Nº','Data','Cliente','Endereço / Bairro','Cidade','Tipo','Valor','Pago']],
         body:storeStops.map((s,i)=>[
           String(i+1),s._date,s.name||'—',
-          ((s.street||s.address||'').substring(0,22)+(s.neighborhood?' - '+s.neighborhood:'')).substring(0,30),
+          ((s.street||s.address||'').substring(0,20)+(s.neighborhood?' - '+s.neighborhood:'')).substring(0,28),
+          cityName(resolveCityCode(s.city||s.cityId))||'—',
           s.serviceType==='retirada'?'Retirada':s.serviceType==='troca'?'Troca':'Entrega',
           fmtMoney(parseMoney(s.value)),s.paid?'✓':'—'
         ]),
-        styles:{fontSize:7.5,cellPadding:2.5,textColor:[220,220,220],fillColor:[14,14,20]},
-        headStyles:{fillColor:[30,30,36],textColor:[150,150,150],fontStyle:'bold',fontSize:7},
+        styles:{fontSize:7,cellPadding:2,textColor:[220,220,220],fillColor:[14,14,20]},
+        headStyles:{fillColor:[30,30,36],textColor:[150,150,150],fontStyle:'bold',fontSize:6.5},
         alternateRowStyles:{fillColor:[10,10,16]},
-        columnStyles:{0:{halign:'center',cellWidth:8},5:{halign:'right',cellWidth:18},6:{halign:'center',cellWidth:10}},
+        columnStyles:{0:{halign:'center',cellWidth:7},4:{cellWidth:16},6:{halign:'right',cellWidth:16},7:{halign:'center',cellWidth:9}},
         margin:{left:14,right:14}
       });
       sy=doc.lastAutoTable.finalY+8;
