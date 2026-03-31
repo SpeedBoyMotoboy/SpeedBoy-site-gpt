@@ -2314,6 +2314,7 @@ function drawCityChart(allStops, w, h){
   const colors=['#f5c518','#00e676','#3b82f6','#ff6b00','#e74c3c','#9b59b6'];
   let angle=-Math.PI/2;
   const cx=w/2,cy=h/2-10,r=Math.min(cx,cy)-20;
+  if(r<=0){return null;}
   entries.forEach(([name,v],i)=>{
     const slice=v/total*Math.PI*2;
     ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle,angle+slice);ctx.closePath();
@@ -2420,26 +2421,6 @@ async function genPDF(){
       doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(120,120,120);doc.text('FATURAMENTO — ÚLTIMOS 7 DIAS',14,y+4);
       doc.addImage(chartImg,'PNG',14,y+6,PW-28,cH);
       y+=cH+10;
-    }
-    // Gráfico 2: por cidade
-    if(y<PH-70){
-      const cityCanvas=drawCityChart(d.allStops,PW-28,50);
-      if(cityCanvas){
-        const cityImg=cityCanvas.toDataURL('image/png');
-        doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(120,120,120);doc.text('ENTREGAS POR CIDADE',14,y+4);
-        doc.addImage(cityImg,'PNG',14,y+6,PW-28,50);
-        y+=60;
-      }
-    }
-    // Gráfico 3: top lojas
-    if(y<PH-70&&Object.keys(d.sm).length>1){
-      const storeCanvas=drawTopStoresChart(d.sm,PW-28,50);
-      if(storeCanvas){
-        const storeImg=storeCanvas.toDataURL('image/png');
-        doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(120,120,120);doc.text('FATURAMENTO POR LOJA',14,y+4);
-        doc.addImage(storeImg,'PNG',14,y+6,PW-28,50);
-        y+=60;
-      }
     }
 
     // ── TABELA RESUMO DE TODAS AS ENTREGAS (na página 1, se couber, ou nova página) ──
