@@ -748,14 +748,17 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     </div>
     <div class="cfg-section">
       <div class="cfg-title">🔥 Firebase (sincronização)</div>
-      <div class="info-box">Cole o <strong style="color:var(--accent)">firebaseConfig</strong> do seu projeto Firebase para sincronizar com sua esposa em tempo real.</div>
-      <div class="info-box warn">⚠️ Nunca compartilhe o celular com a chave inserida aqui.</div>
-      <div class="field"><div class="flabel">Firebase Config (JSON)</div><textarea class="fb-textarea" id="cfgFb" placeholder='{"apiKey":"...","databaseURL":"...","projectId":"..."}'></textarea></div>
+      <div id="fbEmbeddedNotice" style="display:none;background:rgba(0,200,100,.08);border:1px solid var(--green);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--green);margin-bottom:10px;">🔒 Firebase configurado internamente</div>
+      <div id="fbConfigSection">
+        <div class="info-box">Cole o <strong style="color:var(--accent)">firebaseConfig</strong> do seu projeto Firebase para sincronizar com sua esposa em tempo real.</div>
+        <div class="info-box warn">⚠️ Nunca compartilhe o celular com a chave inserida aqui.</div>
+        <div class="field"><div class="flabel">Firebase Config (JSON)</div><textarea class="fb-textarea" id="cfgFb" placeholder='{"apiKey":"...","databaseURL":"...","projectId":"..."}'></textarea></div>
+      </div>
       <div class="room-box">
         <div><div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--muted);margin-bottom:4px;">CÓDIGO DA SALA</div><div class="room-code" id="roomCode">——</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">Compartilhe com sua esposa</div></div>
-        <div class="room-btns"><button class="btn-room" onclick="copyRoom()">📋 Copiar</button><button class="btn-room" onclick="newRoom()">🔄 Novo</button></div>
+        <div id="fbRoomBtns" class="room-btns"><button class="btn-room" onclick="copyRoom()">📋 Copiar</button><button class="btn-room" onclick="newRoom()">🔄 Novo</button></div>
       </div>
-      <div class="fb-join-row"><input class="finput" id="cfgRoom" placeholder="SB-XXXX" style="letter-spacing:2px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;" /><button class="btn-join" onclick="joinRoom()">Entrar</button></div>
+      <div id="fbJoinRow" class="fb-join-row"><input class="finput" id="cfgRoom" placeholder="SB-XXXX" style="letter-spacing:2px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;" /><button class="btn-join" onclick="joinRoom()">Entrar</button></div>
       <div class="fb-status"><div class="sync-dot" id="cfgSyncDot"></div><span id="cfgSyncLbl">Firebase não configurado</span></div>
     </div>
     <button class="btn-cfg-save" onclick="saveConfig()">💾 Salvar configurações</button>
@@ -784,6 +787,14 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 
 <script>
 'use strict';
+// ═══════════════════════════════════════════════════════
+//  CONFIGURAÇÃO EMBUTIDA (opcional)
+//  Preencha abaixo para ocultar Firebase das configurações.
+//  Deixe null/''/0 para usar o formulário normal.
+// ═══════════════════════════════════════════════════════
+const EMBEDDED_FB_CONFIG = null;   // ex: {"apiKey":"...","databaseURL":"...","projectId":"..."}
+const EMBEDDED_ROOM      = '';     // ex: 'SB-ABCD'  — sala que abre automaticamente
+
 // ═══════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════
@@ -1119,20 +1130,30 @@ function renderHome(){
     });
   }
 
-  // ── Seção HISTÓRICO RECENTE (últimas entregas do histórico) ──
+  // ── Seção HISTÓRICO RECENTE (últimos 30 dias) ──
   if(history.length){
-    // Flatten history stops, most-recent-first, max 20
+    // Filter to last 30 days and sort most-recent-first
+    const cutoff30=new Date(); cutoff30.setDate(cutoff30.getDate()-30); cutoff30.setHours(0,0,0,0);
+    const recentDays=history.filter(function(day){
+      try{return parseDate(day.date)>=cutoff30;}catch(e){return false;}
+    }).sort(function(a,b){try{return parseDate(b.date)-parseDate(a.date);}catch(e){return 0;}});
     const hFlat=[];
-    history.forEach(function(day,di){
-      day.stops.forEach(function(s,si){
-        hFlat.push({s,di,si,date:day.date});
-      });
+    recentDays.forEach(function(day){
+      const di=history.indexOf(day);
+      day.stops.forEach(function(s,si){ hFlat.push({s,di,si,date:day.date}); });
     });
-    // Sort by date desc, then take first 20
-    hFlat.sort(function(a,b){try{return parseDate(b.date)-parseDate(a.date);}catch(e){return 0;}});
-    const recent=hFlat.slice(0,20);
-    html+=`<div class="store-label" style="color:#888;margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">🕓 ENTREGAS RECENTES (${recent.length})</div>`;
-    recent.forEach(function({s,di,si,date}){
+    if(!hFlat.length){}else{
+    const totalH=hFlat.length;
+    html+=`<div class="store-label" style="color:#888;margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">🕓 ÚLTIMOS 30 DIAS (${totalH} entrega${totalH!==1?'s':''})</div>`;
+    // Group by day
+    const dayMap={};
+    hFlat.forEach(function(item){if(!dayMap[item.date])dayMap[item.date]=[];dayMap[item.date].push(item);});
+    Object.keys(dayMap).sort(function(a,b){try{return parseDate(b)-parseDate(a);}catch(e){return 0;}}).forEach(function(date){
+      const items=dayMap[date];
+      const dayTotal=items.reduce(function(a,{s}){return a+parseMoney(s.value);},0);
+      const dayRec=items.filter(function({s}){return s.paid;}).reduce(function(a,{s}){return a+parseMoney(s.value);},0);
+      html+=`<div style="font-size:10px;font-weight:700;letter-spacing:.8px;padding:4px 0 2px;color:#666;display:flex;align-items:center;gap:6px;">${date}<span style="flex:1;height:1px;background:rgba(100,100,100,.2);display:inline-block;"></span><span style="color:${dayRec<dayTotal?'var(--accent)':'var(--green)'};">${fmtMoney(dayTotal)}</span></div>`;
+      items.forEach(function({s,di,si,date}){
       const val=parseMoney(s.value);
       const prodVal=parseMoney(s.productValue);
       const cityLabel=cityName(resolveCityCode(s.city||s.cityId))||'';
@@ -1146,7 +1167,6 @@ function renderHome(){
               </div>
             </div>
             <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
-              <span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:700;background:rgba(100,100,100,.15);color:#888;">${date}</span>
               ${cityLabel?`<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:700;background:rgba(59,130,246,.12);color:#3b82f6;">${cityLabel}</span>`:''}
               ${s.store?`<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:700;background:rgba(255,107,0,.12);color:#ff6b00;">${s.store}</span>`:''}
             </div>
@@ -1160,8 +1180,10 @@ function renderHome(){
           </div>
         </div>
       </div>`;
-    });
-  }
+      });  // end items.forEach
+    });    // end Object.keys dayMap forEach
+    }      // end if(!hFlat.length)else
+  }        // end if(history.length)
 
   list.innerHTML=html;
   if(nextIdx !== -1) {
@@ -2676,9 +2698,17 @@ function delLink(i){ const links=getLinks(); if(!confirm('Remover link da loja '
 function loadConfig(){
   document.getElementById('cfgOrigin').value=cfg.origin||'';
   document.getElementById('cfgWpp').value=cfg.wppMsg||'';
-  const fbSaved=localStorage.getItem('sb_firebase_cfg');
-  if(fbSaved){try{document.getElementById('cfgFb').value=JSON.stringify(JSON.parse(fbSaved),null,2);}catch(e){}}
-  const room=localStorage.getItem('sb_room_code')||genRoomCode();
+  // Se config embutida: esconde formulário Firebase e seção de troca de sala
+  if(EMBEDDED_FB_CONFIG){
+    document.getElementById('fbEmbeddedNotice').style.display='';
+    document.getElementById('fbConfigSection').style.display='none';
+    document.getElementById('fbJoinRow').style.display='none';
+    document.getElementById('fbRoomBtns').style.display='none';
+  } else {
+    const fbSaved=localStorage.getItem('sb_firebase_cfg');
+    if(fbSaved){try{document.getElementById('cfgFb').value=JSON.stringify(JSON.parse(fbSaved),null,2);}catch(e){}}
+  }
+  const room=(EMBEDDED_ROOM||localStorage.getItem('sb_room_code')||genRoomCode());
   localStorage.setItem('sb_room_code',room);
   document.getElementById('roomCode').textContent=room;
   document.getElementById('cfgRoom').value=room;
@@ -2689,16 +2719,18 @@ function saveConfig(){
   cfg.origin=document.getElementById('cfgOrigin').value.trim();
   cfg.wppMsg=document.getElementById('cfgWpp').value.trim();
   saveCfg();
-  const fbStr=document.getElementById('cfgFb').value.trim();
-  if(fbStr){
-    const room=document.getElementById('cfgRoom').value.trim().toUpperCase();
-    initFb(fbStr).then(ok=>{
-      if(ok){
-        toast('✅ Firebase conectado!','success');
-        const r=room||localStorage.getItem('sb_room_code')||'';
-        if(r) startSync(r);
-      }
-    });
+  if(!EMBEDDED_FB_CONFIG){
+    const fbStr=document.getElementById('cfgFb').value.trim();
+    if(fbStr){
+      const room=document.getElementById('cfgRoom').value.trim().toUpperCase();
+      initFb(fbStr).then(ok=>{
+        if(ok){
+          toast('✅ Firebase conectado!','success');
+          const r=room||localStorage.getItem('sb_room_code')||'';
+          if(r) startSync(r);
+        }
+      });
+    }
   }
   toast('✅ Configurações salvas!','success');
   goNav('homeScreen','nav-home');
@@ -3002,6 +3034,15 @@ function sendNotify(title, body, tag) {
 //  INIT
 // ═══════════════════════════════════════════════════════
 async function initFirebase(){
+  // Embedded config takes priority over manual settings
+  if(EMBEDDED_FB_CONFIG){
+    const ok=await initFb(JSON.stringify(EMBEDDED_FB_CONFIG));
+    if(ok){
+      const room=EMBEDDED_ROOM||localStorage.getItem('sb_room_code')||'';
+      if(room){ localStorage.setItem('sb_room_code',room); startSync(room); }
+    }
+    return;
+  }
   const saved=localStorage.getItem('sb_firebase_cfg');
   const room=localStorage.getItem('sb_room_code');
   if(!saved)return;
