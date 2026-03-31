@@ -920,24 +920,36 @@ function renderHome(){
   // Build indexed list
   const indexed = stops.map(function(s,i){return Object.assign({},s,{_idx:i});});
 
-  // Group items based on groupByMode
+  // Separar agendadas futuras das de hoje/passado
+  const todayDt=new Date(); todayDt.setHours(0,0,0,0);
+  const tomorrowDt=new Date(todayDt); tomorrowDt.setDate(todayDt.getDate()+1);
+  const isFuture=function(s){
+    if(!s.deliveryDate)return false;
+    try{return parseDate(s.deliveryDate)>todayDt;}catch(e){return false;}
+  };
+  const currentIndexed=indexed.filter(s=>!isFuture(s));
+  const scheduledIndexed=indexed.filter(s=>isFuture(s)).sort(function(a,b){
+    try{return parseDate(a.deliveryDate)-parseDate(b.deliveryDate);}catch(e){return 0;}
+  });
+
+  // Group items based on groupByMode (apenas entregas de hoje)
   const groups = [];
   if(groupByMode==='status'){
-    const pending = indexed.filter(s=>!s.done);
-    const done    = indexed.filter(s=>s.done);
+    const pending = currentIndexed.filter(s=>!s.done);
+    const done    = currentIndexed.filter(s=>s.done);
     if(pending.length) groups.push({label:'⏳ Pendentes ('+pending.length+')',items:pending,color:'var(--accent)'});
     if(done.length)    groups.push({label:'✅ Finalizadas ('+done.length+')',items:done,color:'var(--green)'});
   } else if(groupByMode==='city'){
     const map={};
-    indexed.forEach(function(s){const k=cityName(resolveCityCode(s.city||s.cityId))||'Sem cidade';if(!map[k])map[k]=[];map[k].push(s);});
+    currentIndexed.forEach(function(s){const k=cityName(resolveCityCode(s.city||s.cityId))||'Sem cidade';if(!map[k])map[k]=[];map[k].push(s);});
     Object.keys(map).sort().forEach(function(k){groups.push({label:'🏙️ '+k+' ('+map[k].length+')',items:map[k],color:'var(--blue)'});});
   } else if(groupByMode==='store'){
     const map={};
-    indexed.forEach(function(s){const k=s.store||'Sem loja';if(!map[k])map[k]=[];map[k].push(s);});
+    currentIndexed.forEach(function(s){const k=s.store||'Sem loja';if(!map[k])map[k]=[];map[k].push(s);});
     Object.keys(map).sort().forEach(function(k){groups.push({label:'🏪 '+k+' ('+map[k].length+')',items:map[k],color:'var(--accent)'});});
   } else if(groupByMode==='time'){
     const withTime=[], noTime=[];
-    indexed.forEach(function(s){(s.timeFrom||s.timeTo)?withTime.push(s):noTime.push(s);});
+    currentIndexed.forEach(function(s){(s.timeFrom||s.timeTo)?withTime.push(s):noTime.push(s);});
     withTime.sort(function(a,b){return(a.timeFrom||'99:99').localeCompare(b.timeFrom||'99:99');});
     // Sub-group by time ranges
     const slots={};
@@ -1004,6 +1016,64 @@ function renderHome(){
       </div>`;
     });
   });
+
+  // ── Seção AGENDADAS (entregas de dias futuros) ──
+  if(scheduledIndexed.length){
+    html+=`<div class="store-label" style="color:#a164dc;margin-top:10px;border-top:1px solid var(--border);padding-top:10px;">📅 AGENDADAS (${scheduledIndexed.length})</div>`;
+    // Agrupar por data
+    const dGroups={};
+    scheduledIndexed.forEach(function(s){
+      const dt=parseDate(s.deliveryDate);
+      const lbl=dt.toDateString()===tomorrowDt.toDateString()?'AMANHÃ':s.deliveryDate.slice(0,5);
+      if(!dGroups[lbl])dGroups[lbl]=[];
+      dGroups[lbl].push(s);
+    });
+    Object.entries(dGroups).forEach(function([lbl,items]){
+      html+=`<div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:4px 0 2px;color:#a164dc;opacity:.75;display:flex;align-items:center;gap:6px;">${lbl}<span style="flex:1;height:1px;background:rgba(161,100,220,.25);display:inline-block;"></span></div>`;
+      items.forEach(function(s){
+        const i=s._idx;
+        const val=parseMoney(s.value);
+        const valStr=val>0?fmtMoney(val):'';
+        const cityLabel=cityName(resolveCityCode(s.city||s.cityId))||'';
+        const valInput=val>0?`<input type="text" value="${valStr}" onclick="event.stopPropagation()" onblur="updateStopValue(${i},this.value)" style="width:72px;text-align:right;background:transparent;border:none;border-bottom:1px solid var(--border);color:${s.paid?'var(--green)':'var(--accent)'};font-weight:800;font-size:13px;font-family:'Barlow Condensed',sans-serif;outline:none;padding:1px 2px;" inputmode="decimal" />`:'';
+        html+=`<div class="stop-card ${s.done?'done':''}" id="sc${i}" onclick="toggleCard(${i})" style="border-color:rgba(161,100,220,.3);opacity:.9;">
+          <div class="stop-header" style="align-items:flex-start;padding:12px 14px 10px;">
+            <div class="stop-num" style="color:#a164dc;">${i+1}</div>
+            <div class="stop-info" style="flex:1;min-width:0;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <div class="stop-name">${s.name||'Sem nome'}</div>
+                ${valInput}
+              </div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
+                ${cityLabel?`<span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;">${cityLabel}</span>`:''}
+                <span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(255,107,0,.15);color:#ff6b00;">${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</span>
+                ${s.store?`<span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(161,100,220,.12);color:#a164dc;">🏪 ${s.store}</span>`:''}
+              </div>
+              ${(s.street||s.number||s.complement)?`<div style="font-size:11px;color:var(--muted);margin-bottom:2px;">${[s.street,s.number,s.complement].filter(Boolean).join(' ')}</div>`:''}
+              ${(s.reference||s.notes)?`<div style="font-size:10px;color:var(--muted);opacity:.75;">${[s.reference,s.notes].filter(Boolean).join(' · ')}</div>`:''}
+            </div>
+            <div class="stop-dot" style="margin-top:4px;flex-shrink:0;background:rgba(161,100,220,.5);"></div>
+          </div>
+          <div class="stop-detail">
+            ${s.phone?`<div><strong>TEL</strong> ${fmtPhone(s.phone)}</div>`:''}
+            ${s.complement?`<div><strong>COMPL</strong> ${s.complement}</div>`:''}
+            ${s.reference?`<div><strong>REF</strong> ${s.reference}</div>`:''}
+            ${(s.timeFrom||s.timeTo)?`<div><strong>HORÁRIO</strong> ⏰ ${s.timeFrom||'?'} até ${s.timeTo||'?'}</div>`:''}
+            ${s.notes?`<div><strong>OBS</strong> ${s.notes}</div>`:''}
+          </div>
+          <div class="stop-actions" onclick="event.stopPropagation()">
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+              <button class="btn-act ba-maps" onclick="openMapsWithAddress(${i})" style="flex:1;background:#4285f4;color:#fff;font-weight:800;padding:14px;font-size:14px;">🗺️ NAVEGAR</button>
+              ${s.phone?`<button class="btn-act ba-wpp" onclick="openWpp(${i})">💬 WhatsApp</button>`:''}
+              <button class="btn-act ba-edit" onclick="goForm(${i})">✏️ Editar</button>
+              <button class="btn-act ba-del" onclick="delStop(${i})">🗑️ Remover</button>
+            </div>
+          </div>
+        </div>`;
+      });
+    });
+  }
+
   list.innerHTML=html;
   if(nextIdx !== -1) {
     setTimeout(()=>{
