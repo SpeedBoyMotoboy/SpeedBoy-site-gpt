@@ -555,6 +555,52 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   </div>
 </div>
 
+<!-- MODAL LOJA RÁPIDA -->
+<div class="modal-overlay hidden" id="qsModal">
+  <div class="modal-sheet" style="max-height:90vh;overflow-y:auto;">
+    <div class="modal-header">
+      <div class="modal-name" id="qsModalTitle">⚡ Nova loja rápida</div>
+      <button class="modal-close" onclick="closeQsModal()">✕</button>
+    </div>
+    <input type="hidden" id="qsEditIdx" value="-1" />
+    <div class="field" style="margin-bottom:10px;">
+      <div class="field-label">Nome da loja <span class="req">*</span></div>
+      <input class="field-input" id="qsName" placeholder="Ex: KS, Farmácia ABC" maxlength="40" />
+    </div>
+    <div class="field" style="margin-bottom:10px;">
+      <div class="field-label">Sua taxa (R$)</div>
+      <input class="field-input" id="qsTaxa" type="text" inputmode="decimal" placeholder="0,00" oninput="maskMoney(this)" />
+    </div>
+    <div class="field" style="margin-bottom:10px;">
+      <div class="field-label">Cidade</div>
+      <select class="field-input" id="qsCity">
+        <option value="">— Selecione —</option>
+        <option value="SRR">Serra</option>
+        <option value="VIX">Vitória</option>
+        <option value="VV">Vila Velha</option>
+        <option value="CCA">Cariacica</option>
+        <option value="VIA">Viana</option>
+        <option value="OUT">Outra</option>
+      </select>
+    </div>
+    <div class="field" style="margin-bottom:10px;">
+      <div class="field-label">Bairro</div>
+      <input class="field-input" id="qsBairro" placeholder="Ex: Boa Vista" />
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <div class="field" style="flex:2;margin-bottom:0;">
+        <div class="field-label">Rua / Avenida</div>
+        <input class="field-input" id="qsRua" placeholder="Ex: Rua das Flores" />
+      </div>
+      <div class="field" style="flex:1;margin-bottom:0;">
+        <div class="field-label">Número</div>
+        <input class="field-input" id="qsNumero" placeholder="123" inputmode="numeric" />
+      </div>
+    </div>
+    <button onclick="saveQsModal()" style="width:100%;margin-top:6px;padding:14px;background:var(--accent);color:#000;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;cursor:pointer;">💾 Salvar loja</button>
+  </div>
+</div>
+
 <!-- MODAL DESPESA -->
 <div class="modal-overlay hidden" id="expenseModal">
   <div class="modal-sheet">
@@ -1222,19 +1268,39 @@ function cityName(code){ return CITY_MAP[code]||code||''; }
 function getQuickStores(){try{return JSON.parse(localStorage.getItem('sb_quick_stores')||'[]');}catch(e){return[];}}
 function saveQuickStores(list){localStorage.setItem('sb_quick_stores',JSON.stringify(list));}
 
-function addQuickStore(){
-  const name=prompt('Nome da loja (ex: Farmácia ABC):');
-  if(!name||!name.trim())return;
-  const taxa=prompt('Sua taxa de entrega (R$):');
-  const city=prompt('Cidade? (Serra, Vitória, Vila Velha, Cariacica, Viana):');
-  const bairro=prompt('Bairro da loja:');
-  const rua=prompt('Rua/Avenida da loja:');
-  const numero=prompt('Número:');
+function addQuickStore(){ openQsModal(-1); }
+function openQsModal(idx){
   const qs=getQuickStores();
-  qs.push({name:name.trim(),taxa:parseMoney(taxa||'0'),city:resolveCityCode(city||''),bairro:bairro?.trim()||'',rua:rua?.trim()||'',numero:numero?.trim()||''});
+  const s=idx>=0?qs[idx]:null;
+  document.getElementById('qsEditIdx').value=idx;
+  document.getElementById('qsModalTitle').textContent=idx>=0?'✏️ Editar loja rápida':'⚡ Nova loja rápida';
+  document.getElementById('qsName').value=s?.name||'';
+  document.getElementById('qsTaxa').value=s?.taxa?String(s.taxa).replace('.',','):'';
+  document.getElementById('qsCity').value=s?.city||'';
+  document.getElementById('qsBairro').value=s?.bairro||'';
+  document.getElementById('qsRua').value=s?.rua||'';
+  document.getElementById('qsNumero').value=s?.numero||'';
+  document.getElementById('qsModal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('qsName').focus(),100);
+}
+function closeQsModal(){ document.getElementById('qsModal').classList.add('hidden'); }
+document.getElementById('qsModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeQsModal();});
+function saveQsModal(){
+  const name=document.getElementById('qsName').value.trim();
+  if(!name){toast('Nome é obrigatório','error');return;}
+  const taxa=parseMoney(document.getElementById('qsTaxa').value)||0;
+  const city=document.getElementById('qsCity').value;
+  const bairro=document.getElementById('qsBairro').value.trim();
+  const rua=document.getElementById('qsRua').value.trim();
+  const numero=document.getElementById('qsNumero').value.trim();
+  const qs=getQuickStores();
+  const idx=parseInt(document.getElementById('qsEditIdx').value);
+  const obj={name,taxa,city,bairro,rua,numero};
+  if(idx>=0) qs[idx]=obj; else qs.push(obj);
   saveQuickStores(qs);
+  closeQsModal();
   renderQuickStoresConfig();
-  toast('⚡ Loja rápida "'+name.trim()+'" adicionada!','success');
+  toast((idx>=0?'✅ Loja atualizada!':'⚡ Loja "'+name+'" adicionada!'),'success');
 }
 function rmQuickStore(i){const qs=getQuickStores();if(!confirm('Remover '+qs[i]?.name+'?'))return;qs.splice(i,1);saveQuickStores(qs);renderQuickStoresConfig();}
 function renderQuickStoresConfig(){
@@ -1242,7 +1308,7 @@ function renderQuickStoresConfig(){
   if(!el)return;
   const qs=getQuickStores();
   if(!qs.length){el.innerHTML='<div style="font-size:12px;color:var(--muted)">Nenhuma loja rápida.</div>';return;}
-  el.innerHTML=qs.map((s,i)=>`<div class="store-chip">⚡ ${s.name} <span style="font-size:10px;color:var(--green)">${s.taxa?fmtMoney(s.taxa):''}</span> <span style="font-size:10px;color:var(--muted)">${CITY_MAP[s.city]||''}</span><button class="store-chip-del" onclick="rmQuickStore(${i})">×</button></div>`).join('');
+  el.innerHTML=qs.map((s,i)=>`<div class="store-chip">⚡ ${esc(s.name)} <span style="font-size:10px;color:var(--green)">${s.taxa?fmtMoney(s.taxa):''}</span> <span style="font-size:10px;color:var(--muted)">${CITY_MAP[s.city]||''}</span><button class="store-chip-del" onclick="openQsModal(${i})" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;padding:0 2px;">✏️</button><button class="store-chip-del" onclick="rmQuickStore(${i})">×</button></div>`).join('');
 }
 function quickAddStop(i){
   const qs=getQuickStores();
@@ -1309,6 +1375,7 @@ function saveQuickPanel(){
   });
   if(!added){toast('Selecione ao menos uma loja','error');return;}
   saveStops();
+  renderHome();
   closeQuickPanel();
   toast(`⚡ ${added} parada(s) adicionada(s)!`,'success');
 }
