@@ -100,8 +100,8 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .stop-header-next{border:3px solid var(--green);background:rgba(0,230,118,.08);}
 .stop-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;color:var(--accent);min-width:24px;}
 .stop-info{flex:1;min-width:0;}
-.stop-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.stop-addr{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.stop-name{font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stop-addr{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
 .stop-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
 .stop-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;color:var(--green);}
 .stop-val.unpaid{color:var(--accent);}
@@ -376,6 +376,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   </div>
   <div class="home-top">
     <button class="btn-add" onclick="goForm()">＋ Adicionar parada</button>
+    <button class="btn-cfg-icon" id="quickFabInline" onclick="openQuickPanel()" style="display:none;background:rgba(245,197,24,.15);border:1.5px solid var(--accent);color:var(--accent);font-size:20px;">⚡</button>
     <button class="btn-cfg-icon" onclick="goNav('configScreen','nav-cfg')">⚙️</button>
   </div>
   <div class="pending-section" id="pendingSection">
@@ -977,14 +978,14 @@ function renderHome(){
               <div class="stop-name">${s.name||'Sem nome'}</div>
               ${valInput}
             </div>
-            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
-              ${cityLabel?`<span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;">${cityLabel}</span>`:''}
-              <span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(255,107,0,.15);color:#ff6b00;">${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</span>
-              ${val>0?`<span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:${s.paid?'rgba(0,230,118,.15)':'rgba(245,197,24,.12)'};color:${s.paid?'var(--green)':'var(--accent)'};">${s.paid?'✓ Pago':'⏳ A receber'}</span>`:''}
-              ${s.deliveryDate?`<span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(161,100,220,.15);color:#a164dc;">${delivDateLabel(s.deliveryDate)}</span>`:''}
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
+              ${cityLabel?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;">${cityLabel}</span>`:''}
+              <span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(255,107,0,.15);color:#ff6b00;">${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</span>
+              ${val>0?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:${s.paid?'rgba(0,230,118,.15)':'rgba(245,197,24,.12)'};color:${s.paid?'var(--green)':'var(--accent)'};">${s.paid?'✓ Pago':'⏳ A receber'}</span>`:''}
+              ${s.deliveryDate?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(161,100,220,.15);color:#a164dc;">${delivDateLabel(s.deliveryDate)}</span>`:''}
             </div>
-            ${(s.street||s.number||s.complement)?`<div style="font-size:11px;color:var(--muted);margin-bottom:2px;">${[s.street,s.number,s.complement].filter(Boolean).join(' ')}</div>`:''}
-            ${(s.reference||s.notes)?`<div style="font-size:10px;color:var(--muted);opacity:.75;">${[s.reference,s.notes].filter(Boolean).join(' · ')}</div>`:''}
+            ${(s.street||s.number||s.complement)?`<div style="font-size:13px;color:var(--muted);margin-bottom:2px;">${[s.street,s.number,s.complement].filter(Boolean).join(' ')}</div>`:''}
+            ${(s.reference||s.notes)?`<div style="font-size:12px;color:var(--muted);opacity:.75;">${[s.reference,s.notes].filter(Boolean).join(' · ')}</div>`:''}
           </div>
           <div class="stop-dot" style="margin-top:4px;flex-shrink:0;"></div>
         </div>
@@ -1044,13 +1045,13 @@ function renderHome(){
                 <div class="stop-name">${s.name||'Sem nome'}</div>
                 ${valInput}
               </div>
-              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
-                ${cityLabel?`<span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;">${cityLabel}</span>`:''}
-                <span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(255,107,0,.15);color:#ff6b00;">${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</span>
-                ${s.store?`<span style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(161,100,220,.12);color:#a164dc;">🏪 ${s.store}</span>`:''}
+              <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
+                ${cityLabel?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;">${cityLabel}</span>`:''}
+                <span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(255,107,0,.15);color:#ff6b00;">${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</span>
+                ${s.store?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(161,100,220,.12);color:#a164dc;">🏪 ${s.store}</span>`:''}
               </div>
-              ${(s.street||s.number||s.complement)?`<div style="font-size:11px;color:var(--muted);margin-bottom:2px;">${[s.street,s.number,s.complement].filter(Boolean).join(' ')}</div>`:''}
-              ${(s.reference||s.notes)?`<div style="font-size:10px;color:var(--muted);opacity:.75;">${[s.reference,s.notes].filter(Boolean).join(' · ')}</div>`:''}
+              ${(s.street||s.number||s.complement)?`<div style="font-size:13px;color:var(--muted);margin-bottom:2px;">${[s.street,s.number,s.complement].filter(Boolean).join(' ')}</div>`:''}
+              ${(s.reference||s.notes)?`<div style="font-size:12px;color:var(--muted);opacity:.75;">${[s.reference,s.notes].filter(Boolean).join(' · ')}</div>`:''}
             </div>
             <div class="stop-dot" style="margin-top:4px;flex-shrink:0;background:rgba(161,100,220,.5);"></div>
           </div>
@@ -1261,12 +1262,9 @@ function quickAddStop(i){
   renderHome();
 }
 function renderQuickButtons(){
-  const fab=document.getElementById('quickFab');
-  if(!fab)return;
   const qs=getQuickStores();
-  if(!qs.length){fab.style.display='none';return;}
-  fab.style.display='block';
-  fab.innerHTML=`<button class="quick-fab" onclick="openQuickPanel()">⚡</button>`;
+  const btn=document.getElementById('quickFabInline');
+  if(btn) btn.style.display=qs.length?'block':'none';
 }
 
 let _qCounts={};
