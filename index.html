@@ -439,7 +439,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <!-- ROW 2: Loja (full) -->
     <div class="field-group">
       <div class="field-label">🏪 Loja de origem</div>
-      <select class="field-input" id="fStore"><option value="">— Sem loja específica —</option></select>
+      <select class="field-input" id="fStore" onchange="autoTaxaAritana()"><option value="">— Sem loja específica —</option></select>
     </div>
 
     <!-- ROW 3: Nome + Tipo -->
@@ -492,7 +492,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       <div class="field-group">
         <div class="field-label">Bairro <span class="req">*</span></div>
         <div class="bairro-wrap">
-          <input class="field-input" id="fBairro" placeholder="Digite para buscar..." autocomplete="off" oninput="filterBairros()" onfocus="filterBairros()" />
+          <input class="field-input" id="fBairro" placeholder="Digite para buscar..." autocomplete="off" oninput="filterBairros()" onfocus="filterBairros()" onblur="autoTaxaAritana()" />
           <div class="bairro-list" id="fBairroList"></div>
         </div>
       </div>
@@ -565,7 +565,10 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <input type="hidden" id="qsEditIdx" value="-1" />
     <div class="field" style="margin-bottom:10px;">
       <div class="field-label">Nome da loja <span class="req">*</span></div>
-      <input class="field-input" id="qsName" placeholder="Ex: KS, Farmácia ABC" maxlength="40" />
+      <select class="field-input" id="qsName" onchange="onQsNameChange(this)">
+        <option value="">— Selecione ou digite abaixo —</option>
+      </select>
+      <input class="field-input" id="qsNameCustom" placeholder="Ou digite um nome personalizado..." maxlength="40" style="margin-top:6px;display:none;" />
     </div>
     <div class="field" style="margin-bottom:10px;">
       <div class="field-label">Sua taxa (R$)</div>
@@ -732,12 +735,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     </div>
     <input type="hidden" id="cfgOrigin" />
     <input type="hidden" id="cfgWpp" />
-    <div class="cfg-section">
-      <div class="cfg-title">👤 Dados do Prestador (aparecem no relatório PDF)</div>
-      <div class="field" style="margin-bottom:8px;"><div class="flabel">Seu nome completo</div><input class="finput" id="cfgPrestadorNome" placeholder="Ex: João da Silva" /></div>
-      <div class="field" style="margin-bottom:8px;"><div class="flabel">Chave PIX (para cobrança)</div><input class="finput" id="cfgPrestadorPix" placeholder="CPF, e-mail, telefone ou chave aleatória" /></div>
-      <div class="field" style="margin-bottom:8px;"><div class="flabel">Telefone / WhatsApp</div><input class="finput" id="cfgPrestadorTel" placeholder="(27) 99999-9999" /></div>
-    </div>
     <div class="cfg-section">
       <div class="cfg-title">🏬 Minhas lojas</div>
       <div class="stores-list" id="storesList"></div>
@@ -1122,6 +1119,50 @@ function renderHome(){
     });
   }
 
+  // ── Seção HISTÓRICO RECENTE (últimas entregas do histórico) ──
+  if(history.length){
+    // Flatten history stops, most-recent-first, max 20
+    const hFlat=[];
+    history.forEach(function(day,di){
+      day.stops.forEach(function(s,si){
+        hFlat.push({s,di,si,date:day.date});
+      });
+    });
+    // Sort by date desc, then take first 20
+    hFlat.sort(function(a,b){try{return parseDate(b.date)-parseDate(a.date);}catch(e){return 0;}});
+    const recent=hFlat.slice(0,20);
+    html+=`<div class="store-label" style="color:#888;margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">🕓 ENTREGAS RECENTES (${recent.length})</div>`;
+    recent.forEach(function({s,di,si,date}){
+      const val=parseMoney(s.value);
+      const prodVal=parseMoney(s.productValue);
+      const cityLabel=cityName(resolveCityCode(s.city||s.cityId))||'';
+      html+=`<div class="stop-card" style="opacity:.85;border-color:rgba(100,100,100,.25);">
+        <div class="stop-header" style="align-items:flex-start;padding:10px 14px 8px;">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+              <div class="stop-name">${s.name||'Sem nome'}</div>
+              <div style="display:flex;align-items:center;gap:3px;" onclick="event.stopPropagation()">
+                ${val>0?`<input type="text" value="${fmtMoney(val)}" onblur="updateHistStopValue(${di},${si},this.value)" style="width:65px;text-align:right;background:transparent;border:none;border-bottom:1px solid var(--border);color:${s.paid?'var(--green)':'var(--accent)'};font-weight:800;font-size:13px;font-family:'Barlow Condensed',sans-serif;outline:none;padding:1px 2px;" inputmode="decimal" />${s.paid?`<span style="color:var(--green);font-size:15px;font-weight:900;line-height:1;">✓</span>`:''}`:''}
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
+              <span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:700;background:rgba(100,100,100,.15);color:#888;">${date}</span>
+              ${cityLabel?`<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:700;background:rgba(59,130,246,.12);color:#3b82f6;">${cityLabel}</span>`:''}
+              ${s.store?`<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:700;background:rgba(255,107,0,.12);color:#ff6b00;">${s.store}</span>`:''}
+            </div>
+            ${(s.street||s.neighborhood)?`<div style="font-size:12px;color:var(--muted);">${[s.street,s.number,s.neighborhood].filter(Boolean).join(' ')}</div>`:''}
+          </div>
+        </div>
+        <div class="stop-actions" onclick="event.stopPropagation()">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togHistPaid(${di},${si})" style="flex:1;">${s.paid?'💸 Taxa ok':'💰 Taxa?'}</button>`:''}
+            ${prodVal>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''}" onclick="togHistProductPaid(${di},${si})" style="flex:1;">${s.productPaid?'✅ Cobrado':'💳 Cobrar'}</button>`:''}
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
   list.innerHTML=html;
   if(nextIdx !== -1) {
     setTimeout(()=>{
@@ -1135,6 +1176,22 @@ function toggleCard(i){
   const c=document.getElementById('sc'+i), was=c.classList.contains('expanded');
   document.querySelectorAll('.stop-card').forEach(x=>x.classList.remove('expanded'));
   if(!was) c.classList.add('expanded');
+}
+
+function togHistPaid(di,si){
+  if(!history[di]||!history[di].stops[si])return;
+  history[di].stops[si].paid=!history[di].stops[si].paid;
+  saveHistory();renderHome();
+}
+function togHistProductPaid(di,si){
+  if(!history[di]||!history[di].stops[si])return;
+  history[di].stops[si].productPaid=!history[di].stops[si].productPaid;
+  saveHistory();renderHome();
+}
+function updateHistStopValue(di,si,rawVal){
+  if(!history[di]||!history[di].stops[si])return;
+  history[di].stops[si].value=parseMoney(rawVal)||0;
+  saveHistory();
 }
 
 function togDone(i){
@@ -1214,6 +1271,7 @@ function filterBairros(){
 function selectFormBairro(b){
   document.getElementById('fBairro').value=b;
   document.getElementById('fBairroList').classList.remove('show');
+  autoTaxaAritana();
 }
 
 // Fechar sugestões ao clicar fora
@@ -1265,6 +1323,43 @@ function resolveCityCode(val){
 }
 function cityName(code){ return CITY_MAP[code]||code||''; }
 
+// ═══════════════ ARITANA AUTO-TAXA ═══════════════
+const ARITANA_TAXAS = {
+  "araçás":20,"argolas":20,"aribiri":20,"ataíde":20,"boa vista":20,"brisamar":20,"cavalieri":20,"centro":20,"chácara do conde":20,"cocal":20,"coqueiral de itaparica":20,"cristóvão colombo":20,"darly santos":20,"divino espírito santo":20,"dom joão batista":20,"garoto":20,"glória":20,"guaranhuns":20,"ibes":20,"ilha da conceição":20,"ilha das flores":20,"ilha dos ayres":20,"ilha dos bentos":20,"itaparica":20,"itapuã":20,"jaburuna":20,"jardim asteca":20,"jardim colorado":20,"jardim guadalajara":20,"jardim guaranhuns":20,"jockey de itaparica":20,"nossa senhora da penha":20,"nova itaparica":20,"novo méxico":20,"olaria":20,"paul":20,"pedra dos búzios":20,"pontal das garças":20,"praia da costa":20,"praia das gaivotas":20,"praia de itaparica":20,"primeiro de maio":20,"residencial coqueiral":20,"sagrada família":20,"santa inês":20,"santa mônica":20,"santa mônica popular":20,"santa rita":20,"santos dumont":20,"soteco":20,"vila batista":20,"vila garrido":20,"vila guaranhuns":20,"vila nova":20,"vista da penha":20,"zumbi dos palmares":20,
+  "aeroporto":25,"alecrim":25,"alto boa vista":25,"alto lage":25,"alvorada":25,"alzira ramos":25,"andorinhas":25,"antônio honório":25,"bandeirantes":25,"barro vermelho":25,"bela aurora":25,"bela vista":25,"bento ferreira":25,"boa sorte":25,"bonfim":25,"campo belo":25,"castelo branco":25,"caçaroca":25,"chácaras união":25,"cobi de baixo":25,"cobi de cima":25,"cobilândia":25,"consolação":25,"cruzamento":25,"da penha":25,"de lourdes":25,"enseada do suá":25,"expedito":25,"forte são joão":25,"fradinhos":25,"goiabeiras":25,"gurigica":25,"horto":25,"ilha de santa maria":25,"ilha do boi":25,"ilha do frade":25,"industrial":25,"itacibá":25,"itapemirim":25,"itaquari":25,"itararé":25,"jabour":25,"jardim américa":25,"jardim botânico":25,"jardim campo grande":25,"jardim marilândia":25,"jardim da penha":25,"jardim de alah":25,"jardim do vale":25,"jesus de nazareth":25,"joana d'arc":25,"jucutuquara":25,"maracanã":25,"maria ortiz":25,"maruípe":25,"mata da praia":25,"monte belo":25,"morada de camburi":25,"nazareth":25,"nova américa":25,"padre gabriel":25,"planalto":25,"pontal de camburi":25,"praia do canto":25,"praia do suá":25,"república":25,"rio marinho":25,"romão":25,"santa cecília":25,"santa clara":25,"santa helena":25,"santa luíza":25,"santa lúcia":25,"santa paula":25,"segurança do lar":25,"solon borges":25,"sotelândia":25,"sotema":25,"são benedito":25,"são conrado":25,"são cristóvão":25,"são torquato":25,"tabuazeiro":25,"vale encantado":25,"vale esperança":25,"valparaíso":25,"vasco da gama":25,"vila isabel":25,"vista linda":25,"vista mar":25,
+  "aparecida":30,"campina grande":30,"campo grande":30,"caratoíra":30,"comdusa":30,"conquista":30,"cruzeiro do sul":30,"do cabral":30,"do moscoso":30,"do quadro":30,"dom bosco":30,"estrelinha":30,"flexal":30,"fonte grande":30,"grande vitória":30,"graúna":30,"ilha das caieiras":30,"ilha do príncipe":30,"inhanguetá":30,"itanguá":30,"jardim camburi":30,"morada de santa fé":30,"mário cypreste":30,"nova brasília":30,"nova canaã":30,"nova palestina":30,"nova valverde":30,"oriente":30,"parque gramado":30,"parque moscoso":30,"piedade":30,"planeta":30,"porto novo":30,"porto de santana":30,"presidente médici":30,"redenção":30,"resistência":30,"retiro saudoso":30,"rio branco":30,"rosa da penha":30,"santa bárbara":30,"santa tereza":30,"santana":30,"santo andré":30,"santo antônio":30,"santos reis":30,"são francisco":30,"são geraldo":30,"são josé":30,"são pedro":30,"tabajara":30,"tiradentes":30,"tucum":30,"universitário":30,"vera cruz":30,"vila capixaba":30,"vila palestina":30,"vila prudêncio":30,"vila rubim":30,
+  "andré carloni":35,"bairro de fátima":35,"carapina grande":35,"conjunto carapina":35,"eurico salles":35,"hélio ferraz":35,"jardim carapina":35,"manoel plaza":35,"rosário de fátima":35,
+  "alterozas":40,"camará":40,"cantinho do céu":40,"central carapina":40,"chacará parreiral":40,"civit ii":40,"diamantina":40,"guaraciaba":40,"jardim limoeiro":40,"jardim tropical":40,"josé de anchieta":40,"laranjeiras velha":40,"morada de laranjeiras":40,"mucuri":40,"nova campo grande":40,"nova zelândia":40,"novo brasil":40,"novo horizonte":40,"operário":40,"parq. resid. laranjeiras":40,"piranema":40,"planalto de carapina":40,"santa luzia":40,"solar de anchieta":40,"são diogo":40,"são gonçalo":40,"tims":40,"taquara":40,"vale dos reis":40,"valparaiso":40,"vila independência":40,"vista dourada":40,
+  "alice coutinho":45,"antônio ferreira borges":45,"barcelona":45,"barro branco":45,"bubú":45,"campo verde":45,"cangaíba":45,"cariacica sede":45,"cidade pomar":45,"civit i":45,"eldorado":45,"maringá":45,"mata da serra":45,"nova carapina":45,"novo porto canoa":45,"pitanga":45,"planície da serra":45,"porto canoa":45,"prolar":45,"resid. mestre álvaro":45,"resid. tubarão":45,"serra dourada":45,"são joão batista":45,"vila merlo":45,
+  "alphaville":50,"baln. de carapebus":50,"barra do jucu":50,"barramares":50,"castelândia":50,"cidade continental":50,"cidade da barra":50,"feu rosa":50,"jabaeté":50,"joão goulart":50,"morada da barra":50,"normília da cunha":50,"nova esperança":50,"nova rosa da penha":50,"padre mathias":50,"porto de cariacica":50,"praia de carapebus":50,"praia dos recifes":50,"riviera da barra":50,"ulisses guimarães":50,"vila nova de colares":50,"vila progresso":50,
+  "campinho da serra":55,"cascata":55,"centro da serra":55,"colina da serra":55,"divinopólis":55,"jardim bela vista":55,"jardim guanabara":55,"jardim primavera":55,"jardim da serra":55,"nos. sra. da conceição":55,"planalto serrano":55,"serra centro":55,"são domingos":55,"são judas tadeu":55,"são lourenço":55,"são marcos":55,"vila maria níobe":55,"vista da serra":55,
+  "balneário ponta da fruta":60,"bicanga":60,"conjunto jacaraípe":60,"costa dourada":60,"costabela":60,"das laranjeiras":60,"enseada de jacaralpe":60,"estância monazítica":60,"interlagos":60,"jardim atlântico":60,"lagoa de jacaraípe":60,"manguinhos":60,"morada do sol":60,"morro da lagoa":60,"nova ponta da fruta":60,"ourimar":60,"parque jacaraípe":60,"ponta da fruta":60,"portal de jacaraípe":60,"praia de capuba":60,"resid. jacaraípe":60,"são patrício":60,
+  "bairro novo":75,"marbela":75,"nova almeida":75,"nova almeida centro":75,"parque nova fé":75,"parque da gaivotas":75,"praiamar":75,"reis magos":75,"serramar":75,"são joão":75
+};
+function detectarTaxaAritana(endereco){
+  if(!endereco)return null;
+  const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').trim();
+  const endNorm=norm(endereco);
+  let best=null,bestLen=0;
+  for(const[bairro,taxa]of Object.entries(ARITANA_TAXAS)){
+    const b=norm(bairro);
+    if(endNorm.includes(b)&&b.length>bestLen){bestLen=b.length;best={taxa,bairro};}
+  }
+  return best;
+}
+function autoTaxaAritana(){
+  const store=(document.getElementById('fStore')?.value||'').toUpperCase();
+  if(store!=='ARITANA')return;
+  const bairro=document.getElementById('fBairro')?.value||'';
+  const rua=document.getElementById('fRua')?.value||'';
+  const fValue=document.getElementById('fValue');
+  if(!fValue||fValue.value)return;
+  const match=detectarTaxaAritana(bairro+' '+rua);
+  if(!match)return;
+  fValue.value=match.taxa.toFixed(2).replace('.',',');
+  toast('🛵 Taxa ARITANA: R$ '+match.taxa+' — '+match.bairro,'success');
+}
+
 // ═══════════════ QUICK STORES ═══════════════
 function getQuickStores(){try{return JSON.parse(localStorage.getItem('sb_quick_stores')||'[]');}catch(e){return[];}}
 function saveQuickStores(list){localStorage.setItem('sb_quick_stores',JSON.stringify(list));}
@@ -1275,19 +1370,36 @@ function openQsModal(idx){
   const s=idx>=0?qs[idx]:null;
   document.getElementById('qsEditIdx').value=idx;
   document.getElementById('qsModalTitle').textContent=idx>=0?'✏️ Editar loja rápida':'⚡ Nova loja rápida';
-  document.getElementById('qsName').value=s?.name||'';
+  // Populate store select from cfg.stores
+  const sel=document.getElementById('qsName');
+  sel.innerHTML='<option value="">— Selecione ou digite abaixo —</option>'+cfg.stores.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('')+'<option value="__custom__">✏️ Nome personalizado...</option>';
+  const customInput=document.getElementById('qsNameCustom');
+  const existingName=s?.name||'';
+  if(existingName&&cfg.stores.includes(existingName)){
+    sel.value=existingName;customInput.style.display='none';customInput.value='';
+  } else if(existingName){
+    sel.value='__custom__';customInput.style.display='';customInput.value=existingName;
+  } else {
+    sel.value='';customInput.style.display='none';customInput.value='';
+  }
   document.getElementById('qsTaxa').value=s?.taxa?String(s.taxa).replace('.',','):'';
   document.getElementById('qsCity').value=s?.city||'';
   document.getElementById('qsBairro').value=s?.bairro||'';
   document.getElementById('qsRua').value=s?.rua||'';
   document.getElementById('qsNumero').value=s?.numero||'';
   document.getElementById('qsModal').classList.remove('hidden');
-  setTimeout(()=>document.getElementById('qsName').focus(),100);
+  setTimeout(()=>sel.focus(),100);
+}
+function onQsNameChange(sel){
+  const customInput=document.getElementById('qsNameCustom');
+  if(sel.value==='__custom__'){customInput.style.display='';customInput.focus();}
+  else{customInput.style.display='none';customInput.value='';}
 }
 function closeQsModal(){ document.getElementById('qsModal').classList.add('hidden'); }
 document.getElementById('qsModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeQsModal();});
 function saveQsModal(){
-  const name=document.getElementById('qsName').value.trim();
+  const selVal=document.getElementById('qsName').value;
+  const name=selVal==='__custom__'?(document.getElementById('qsNameCustom').value.trim()):selVal.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
   const taxa=parseMoney(document.getElementById('qsTaxa').value)||0;
   const city=document.getElementById('qsCity').value;
@@ -1346,18 +1458,29 @@ function closeQuickPanel(){document.getElementById('quickPanel').classList.add('
 document.getElementById('quickPanel').addEventListener('click',e=>{if(e.target===e.currentTarget)closeQuickPanel();});
 function _renderQuickPanelBody(){
   const qs=getQuickStores();
-  document.getElementById('quickPanelBody').innerHTML=qs.map((s,i)=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);">
+  const todayStr=new Date().toLocaleDateString('pt-BR');
+  // Count today's stops per store name
+  const tripCount={};
+  stops.forEach(s=>{if(s.store){tripCount[s.store]=(tripCount[s.store]||0)+1;}});
+  document.getElementById('quickPanelBody').innerHTML=qs.map((s,i)=>{
+    const pickup=[s.rua,s.bairro,CITY_MAP[s.city]||s.city].filter(Boolean).join(', ');
+    const trips=tripCount[s.name]||0;
+    return`<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);">
       <div style="flex:1;min-width:0;">
         <div style="font-weight:700;font-size:15px;">${esc(s.name)}</div>
-        ${s.taxa?`<div style="font-size:12px;color:var(--green);">${fmtMoney(s.taxa)}</div>`:''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;">
+          ${s.taxa?`<span style="font-size:12px;color:var(--green);font-weight:700;">${fmtMoney(s.taxa)}</span>`:''}
+          ${trips>0?`<span style="font-size:11px;color:var(--accent);font-weight:700;">⚡${trips} hoje</span>`:''}
+        </div>
+        ${pickup?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">📍 ${pickup}</div>`:''}
       </div>
       <div style="display:flex;align-items:center;">
         <button onclick="qAdj(${i},-1)" style="width:36px;height:36px;border-radius:8px 0 0 8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:20px;font-weight:700;cursor:pointer;">−</button>
         <div id="qCount_${i}" style="min-width:44px;height:36px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;">${_qCounts[i]||0}</div>
         <button onclick="qAdj(${i},1)" style="width:36px;height:36px;border-radius:0 8px 8px 0;border:1px solid var(--border);background:var(--accent);color:#000;font-size:20px;font-weight:700;cursor:pointer;">+</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function qAdj(i,delta){
   _qCounts[i]=Math.max(0,(_qCounts[i]||0)+delta);
@@ -2032,6 +2155,39 @@ function drawChart(flatStops){
   });
 }
 
+// Helper: draw 7-day bar chart to offscreen canvas for PDF
+function drawChartOffscreen(flatStops,w,h){
+  const canvas=document.createElement('canvas');
+  const dpr=2;
+  canvas.width=w*dpr; canvas.height=h*dpr;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const dateStr=d.toLocaleDateString('pt-BR');
+    const lbl=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    const dayStops=(flatStops||[]).filter(s=>s._effDate===dateStr);
+    const rec=dayStops.filter(s=>s.paid).reduce((a,s)=>a+parseMoney(s.value),0);
+    const pend=dayStops.filter(s=>!s.paid).reduce((a,s)=>a+parseMoney(s.value),0);
+    days.push({lbl,v:rec+pend,rec,pend});
+  }
+  const mx=Math.max(...days.map(d=>d.v),1);
+  const pL=6,pR=6,pT=10,pB=22,bw=Math.floor((w-pL-pR)/7)-4,bA=h-pT-pB;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#0e0e14';ctx.fillRect(0,0,w,h);
+  days.forEach((d,i)=>{
+    const x=pL+i*((w-pL-pR)/7)+2;
+    const bhRec=Math.max(0,d.rec/mx*bA),bhPend=Math.max(0,d.pend/mx*bA);
+    const yRec=pT+bA-bhRec,yPend=yRec-bhPend;
+    if(bhRec>0){ctx.fillStyle='rgba(0,230,118,.7)';ctx.fillRect(x,yRec,bw,bhRec);}
+    if(bhPend>0){ctx.fillStyle='rgba(245,197,24,.7)';ctx.fillRect(x,yPend,bw,bhPend);}
+    if(d.v>0){ctx.fillStyle='#aaa';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillText('R$'+d.v.toFixed(0),x+bw/2,(yPend||yRec)-2);}
+    ctx.fillStyle='#888';ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillText(d.lbl,x+bw/2,h-4);
+  });
+  return canvas;
+}
+
 // ═══════════════════════════════════════════════════════
 //  HISTORY
 // ═══════════════════════════════════════════════════════
@@ -2158,6 +2314,7 @@ function drawCityChart(allStops, w, h){
   const colors=['#f5c518','#00e676','#3b82f6','#ff6b00','#e74c3c','#9b59b6'];
   let angle=-Math.PI/2;
   const cx=w/2,cy=h/2-10,r=Math.min(cx,cy)-20;
+  if(r<=0){return null;}
   entries.forEach(([name,v],i)=>{
     const slice=v/total*Math.PI*2;
     ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle,angle+slice);ctx.closePath();
@@ -2256,37 +2413,38 @@ async function genPDF(){
       doc.text(`⚠ ${d.dupCount} duplicata(s) removida(s) automaticamente deste relatório`,PW/2,y+7,{align:'center'});
       y+=14;
     }
-    // Gráfico 1: por dia (usar canvas existente)
-    const chartCanvas=document.getElementById('chart');
-    if(chartCanvas){
-      const chartImg=chartToImage(chartCanvas);
-      if(chartImg){
-        const cH=35;
-        doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(120,120,120);doc.text('FATURAMENTO — ÚLTIMOS 7 DIAS',14,y+4);
-        doc.addImage(chartImg,'PNG',14,y+6,PW-28,cH);
-        y+=cH+10;
-      }
+    // Gráfico 1: por dia (offscreen, funciona mesmo com tela oculta)
+    const offChart=drawChartOffscreen(d.allStops,PW-28,35);
+    if(offChart){
+      const chartImg=offChart.toDataURL('image/png');
+      const cH=35;
+      doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(120,120,120);doc.text('FATURAMENTO — ÚLTIMOS 7 DIAS',14,y+4);
+      doc.addImage(chartImg,'PNG',14,y+6,PW-28,cH);
+      y+=cH+10;
     }
-    // Gráfico 2: por cidade
-    if(y<PH-70){
-      const cityCanvas=drawCityChart(d.allStops,PW-28,50);
-      if(cityCanvas){
-        const cityImg=cityCanvas.toDataURL('image/png');
-        doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(120,120,120);doc.text('ENTREGAS POR CIDADE',14,y+4);
-        doc.addImage(cityImg,'PNG',14,y+6,PW-28,50);
-        y+=60;
-      }
-    }
-    // Gráfico 3: top lojas
-    if(y<PH-70&&Object.keys(d.sm).length>1){
-      const storeCanvas=drawTopStoresChart(d.sm,PW-28,50);
-      if(storeCanvas){
-        const storeImg=storeCanvas.toDataURL('image/png');
-        doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(120,120,120);doc.text('FATURAMENTO POR LOJA',14,y+4);
-        doc.addImage(storeImg,'PNG',14,y+6,PW-28,50);
-        y+=60;
-      }
-    }
+
+    // ── TABELA RESUMO DE TODAS AS ENTREGAS (na página 1, se couber, ou nova página) ──
+    const summaryRows=d.allStops.map((s,i)=>[
+      String(i+1),s._date,s.name||'—',
+      cityName(resolveCityCode(s.city||s.cityId))||'—',
+      s.store||'—',
+      s.serviceType==='retirada'?'Retirada':s.serviceType==='troca'?'Troca':'Entrega',
+      fmtMoney(parseMoney(s.value)),s.paid?'✓':'—'
+    ]);
+    if(y>PH-60){doc.addPage();y=14;}
+    doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(120,120,120);doc.text('TODAS AS ENTREGAS ('+d.allStops.length+')',14,y+4);
+    y+=6;
+    doc.autoTable({
+      startY:y,
+      head:[['Nº','Data','Cliente','Cidade','Loja','Tipo','Valor','Pago']],
+      body:summaryRows,
+      styles:{fontSize:6.5,cellPadding:1.5,textColor:[220,220,220],fillColor:[14,14,20]},
+      headStyles:{fillColor:[30,30,36],textColor:[150,150,150],fontStyle:'bold',fontSize:6},
+      alternateRowStyles:{fillColor:[10,10,16]},
+      columnStyles:{0:{halign:'center',cellWidth:7},3:{cellWidth:16},6:{halign:'right',cellWidth:16},7:{halign:'center',cellWidth:9}},
+      margin:{left:14,right:14}
+    });
+    y=doc.lastAutoTable.finalY+8;
 
     // ── PÁGINA(S) SEGUINTES: DETALHAMENTO POR LOJA ──
     Object.entries(d.sm).forEach(([storeName,sv])=>{
@@ -2518,9 +2676,6 @@ function delLink(i){ const links=getLinks(); if(!confirm('Remover link da loja '
 function loadConfig(){
   document.getElementById('cfgOrigin').value=cfg.origin||'';
   document.getElementById('cfgWpp').value=cfg.wppMsg||'';
-  document.getElementById('cfgPrestadorNome').value=cfg.prestNome||'';
-  document.getElementById('cfgPrestadorPix').value=cfg.prestPix||'';
-  document.getElementById('cfgPrestadorTel').value=cfg.prestTel||'';
   const fbSaved=localStorage.getItem('sb_firebase_cfg');
   if(fbSaved){try{document.getElementById('cfgFb').value=JSON.stringify(JSON.parse(fbSaved),null,2);}catch(e){}}
   const room=localStorage.getItem('sb_room_code')||genRoomCode();
@@ -2533,9 +2688,6 @@ function loadConfig(){
 function saveConfig(){
   cfg.origin=document.getElementById('cfgOrigin').value.trim();
   cfg.wppMsg=document.getElementById('cfgWpp').value.trim();
-  cfg.prestNome=document.getElementById('cfgPrestadorNome').value.trim();
-  cfg.prestPix=document.getElementById('cfgPrestadorPix').value.trim();
-  cfg.prestTel=document.getElementById('cfgPrestadorTel').value.trim();
   saveCfg();
   const fbStr=document.getElementById('cfgFb').value.trim();
   if(fbStr){
@@ -2703,7 +2855,13 @@ async function acceptPending(key){
   s.city=resolveCityCode(s.city||s.cityId||'');
   s.status='confirmed'; s._order=stops.length; s.done=false;
   s._trackKey=key;
-  stops.push(s); saveStops();
+  stops.push(s);
+  // Auto-taxa ARITANA
+  if((s.store||'').toUpperCase()==='ARITANA'&&!s.value){
+    const match=detectarTaxaAritana(s.address||'');
+    if(match){s.value=match.taxa;toast('💰 Taxa ARITANA: R$ '+match.taxa+' — '+match.bairro,'success');}
+  }
+  saveStops();
   await updateTracking(key,'aceito',{name:s.name||'',address:s.address||'',store:s.store||''});
   await rmPending(key);
   toast('✅ Entrega de '+s.name+' adicionada!','success'); renderHome();
