@@ -1372,16 +1372,25 @@ function saveStop(){
 // ═══════════════════════════════════════════════════════
 //  ROUTE
 // ═══════════════════════════════════════════════════════
-function buildMapsUrl(addrs){
+function buildMapsUrl(addrs,originOverride){
   if(!addrs.length)return null;
   // /dir/ path format funciona universalmente — web e app mobile
-  const all=cfg.origin?[cfg.origin,...addrs]:addrs;
+  const origin=originOverride||cfg.origin||null;
+  const all=origin?[origin,...addrs]:addrs;
   return 'https://www.google.com/maps/dir/'+all.map(a=>encodeURIComponent(a)).join('/');
 }
-function openRoute(){
+async function getGpsOrigin(){
+  if(!navigator.geolocation)return null;
+  try{
+    const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:5000,maximumAge:30000}));
+    return pos.coords.latitude+','+pos.coords.longitude;
+  }catch(e){return null;}
+}
+async function openRoute(){
   const active=stops.filter(s=>!s.done);
   if(!active.length){ toast('Nenhuma parada pendente','error'); return; }
-  const url=buildMapsUrl(active.map(s=>s.address));
+  const origin=await getGpsOrigin();
+  const url=buildMapsUrl(active.map(s=>s.address),origin);
   if(url)window.open(url,'_blank');
 }
 function openMaps(addr){ window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`,'_blank'); }
@@ -1488,13 +1497,21 @@ async function optimizeAndOpenRoute(){
     if(!withCoords.length){
       // Geocoding falhou em tudo — abre na ordem atual mas como rota completa
       toast('🗺️ Abrindo rota completa (sem otimização)','');
-      window.open(buildMapsUrl(active.map(s=>s.address)),'_blank');
+      const gpsOrig=await getGpsOrigin();
+      window.open(buildMapsUrl(active.map(s=>s.address),gpsOrig),'_blank');
       return;
     }
 
-    // 2. Origem
+    // 2. Origem — GPS primeiro, cfg.origin como fallback
     let originCoords=null;
-    if(cfg.origin){ const og=await geocodeAddress(cfg.origin); if(og)originCoords=og; }
+    let gpsOriginStr=null;
+    try{
+      const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:5000,maximumAge:30000}));
+      originCoords={lat:pos.coords.latitude,lng:pos.coords.longitude};
+      gpsOriginStr=pos.coords.latitude+','+pos.coords.longitude;
+    }catch(e){
+      if(cfg.origin){ const og=await geocodeAddress(cfg.origin); if(og)originCoords=og; }
+    }
     if(!originCoords) originCoords=withCoords[0]._coords;
 
     // 3. Otimizar: OSRM primeiro, Haversine como fallback
@@ -1510,8 +1527,8 @@ async function optimizeAndOpenRoute(){
     stops.filter(s=>s.done).forEach(s=>{s._order=newStops.length;newStops.push(s);});
     stops=newStops; saveStops(); renderHome();
 
-    // 5. Abrir no Maps com /dir/ format (funciona em web e app mobile)
-    window.open(buildMapsUrl(finalOrder.map(s=>s.address)),'_blank');
+    // 5. Abrir no Maps com /dir/ format — origem = GPS atual
+    window.open(buildMapsUrl(finalOrder.map(s=>s.address),gpsOriginStr),'_blank');
     const skipped=withoutCoords.length;
     toast(`✅ Rota otimizada via ${method}! ${ordered.length} paradas${skipped?' (+'+skipped+' sem coords)':''}`, 'success');
   }catch(e){
