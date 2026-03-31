@@ -1015,7 +1015,8 @@ function renderHome(){
       const val=parseMoney(s.value);
       const valStr=val>0?fmtMoney(val):'';
       const cityLabel=cityName(resolveCityCode(s.city||s.cityId))||'';
-      const valInput=val>0?`<input type="text" value="${valStr}" onclick="event.stopPropagation()" onblur="updateStopValue(${i},this.value)" style="width:72px;text-align:right;background:transparent;border:none;border-bottom:1px solid var(--border);color:${s.paid?'var(--green)':'var(--accent)'};font-weight:800;font-size:13px;font-family:'Barlow Condensed',sans-serif;outline:none;padding:1px 2px;" inputmode="decimal" />`:'';
+      const prodVal=parseMoney(s.productValue);
+      const valInput=val>0?`<div style="display:flex;align-items:center;gap:3px;" onclick="event.stopPropagation()"><input type="text" value="${valStr}" onblur="updateStopValue(${i},this.value)" style="width:65px;text-align:right;background:transparent;border:none;border-bottom:1px solid var(--border);color:${s.paid?'var(--green)':'var(--accent)'};font-weight:800;font-size:13px;font-family:'Barlow Condensed',sans-serif;outline:none;padding:1px 2px;" inputmode="decimal" />${s.paid?`<span style="color:var(--green);font-size:15px;font-weight:900;line-height:1;">✓</span>`:''}</div>`:'';
       html+=`<div class="stop-card ${s.done?'done':''}" id="sc${i}" onclick="toggleCard(${i})">
         <div class="stop-header ${nextIdx === i ? 'stop-header-next' : ''}" style="align-items:flex-start;padding:12px 14px 10px;">
           <div class="stop-num">${i+1}</div>
@@ -1027,7 +1028,7 @@ function renderHome(){
             <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
               ${cityLabel?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;">${cityLabel}</span>`:''}
               <span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(255,107,0,.15);color:#ff6b00;">${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</span>
-              ${val>0?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:${s.paid?'rgba(0,230,118,.15)':'rgba(245,197,24,.12)'};color:${s.paid?'var(--green)':'var(--accent)'};">${s.paid?'✓ Pago':'⏳ A receber'}</span>`:''}
+              ${prodVal>0?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:${s.productPaid?'rgba(0,230,118,.15)':'rgba(245,197,24,.12)'};color:${s.productPaid?'var(--green)':'var(--accent)'};">${s.productPaid?'✓ Cobrado':'💰 R$'+prodVal.toFixed(2).replace('.',',')}</span>`:''}
               ${s.deliveryDate?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(161,100,220,.15);color:#a164dc;">${delivDateLabel(s.deliveryDate)}</span>`:''}
             </div>
             ${(s.street||s.number||s.complement)?`<div style="font-size:13px;color:var(--muted);margin-bottom:2px;">${[s.street,s.number,s.complement].filter(Boolean).join(' ')}</div>`:''}
@@ -1082,7 +1083,7 @@ function renderHome(){
         const val=parseMoney(s.value);
         const valStr=val>0?fmtMoney(val):'';
         const cityLabel=cityName(resolveCityCode(s.city||s.cityId))||'';
-        const valInput=val>0?`<input type="text" value="${valStr}" onclick="event.stopPropagation()" onblur="updateStopValue(${i},this.value)" style="width:72px;text-align:right;background:transparent;border:none;border-bottom:1px solid var(--border);color:${s.paid?'var(--green)':'var(--accent)'};font-weight:800;font-size:13px;font-family:'Barlow Condensed',sans-serif;outline:none;padding:1px 2px;" inputmode="decimal" />`:'';
+        const valInput=val>0?`<div style="display:flex;align-items:center;gap:3px;" onclick="event.stopPropagation()"><input type="text" value="${valStr}" onblur="updateStopValue(${i},this.value)" style="width:65px;text-align:right;background:transparent;border:none;border-bottom:1px solid var(--border);color:${s.paid?'var(--green)':'var(--accent)'};font-weight:800;font-size:13px;font-family:'Barlow Condensed',sans-serif;outline:none;padding:1px 2px;" inputmode="decimal" />${s.paid?`<span style="color:var(--green);font-size:15px;font-weight:900;line-height:1;">✓</span>`:''}</div>`:'';
         html+=`<div class="stop-card ${s.done?'done':''}" id="sc${i}" onclick="toggleCard(${i})" style="border-color:rgba(161,100,220,.3);opacity:.9;">
           <div class="stop-header" style="align-items:flex-start;padding:12px 14px 10px;">
             <div class="stop-num" style="color:#a164dc;">${i+1}</div>
