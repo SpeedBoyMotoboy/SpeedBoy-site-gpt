@@ -1225,7 +1225,7 @@ function sendTrackingLink(i){
   const s=stops[i];
   if(!s._trackKey){toast('Este pedido não tem rastreio disponível','error');return;}
   const room=localStorage.getItem('sb_room_code')||'';
-  const base='https://speedboymotoboy.github.io/SpeedBoy-APP/rastreio.html';
+  const base=window.location.href.replace(/\/[^/?#]*(\?.*)?$/,'/rastreio.html');
   const link=`${base}?room=${encodeURIComponent(room)}&key=${encodeURIComponent(s._trackKey)}`;
   const msg=`📦 Olá ${s.name||''}! Rastreie sua entrega em tempo real pelo link abaixo:\n\n${link}\n\n🛵 SPEEDBOY Entregas`;
   if(s.phone){
