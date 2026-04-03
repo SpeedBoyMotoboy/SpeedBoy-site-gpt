@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPEEDBOY — Pedido</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#070709;--card:#13131a;--card2:#1a1a24;--border:#252535;
+  --accent:#f5c518;--accent2:#ff6b00;--green:#00a854;--red:#ff4560;
+  --text:#f0f0f0;--muted:#666;--radius:16px;
+}
+/* LIGHT THEME */
+body.light{
+  --bg:#f5f5f0;--card:#ffffff;--card2:#f0f0eb;--border:#ddddd5;
+  --accent:#c9920a;--accent2:#e05500;--green:#1a7a3f;--red:#cc2233;
+  --text:#1a1a1a;--muted:#888;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;}
+body{max-width:480px;margin:0 auto;padding-bottom:50px;}
+
+.hero{position:relative;overflow:hidden;padding:32px 20px 28px;background:linear-gradient(160deg,#0d0d14 0%,#1a1220 60%,#0d0d14 100%);border-bottom:1px solid var(--border);text-align:center;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(245,197,24,.12) 0%,transparent 65%);pointer-events:none;}
+.hero-logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:42px;letter-spacing:-2px;color:var(--accent);position:relative;}
+.hero-logo span{color:var(--text);}
+.hero-tag{font-size:13px;color:var(--muted);margin-top:6px;letter-spacing:.5px;}
+.theme-toggle{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;backdrop-filter:blur(4px);}
+body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15);}
+.hero-badge{display:none;align-items:center;gap:6px;background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);border-radius:20px;padding:6px 14px;margin-top:12px;font-size:13px;font-weight:600;color:var(--accent);justify-content:center;}
+.hero-badge.show{display:inline-flex;}
+
+.form-wrap{padding:20px 16px 0;}
+.sec-divider{display:flex;align-items:center;gap:12px;margin:20px 0 18px;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:1px;}
+.sec-divider::before,.sec-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* STOP CARD */
+.stops-wrap{display:flex;flex-direction:column;gap:12px;}
+.stop-card{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border);overflow:hidden;}
+.stop-card-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--card2);border-bottom:1px solid var(--border);}
+.stop-card-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:.5px;color:var(--accent);display:flex;align-items:center;gap:7px;}
+.stop-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#000;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;}
+.btn-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:2px;}
+.stop-card-body{padding:14px;}
+
+.field-group{margin-bottom:12px;}
+.field-label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+.req{color:var(--red);}
+.field-input{width:100%;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:12px;padding:13px 14px;font-size:15px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;}
+.field-input:focus{border-color:var(--accent);}
+.field-input::placeholder{color:var(--muted);}
+.field-input.error{border-color:var(--red);}
+.field-row{display:flex;gap:10px;}
+.field-row .field-group{flex:1;}
+
+/* SEARCH BAIRRO */
+.bairro-search-wrap{position:relative;}
+.bairro-suggestions{display:none;position:absolute;top:100%;left:0;right:0;background:var(--card2);border:1.5px solid var(--border);border-top:none;border-radius:0 0 12px 12px;max-height:200px;overflow-y:auto;z-index:10;}
+.bairro-suggestions.show{display:block;}
+.bairro-suggestion-item{padding:10px 14px;cursor:pointer;font-size:14px;color:var(--text);border-bottom:1px solid var(--border);transition:background .15s;}
+.bairro-suggestion-item:hover{background:var(--border);}
+.bairro-suggestion-item:last-child{border-bottom:none;}
+
+/* TIME */
+.time-row{display:flex;gap:8px;align-items:flex-end;}
+.time-sep{font-size:12px;color:var(--muted);font-weight:600;padding-bottom:14px;flex-shrink:0;}
+.time-input{width:100%;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:12px;padding:13px 14px;font-size:15px;font-family:'Barlow',sans-serif;outline:none;text-align:center;transition:border-color .2s;}
+.time-input:focus{border-color:var(--accent);}
+
+/* PAYMENT */
+.pay-row{display:flex;gap:8px;}
+.pay-btn{flex:1;padding:11px 8px;border-radius:10px;border:1.5px solid var(--border);background:var(--card2);color:var(--muted);font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;cursor:pointer;text-align:center;transition:all .2s;}
+.pay-btn.paid{border-color:var(--green);background:rgba(0,230,118,.1);color:var(--green);}
+.pay-btn.due{border-color:var(--accent);background:rgba(245,197,24,.1);color:var(--accent);}
+.value-group{display:none;margin-top:10px;}
+.value-group.show{display:block;}
+
+/* MONEY INPUT WITH PREFIX */
+.money-input-wrap{position:relative;}
+.money-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;font-weight:600;pointer-events:none;}
+.money-input-wrap .field-input{padding-left:40px;}
+
+/* ADD STOP */
+.btn-add-stop{width:100%;background:transparent;border:1.5px dashed var(--border);border-radius:var(--radius);color:var(--muted);font-family:'Barlow',sans-serif;font-weight:600;font-size:14px;padding:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;transition:all .2s;}
+.btn-add-stop:active{border-color:var(--accent);color:var(--accent);}
+
+/* SUBMIT */
+.submit-wrap{padding:0 16px;margin-top:24px;}
+.btn-submit{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#000;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;letter-spacing:.5px;padding:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 24px rgba(245,197,24,.25);}
+.btn-submit:active{opacity:.85;}
+.btn-submit:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+.submit-note{text-align:center;font-size:11px;color:var(--muted);margin-top:10px;}
+
+/* SUCCESS */
+.success-wrap{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
+.success-wrap.show{display:flex;}
+.success-icon{font-size:80px;margin-bottom:20px;animation:pop .5s ease;}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+.success-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:36px;color:var(--green);margin-bottom:8px;}
+.success-sub{font-size:14px;color:var(--muted);line-height:1.7;max-width:300px;}
+.success-list{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-top:20px;width:100%;text-align:left;}
+.success-item{padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.success-item:last-child{border-bottom:none;}
+.btn-novo{margin-top:20px;background:var(--accent);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px 36px;border-radius:var(--radius);cursor:pointer;margin-right:8px;}
+.btn-whatsapp{margin-top:20px;background:var(--green);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;padding:14px 36px;border-radius:var(--radius);cursor:pointer;}
+
+/* ERROR */
+.error-wrap{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
+.error-wrap.show{display:flex;}
+
+/* LOADING */
+.loading{display:none;position:fixed;inset:0;background:rgba(7,7,9,.9);align-items:center;justify-content:center;z-index:500;flex-direction:column;gap:18px;backdrop-filter:blur(6px);}
+.loading.show{display:flex;}
+.spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;color:var(--accent);}
+
+/* CLIENT HISTORY */
+.hist-toggle{width:100%;background:var(--card);border:1px solid var(--border);color:var(--muted);font-family:'Barlow',sans-serif;font-weight:600;font-size:13px;padding:12px 16px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:12px;}
+.hist-panel{display:none;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:8px;}
+.hist-panel.open{display:block;}
+.hist-item{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;}
+.hist-item:last-child{border-bottom:none;}
+.hist-item-name{font-weight:600;color:var(--text);}
+.hist-item-info{color:var(--muted);margin-top:2px;}
+.hist-empty{padding:16px;text-align:center;color:var(--muted);font-size:12px;}
+
+/* STATUS BADGE */
+.status-badge{display:inline-block;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;margin-top:6px;transition:all .3s;}
+.status-pending{background:rgba(245,197,24,.15);color:var(--accent);border:1px solid rgba(245,197,24,.3);}
+.status-aceito{background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3);}
+.status-acaminho{background:rgba(255,107,0,.15);color:var(--accent2);border:1px solid rgba(255,107,0,.3);}
+.status-entregue{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3);}
+.status-recusado{background:rgba(255,69,96,.15);color:var(--red);border:1px solid rgba(255,69,96,.3);}
+
+/* TOAST */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;z-index:600;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.error{border-color:var(--red);color:var(--red);}
+.toast.success{border-color:var(--green);color:var(--green);}
+</style>
+</head>
+<body>
+
+<div class="toast"  id="toast"></div>
+<div class="loading" id="loading"><div class="spinner"></div><div class="loading-text">Enviando...</div></div>
+
+<div class="hero">
+  <button class="theme-toggle" id="themeBtn" onclick="window.toggleTheme()">☀️ Claro</button>
+  <div class="hero-logo">SPEED<span>BOY</span></div>
+  <div class="hero-tag">Sua entrega nossa prioridade</div>
+  <div class="hero-badge" id="heroBadge">🏪 <span id="storeSpan"></span></div>
+</div>
+
+<div id="mainWrap">
+  <div class="form-wrap">
+    <div class="sec-divider">ENTREGAS</div>
+    <div class="stops-wrap" id="stopsWrap"></div>
+    <button class="btn-add-stop" id="btnAdd" onclick="window.addStop()">
+      <span style="font-size:20px">＋</span> Adicionar outro endereço
+    </button>
+  </div>
+  <div class="form-wrap" style="padding-top:0;">
+  <button class="hist-toggle" onclick="window.toggleHistory()">
+    📋 Meu histórico de pedidos <span id="histCount"></span>
+    <span id="histArrow">▼</span>
+  </button>
+  <div class="hist-panel" id="histPanel">
+    <div id="histList"><div class="hist-empty">Nenhum pedido ainda.</div></div>
+  </div>
+</div>
+<div class="submit-wrap">
+    <button class="btn-submit" id="btnSubmit" onclick="window.submitPedido()">
+      🛵 Enviar pedido
+    </button>
+    <div class="submit-note">O motoboy receberá as entregas automaticamente</div>
+  </div>
+</div>
+
+<div class="success-wrap" id="successWrap">
+  <div class="success-icon">🛵</div>
+  <div class="success-title">Pedido enviado!</div>
+  <div class="success-sub">Pedido enviado! O motoboy confirmará em instantes.</div>
+  <div class="success-list" id="successList"></div>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+    <button class="btn-novo" onclick="window.resetForm()">+ Novo pedido</button>
+    <button class="btn-whatsapp" id="btnWhatsApp" onclick="window.sendWhatsApp()" style="display:none;">💬 Avisar no WhatsApp</button>
+  </div>
+</div>
+
+<div class="error-wrap" id="errorWrap">
+  <div style="font-size:64px;margin-bottom:16px">⚠️</div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;color:var(--red);margin-bottom:10px">Link inválido</div>
+  <div style="font-size:13px;color:var(--muted);line-height:1.6;max-width:260px">Peça um novo link para o motoboy.</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  BAIRROS POR CIDADE — Região Metropolitana Vitória
+// ═══════════════════════════════════════════════════
+var CIDADE_BAIRROS = {
+  'VIX': {
+    nome: 'Vitória',
+    bairros: [
+      "Aeroporto", "Andorinhas", "Antônio Honório", "Ariovaldo Favalessa", "Barro Vermelho", "Bela Vista", "Bento Ferreira", "Boa Vista", "Bonfim", "Caratoíra", "Centro", "Comdusa", "Conquista", "Consolação", "Cruzamento", "Da Penha", "De Lourdes", "Do Cabral", "Do Moscoso", "Do Quadro", "Enseada do Suá", "Estrelinha", "Fonte Grande", "Forte São João", "Fradinhos", "Goiabeiras", "Grande Vitória", "Guaçuí", "Gurigica", "Horácio Bento", "Ilha das Caieiras", "Ilha de Monte Belo", "Ilha de Santa Maria", "Ilha do Boi", "Ilha do Frade", "Ilha do Príncipe", "Inhanguetá", "Itararé", "Jabour", "Jardim Camburi", "Jardim da Penha", "Jesus de Nazareth", "Joana D'arc", "Jucutuquara", "Maria Ortiz", "Mário Cypreste", "Maruípe", "Mata da Praia", "Monte Belo", "Morada de Camburi", "Nazareth", "Nova Palestina", "Parque Moscoso", "Piedade", "Pontal de Camburi", "Praia do Canto", "Praia do Suá", "Redenção", "República", "Resistência", "Romão", "Santa Cecília", "Santa Clara", "Santa Helena", "Santa Lúcia", "Santa Luíza", "Santa Martha", "Santa Teresa", "Santo André", "Santo Antônio", "Santos Dumont", "Santos Reis", "São Benedito", "São Cristóvão", "São José", "São Pedro", "Segurança do Lar", "Solon Borges", "Tabuazeiro", "Universitário", "Vila Rubim"
+    ].sort()
+  },
+  'VV': {
+    nome: 'Vila Velha',
+    bairros: [
+      "23 de Maio", "Alecrim", "Alvorada", "Araçás", "Argolas", "Aribiri", "Ataíde", "Atalaia", "Balneário Ponta da Fruta", "Barra do Jucú", "Barramares", "Boa Vista 01", "Boa Vista 02", "Brisamar", "Capuaba", "Cavalieri", "Chácara do Conde", "Cidade da Barra", "Cobi de Baixo", "Cobi de Cima", "Cobilândia", "Cocal", "Coqueiral de Itaparica", "Cristóvão Colombo", "Darcy Santos", "Divino Espírito Santo", "Dom João Batista", "Garoto", "Glória", "Guadalupe", "Guaranhuns", "Ibes", "Ilha da Conceição", "Ilha das Flores", "Ilha dos Ayres", "Ilha dos Bentos", "Industrial", "Interlagos", "Ipessa", "Itapoã", "Jaburuna", "Jardim Asteca", "Jardim Colorado", "Jardim do Vale", "Jardim Guadalajara", "Jardim Guaranhuns", "Jardim Marilândia", "Jardim São Paulo", "João Goulart", "Jockey de Itaparica", "Morada da Barra", "Morada do Sol", "Morro da Lagoa", "Morro da Philips", "Morro do Cruzeiro", "Normília da Cunha", "Nossa Senhora da Penha II", "Nova América", "Nova Itaparica", "Nova Ponta da Fruta", "Novo México", "Olaria", "Parque das Gaivotas", "Paul", "Pedra dos Búzios", "Planalto", "Ponta da Fruta", "Pontal das Garças", "Praia da Costa", "Praia de Itaparica", "Praia dos Recifes", "Prainha da Glória", "Primeiro de Maio", "Residencial Coqueiral", "Residencial Jabaeté", "Rio Marinho", "Riviera da Barra", "Sagrada Família", "Santa Clara", "Santa Inês", "Santa Mônica", "Santa Mônica Popular", "Santa Paula I", "Santa Paula II", "Santa Rita", "Santos Dumont", "São Conrado", "São Torquato", "Soteco", "Terra Vermelha", "Ulisses Guimarães", "Vale Encantado", "Vila Batista", "Vila Garrido", "Vila Guaranhuns", "Vila Nova", "Vila Velha - Centro", "Vista da Penha", "Zumbi dos Palmares"
+    ].sort()
+  },
+  'CCA': {
+    nome: 'Cariacica',
+    bairros: [
+      "Alice Coutinho", "Alto Boa Vista", "Alto Lage", "Alzira Ramos", "Antônio Ferreira Borges", "Aparecida", "Bandeirantes", "Bela Aurora", "Bela Vista", "Boa Sorte", "Bubu", "Caçaroca", "Campina Grande", "Campo Belo", "Campo Grande", "Campo Verde", "Cangaíba", "Cariacica Sede", "Castelo Branco", "Chácaras União", "Cruzeiro do Sul", "Dom Bosco", "Expedito", "Flexal I", "Flexal II", "Formate", "Foz do Rio Bubu", "Graúna", "Ibiapaba", "Itacibá", "Itanguá", "Itapemirim", "Itaquari", "Jardim América", "Jardim Botânico", "Jardim Campo Grande", "Jardim de Alah", "Maracanã", "Morada de Santa Fé", "Mucuri", "Nova Brasília", "Nova Campo Grande", "Nova Canaã", "Nova Esperança", "Nova Rosa da Penha", "Nova Valverde", "Novo Brasil", "Novo Horizonte", "Operário", "Oriente", "Padre Gabriel", "Padre Mathias", "Palestina", "Parque Gramado", "Piranema", "Planeta", "Porto de Cariacica", "Porto de Santana", "Porto Novo", "Presidente Médice", "Prolar", "Retiro Saudoso", "Rio Branco", "Rio Marinho", "Rosa da Penha", "Santa Bárbara", "Santa Cecília", "Santa Luzia", "Santa Paula", "Santana", "Santo André", "Santo Antônio", "São Benedito", "São Conrado", "São Francisco", "São Geraldo I", "São Geraldo II", "São Gonçalo", "São João Batista", "Serra do Anil", "Sotelândia", "Sotema", "Tabajara", "Tiradentes", "Tucum", "Vale dos Reis", "Vale Esperança", "Valparaíso", "Vera Cruz", "Vila Cajueiro", "Vila Capixaba", "Vila Independência", "Vila Isabel", "Vila Merlo", "Vila Progresso", "Vila Prudêncio", "Vista Dourada", "Vista Linda", "Vista Mar"
+    ].sort()
+  },
+  'SRR': {
+    nome: 'Serra',
+    bairros: [
+      "Alterosas", "André Carloni", "Bairro das Laranjeiras", "Bairro de Fátima", "Bairro Novo", "Balneário Carapebus", "Barcelona", "Barro Branco", "Belvedere", "Bicanga", "Boa Vista", "Caçaroca", "Câmara", "Campinho da Serra I", "Campinho da Serra II", "Cantinho do Céu", "Carapina Grande", "Carapina I", "Castelândia", "Central Carapina", "Centro", "Centro Industrial do Município", "Chácara Parreiral", "Cidade Continental", "Cidade Pomar", "CIVIT I", "CIVIT II", "Colina da Serra", "Condomínio Ecológico Parque da Lagoa", "Conjunto Jacaraípe", "Costa Dourada", "Costabella", "Diamantina", "Divinópolis", "Eldorado", "Enseada de Jacaraípe", "Estância Monazítica", "Eurico Salles", "Fazenda Cascata", "Feu Rosa", "Guaraciaba", "Hélio Ferraz", "Jardim Atlântico", "Jardim Bela Vista", "Jardim Carapina", "Jardim da Serra", "Jardim Guanabara", "Jardim Limoeiro", "Jardim Primavera", "Jardim Tropical", "José de Anchieta", "José de Anchieta III", "Laranjeiras Velha", "Loteamento Fonte Limpa", "Loteamento Potiguara", "Manguinhos", "Manoel Plaza", "Marbella", "Maringá", "Mata da Serra", "Morada de Laranjeiras", "Niobe", "Nossa Senhora da Conceição", "Nova Carapina I", "Nova Carapina II", "Nova Zelândia", "Novo Horizonte", "Novo Porto Canoa", "Ourimar", "Parque das Gaivotas", "Parque Jacaraípe", "Parque Residencial Laranjeiras", "Parque Residencial Mestre Álvaro", "Parque Residencial Nova Almeida", "Parque Residencial Tubarão", "Parque Santa Fé", "Pitanga", "Planalto de Carapina", "Planalto Serrano", "Planície da Serra", "Portal dos Laranjais", "Portal Jacaraípe", "Porto Canoa", "Praia de Capuba", "Praia de Carapebus", "Praiamar", "Reis Magos", "Residencial Centro da Serra", "Residencial Jacaraípe", "Rosário de Fátima", "Santa Luzia", "Santa Rita de Cássia", "Santo Antônio", "São Diogo I", "São Diogo II", "São Domingos", "São Francisco", "São Geraldo", "São João", "São Judas Tadeu", "São Lourenço", "São Marcos", "São Patrício", "São Pedro", "Serra Dourada I", "Serra Dourada II", "Serra Dourada III", "Serramar", "Sítio Irema", "Solar de Anchieta", "Taquara I", "Taquara II", "Valparaíso", "Vila Maria", "Vila Nova de Colares", "Vista da Serra I", "Vista da Serra II"
+    ].sort()
+  },
+  'VIA': {
+    nome: 'Viana',
+    bairros: [
+      "Areinha", "Arlindo Villaschi", "Bom Pastor", "Campo Verde", "Canaã", "Caxias do Sul", "Industrial", "Ipanema", "Jucu", "Marcílio de Noronha", "Morada de Bethânia", "Nova Belém", "Nova Bethânia", "Nova Viana", "Primavera", "Ribeira", "Santa Terezinha", "Santo Agostinho", "Soteco", "Universal", "Verona", "Vila Bethânia", "Vila Nova"
+    ].sort()
+  }
+};
+
+// ═══════════════════════════════════════════════════
+//  CONFIGURAÇÃO FIREBASE — hardcoded
+// ═══════════════════════════════════════════════════
+var FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDL8c28T9Q-IAK9JihzEXtT-OPiYOx24Jg",
+  authDomain:        "speedboy-3c1c6.firebaseapp.com",
+  projectId:         "speedboy-3c1c6",
+  storageBucket:     "speedboy-3c1c6.firebasestorage.app",
+  messagingSenderId: "702743802978",
+  appId:             "1:702743802978:web:7b99217bebcc89f9bc8d3b",
+  databaseURL:       "https://speedboy-3c1c6-default-rtdb.firebaseio.com"
+};
+
+// URL params
+var params     = new URLSearchParams(window.location.search);
+var ROOM       = (params.get('room') || '').toUpperCase();
+var STORE_NAME = params.get('store') || '';
+var LUAN_PHONE = params.get('phone') || ''; // Número do motoboy para WhatsApp
+
+var db         = null;
+var stopCount  = 0;
+var lastSubmittedStops = [];
+var lastSubmittedKeys = [];
+var trackingListeners = [];
+
+// ═══════════════════════════════════════════════════
+//  BAIRROS CUSTOMIZADOS (localStorage por loja)
+// ═══════════════════════════════════════════════════
+function getCustomBairros() {
+  var key = 'sb_custom_bairros_' + (STORE_NAME||'default');
+  try { return JSON.parse(localStorage.getItem(key)||'{}'); } catch(e) { return {}; }
+}
+
+function saveCustomBairros(customBairros) {
+  var key = 'sb_custom_bairros_' + (STORE_NAME||'default');
+  localStorage.setItem(key, JSON.stringify(customBairros));
+}
+
+function addCustomBairro(city, bairro) {
+  if (!city || !bairro) return false;
+  var customBairros = getCustomBairros();
+  if (!customBairros[city]) customBairros[city] = [];
+  bairro = bairro.trim();
+  if (customBairros[city].indexOf(bairro) === -1) {
+    customBairros[city].push(bairro);
+    customBairros[city].sort();
+    saveCustomBairros(customBairros);
+    return true;
+  }
+  return false;
+}
+
+function getAllBairros(city) {
+  if (!city || !CIDADE_BAIRROS[city]) return [];
+  var officialBairros = CIDADE_BAIRROS[city].bairros || [];
+  var customBairros = getCustomBairros();
+  var custom = customBairros[city] || [];
+  var combined = officialBairros.concat(custom);
+  var unique = [];
+  var seen = {};
+  combined.forEach(function(b) {
+    if (!seen[b.toLowerCase()]) {
+      seen[b.toLowerCase()] = true;
+      unique.push(b);
+    }
+  });
+  return unique.sort();
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+function init() {
+  // Mostra nome da loja no badge
+  if (STORE_NAME) {
+    document.getElementById('storeSpan').textContent = STORE_NAME;
+    document.getElementById('heroBadge').classList.add('show');
+    document.title = 'SPEEDBOY — ' + STORE_NAME;
+  }
+
+  // Verifica se tem sala
+  if (!ROOM) {
+    document.getElementById('mainWrap').style.display = 'none';
+    document.getElementById('errorWrap').classList.add('show');
+    return;
+  }
+
+  // Inicializa Firebase
+  try {
+    var app = firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    console.log('Firebase OK — sala:', ROOM);
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    showToast('Erro ao conectar. Tente novamente.', 'error');
+  }
+
+  // Define data padrão como hoje
+  setTimeout(function() {
+    var dateInputs = document.querySelectorAll('input[type="date"]');
+    var today = new Date().toISOString().split('T')[0];
+    dateInputs.forEach(function(el){ if(!el.value) el.value = today; });
+  }, 100);
+
+  // Restaura tema salvo
+  if (localStorage.getItem('sb_pedido_theme') === 'light') {
+    document.body.classList.add('light');
+    document.getElementById('themeBtn').textContent = '🌙 Escuro';
+  }
+
+  // Adiciona primeiro stop
+  initClientHistory();
+  window.addStop();
+}
+
+// ═══════════════════════════════════════════════════
+//  GERENCIAR STOPS
+// ═══════════════════════════════════════════════════
+window.addStop = function() {
+  stopCount++;
+  var id  = 'stop_' + stopCount;
+  var num = document.querySelectorAll('.stop-card').length + 1;
+
+  var div = document.createElement('div');
+  div.className = 'stop-card';
+  div.id = id;
+
+  div.innerHTML =
+    '<div class="stop-card-hdr">' +
+      '<div class="stop-card-title">' +
+        '<div class="stop-num">' + num + '</div>' +
+        'ENTREGA ' + num +
+      '</div>' +
+      (num > 1 ? '<button class="btn-rm" onclick="window.removeStop(\'' + id + '\')">✕</button>' : '') +
+    '</div>' +
+    '<div class="stop-card-body">' +
+      '<div class="field-group">' +
+        '<div class="field-label">Nome do cliente <span class="req">*</span></div>' +
+        '<input class="field-input" id="' + id + '_name" placeholder="Ex: Pedro Santos" />' +
+      '</div>' +
+      '<div class="sec-divider" style="margin:16px 0 12px">📍 Endereço</div>' +
+      '<div class="field-row">' +
+        '<div class="field-group">' +
+          '<div class="field-label">Cidade <span class="req">*</span></div>' +
+          '<select class="field-input" id="' + id + '_city" style="appearance:none;cursor:pointer" onchange="window.updateBairros(\'' + id + '\')">' +
+            '<option value="">— Selecione —</option>' +
+            '<option value="SRR">Serra</option>' +
+            '<option value="VIX">Vitória</option>' +
+            '<option value="VV">Vila Velha</option>' +
+            '<option value="CCA">Cariacica</option>' +
+            '<option value="VIA">Viana</option>' +
+          '</select>' +
+        '</div>' +
+        '<div class="field-group">' +
+          '<div class="field-label">Bairro <span class="req">*</span></div>' +
+          '<div class="bairro-search-wrap">' +
+            '<input class="field-input" id="' + id + '_bairro" placeholder="Digite para buscar..." oninput="window.filterBairros(\'' + id + '\')" />' +
+            '<div class="bairro-suggestions" id="' + id + '_bairro_suggestions"></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">Rua / Avenida <span class="req">*</span></div>' +
+        '<input class="field-input" id="' + id + '_rua" placeholder="Rua Exemplo, Avenida Brasil..." />' +
+      '</div>' +
+      '<div class="field-row">' +
+        '<div class="field-group">' +
+          '<div class="field-label">Número <span class="req">*</span></div>' +
+          '<input class="field-input" id="' + id + '_numero" placeholder="123" />' +
+        '</div>' +
+        '<div class="field-group">' +
+          '<div class="field-label">Complemento</div>' +
+          '<input class="field-input" id="' + id + '_complement" placeholder="Apto 42, bloco C..." />' +
+        '</div>' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">Ponto de Referência</div>' +
+        '<input class="field-input" id="' + id + '_reference" placeholder="Próximo à padaria, perto do banco..." />' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">📅 Data da entrega <span class="req">*</span></div>' +
+        '<input class="field-input" id="' + id + '_date" type="date" style="color:var(--text)" />' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">Tipo de serviço</div>' +
+        '<select class="field-input" id="' + id + '_type" style="appearance:none;cursor:pointer">' +
+          '<option value="entrega">🛵 Entrega</option>' +
+          '<option value="retirada">📦 Retirada</option>' +
+          '<option value="troca">🔄 Troca</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">⏰ Horário (opcional)</div>' +
+        '<div class="time-row">' +
+          '<div style="flex:1">' +
+            '<div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;">DE</div>' +
+            '<input class="time-input" id="' + id + '_timeFrom" type="time" />' +
+          '</div>' +
+          '<div class="time-sep">até</div>' +
+          '<div style="flex:1">' +
+            '<div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;">ATÉ</div>' +
+            '<input class="time-input" id="' + id + '_timeTo" type="time" />' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="field-row">' +
+        '<div class="field-group">' +
+          '<div class="field-label">Telefone</div>' +
+          '<input class="field-input" id="' + id + '_phone" type="tel" placeholder="(XX) XXXXX-XXXX" oninput="window.maskPhone(this)" maxlength="15" />' +
+        '</div>' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">Pagamento <span class="req">*</span></div>' +
+        '<div class="pay-row">' +
+          '<button type="button" class="pay-btn" id="' + id + '_paid_yes" onclick="window.selectPay(\'' + id + '\',\'paid\')">✅ Já pago</button>' +
+          '<button type="button" class="pay-btn" id="' + id + '_paid_no"  onclick="window.selectPay(\'' + id + '\',\'due\')">💰 A receber</button>' +
+        '</div>' +
+        '<div class="value-group" id="' + id + '_value_wrap">' +
+          '<div class="field-label" style="margin-top:10px">Valor a receber (R$)</div>' +
+          '<div class="money-input-wrap">' +
+            '<span class="money-prefix">R$</span>' +
+            '<input class="field-input" id="' + id + '_value" type="text" inputmode="decimal" placeholder="0,00" oninput="window.maskMoney(this)" />' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="field-group" style="margin-bottom:0">' +
+        '<div class="field-label">Observações</div>' +
+        '<input class="field-input" id="' + id + '_notes" placeholder="Ligar antes, cuidado com cachorro..." />' +
+      '</div>' +
+    '</div>';
+
+  document.getElementById('stopsWrap').appendChild(div);
+  renumber();
+};
+
+window.removeStop = function(id) {
+  var el = document.getElementById(id);
+  if (el) el.remove();
+  renumber();
+};
+
+// Filtrar bairros com busca (incluindo customizados)
+window.filterBairros = function(stopId) {
+  var input = document.getElementById(stopId + '_bairro');
+  var citySelect = document.getElementById(stopId + '_city');
+  var suggestionsDiv = document.getElementById(stopId + '_bairro_suggestions');
+  var cityValue = citySelect.value;
+  var searchValue = input.value.toLowerCase().trim();
+
+  if (!cityValue || !CIDADE_BAIRROS[cityValue]) {
+    suggestionsDiv.classList.remove('show');
+    return;
+  }
+  
+  var bairros = getAllBairros(cityValue);
+  var filtered = bairros.filter(function(b) {
+    return b.toLowerCase().includes(searchValue);
+  });
+
+  if (searchValue.length === 0 || filtered.length === 0) {
+    suggestionsDiv.classList.remove('show');
+    return;
+  }
+  
+  suggestionsDiv.innerHTML = filtered.map(function(b) {
+    return '<div class="bairro-suggestion-item" onclick="window.selectBairro(\'' + stopId + '\', \'' + b + '\')">' + b + '</div>';
+  }).join('');
+
+  suggestionsDiv.classList.add('show');
+};
+
+window.selectBairro = function(stopId, bairro) {
+  var input = document.getElementById(stopId + '_bairro');
+  var suggestionsDiv = document.getElementById(stopId + '_bairro_suggestions');
+  var citySelect = document.getElementById(stopId + '_city');
+  
+  input.value = bairro;
+  suggestionsDiv.classList.remove('show');
+  
+  // Salva bairro customizado se for novo
+  if (citySelect.value) {
+    addCustomBairro(citySelect.value, bairro);
+  }
+};
+
+// Atualizar bairros quando cidade muda
+window.updateBairros = function(stopId) {
+  var citySelect = document.getElementById(stopId + '_city');
+  var bairroInput = document.getElementById(stopId + '_bairro');
+  var suggestionsDiv = document.getElementById(stopId + '_bairro_suggestions');
+  var cityValue = citySelect.value;
+  
+  if (!cityValue || !CIDADE_BAIRROS[cityValue]) {
+    bairroInput.value = '';
+    suggestionsDiv.classList.remove('show');
+    return;
+  }
+  
+  bairroInput.value = '';
+  suggestionsDiv.classList.remove('show');
+};
+
+function renumber() {
+  var cards = document.querySelectorAll('.stop-card');
+  cards.forEach(function(el, i) {
+    var title = el.querySelector('.stop-card-title');
+    var btn   = el.querySelector('.btn-rm');
+    if (title) title.innerHTML = '<div class="stop-num">' + (i+1) + '</div> ENTREGA ' + (i+1);
+    if (i === 0 && btn) btn.remove();
+  });
+}
+
+window.selectPay = function(id, type) {
+  var yesBtn = document.getElementById(id + '_paid_yes');
+  var noBtn  = document.getElementById(id + '_paid_no');
+  var wrap   = document.getElementById(id + '_value_wrap');
+  if (!yesBtn || !noBtn) return;
+  yesBtn.className = 'pay-btn' + (type === 'paid' ? ' paid' : '');
+  noBtn.className  = 'pay-btn' + (type === 'due'  ? ' due'  : '');
+  if (wrap) wrap.className = 'value-group' + (type === 'due' ? ' show' : '');
+};
+
+// ═══════════════════════════════════════════════════
+//  ENVIAR
+// ═══════════════════════════════════════════════════
+window.submitPedido = function() {
+  var cards    = document.querySelectorAll('.stop-card');
+  var newStops = [];
+  var hasErr   = false;
+
+  cards.forEach(function(card) {
+    var id = card.id;
+    
+    // Elementos
+    var nameEl      = document.getElementById(id + '_name');
+    var cityEl      = document.getElementById(id + '_city');
+    var bairroEl    = document.getElementById(id + '_bairro');
+    var ruaEl       = document.getElementById(id + '_rua');
+    var numeroEl    = document.getElementById(id + '_numero');
+    var compEl      = document.getElementById(id + '_complement');
+    var refEl       = document.getElementById(id + '_reference');
+    var phoneEl     = document.getElementById(id + '_phone');
+    var yesBtn      = document.getElementById(id + '_paid_yes');
+    var dateEl      = document.getElementById(id + '_date');
+    var typeEl      = document.getElementById(id + '_type');
+    var timeFromEl  = document.getElementById(id + '_timeFrom');
+    var timeToEl    = document.getElementById(id + '_timeTo');
+    var valEl       = document.getElementById(id + '_value');
+    var notesEl     = document.getElementById(id + '_notes');
+    
+    // Valores
+    var name    = nameEl  ? nameEl.value.trim()      : '';
+    var city    = cityEl  ? cityEl.value             : '';
+    var bairro  = bairroEl ? bairroEl.value          : '';
+    var rua     = ruaEl   ? ruaEl.value.trim()       : '';
+    var numero  = numeroEl ? numeroEl.value.trim()   : '';
+    var comp    = compEl  ? compEl.value.trim()      : '';
+    var ref     = refEl   ? refEl.value.trim()       : '';
+    var phone   = phoneEl ? phoneEl.value.replace(/\D/g,'') : '';
+
+    // VALIDAÇÕES OBRIGATÓRIAS
+    var errors = [];
+    
+    if (!name)                  { errors.push(nameEl);    }
+    if (!city)                  { errors.push(cityEl);    }
+    if (!bairro)                { errors.push(bairroEl);  }
+    if (!rua)                   { errors.push(ruaEl);     }
+    if (!numero)                { errors.push(numeroEl);  }
+    if (!phone || phone.length < 10) { errors.push(phoneEl); showToast('⚠️ Telefone inválido ou não preenchido', 'error'); }
+    
+    // Salva bairro customizado se for novo
+    if (city && bairro) {
+      addCustomBairro(city, bairro);
+    }
+    
+    if (errors.length > 0) {
+      errors.forEach(function(el) { if (el) el.classList.add('error'); });
+      if (!hasErr) card.scrollIntoView({behavior:'smooth',block:'center'});
+      hasErr = true;
+      return;
+    }
+    
+    // Remover marcação de erro se passou
+    [nameEl, cityEl, bairroEl, ruaEl, numeroEl, compEl, phoneEl].forEach(function(el) {
+      if (el) el.classList.remove('error');
+    });
+
+    // Montar endereço completo
+    var address = rua + ', ' + numero + ', ' + bairro + ' - ' + CIDADE_BAIRROS[city].nome;
+
+    // Verificar pagamento
+    var isPaid  = yesBtn && yesBtn.classList.contains('paid');
+    var isNoBtn = document.getElementById(id + '_paid_no');
+    var hasPay  = (yesBtn && (yesBtn.classList.contains('paid') || (isNoBtn && isNoBtn.classList.contains('due'))));
+    var productVal = valEl ? parseMoney(valEl.value) : 0;
+
+    // Data
+    var delivDate = '';
+    if (dateEl && dateEl.value) {
+      var dp = dateEl.value.split('-');
+      delivDate = dp[2] + '/' + dp[1] + '/' + dp[0];
+    }
+
+    newStops.push({
+      name:         name,
+      address:      address,
+      complement:   comp,
+      reference:    ref,
+      phone:        phone,
+      timeFrom:     timeFromEl? timeFromEl.value : '',
+      timeTo:       timeToEl  ? timeToEl.value   : '',
+      deliveryDate: delivDate,
+      serviceType:  typeEl    ? typeEl.value     : 'entrega',
+      cityId:       city,
+      city:         CIDADE_BAIRROS[city].nome,
+      neighborhood: bairro,
+      street:       rua,
+      number:       numero,
+      productValue: productVal,
+      productPaid:  isPaid,
+      value:        0,
+      paid:         false,
+      notes:        notesEl   ? notesEl.value.trim() : '',
+      store:        STORE_NAME || 'Loja',
+      done:         false,
+      status:       'pending',
+      submittedAt:  new Date().toISOString(),
+      arrivedAt:    new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+    });
+  });
+
+  if (hasErr) { return; }
+  if (!newStops.length){ showToast('Adicione pelo menos uma entrega', 'error'); return; }
+  if (!db)            { showToast('Sem conexão com o sistema. Recarregue a página.', 'error'); return; }
+
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('btnSubmit').disabled = true;
+
+  var pendingRef = db.ref('rooms/' + ROOM + '/pending');
+  var pushRefs = [];
+  var promises = newStops.map(function(s) {
+    var ref = pendingRef.push(JSON.stringify(s));
+    pushRefs.push(ref);
+    return ref;
+  });
+
+  Promise.all(promises)
+    .then(function() {
+      document.getElementById('loading').classList.remove('show');
+      document.getElementById('mainWrap').style.display = 'none';
+      
+      lastSubmittedStops = newStops;
+      lastSubmittedKeys = pushRefs.map(function(r){ return r.key; });
+
+      // Resumo com status badge
+      var html = newStops.map(function(s, i) {
+        var valStr  = s.productValue > 0
+          ? ' · R$ ' + s.productValue.toFixed(2).replace('.',',') + ' (' + (s.productPaid ? '✅ pago' : '💰 a cobrar') + ')'
+          : '';
+        var timeStr = (s.timeFrom || s.timeTo)
+          ? ' · ⏰ ' + (s.timeFrom||'?') + '–' + (s.timeTo||'?')
+          : '';
+        var typeIcon = s.serviceType === 'retirada' ? '📦 Retirada' : s.serviceType === 'troca' ? '🔄 Troca' : '🛵 Entrega';
+        var dateStr  = s.deliveryDate ? ' · 📅 ' + s.deliveryDate : '';
+        var key = lastSubmittedKeys[i] || '';
+        var trackUrl = key ? 'rastreio.html?room=' + encodeURIComponent(ROOM) + '&key=' + encodeURIComponent(key) : '';
+        return '<div class="success-item">' +
+          '<strong>' + typeIcon + ' ' + (i+1) + '. ' + s.name + '</strong>' + dateStr + '<br>' +
+          '<span style="font-size:11px;color:var(--muted)">' + s.address + timeStr + valStr + '</span><br>' +
+          '<span class="status-badge status-pending" id="track_' + key + '">⏳ Aguardando confirmação</span>' +
+          (trackUrl ? '<br><a href="' + trackUrl + '" target="_blank" style="display:inline-block;margin-top:8px;padding:10px 20px;border-radius:12px;font-size:14px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;border:1.5px solid rgba(59,130,246,.4);text-decoration:none;letter-spacing:.3px;">📍 Rastrear entrega</a>' : '') +
+          '</div>';
+      }).join('');
+
+      document.getElementById('successList').innerHTML =
+        '<div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">' +
+        newStops.length + ' entrega(s) enviada(s)</div>' + html;
+      addToClientHistory(newStops, lastSubmittedKeys);
+      document.getElementById('successWrap').classList.add('show');
+      
+      document.getElementById('btnWhatsApp').style.display = 'inline-block';
+      
+      // Start tracking each order
+      startTracking(lastSubmittedKeys);
+    })
+    .catch(function(e) {
+      document.getElementById('loading').classList.remove('show');
+      document.getElementById('btnSubmit').disabled = false;
+      showToast('Erro ao enviar: ' + e.message, 'error');
+      console.error(e);
+    });
+};
+
+// ═══════════════════════════════════════════════════
+//  TRACKING — status em tempo real
+// ═══════════════════════════════════════════════════
+var STATUS_LABELS = {
+  'pending':   { text: '⏳ Aguardando confirmação', css: 'status-pending' },
+  'aceito':    { text: '✅ Confirmado pelo motoboy', css: 'status-aceito' },
+  'a caminho': { text: '🏍️ Motoboy a caminho!', css: 'status-acaminho' },
+  'entregue':  { text: '📦 Entregue!', css: 'status-entregue' },
+  'recusado':  { text: '❌ Recusado', css: 'status-recusado' }
+};
+
+function startTracking(keys) {
+  stopTracking();
+  if (!db || !keys || !keys.length) return;
+  keys.forEach(function(key) {
+    if (!key) return;
+    var ref = db.ref('rooms/' + ROOM + '/tracking/' + key);
+    var unsub = ref.on('value', function(snap) {
+      var raw = snap.val();
+      if (!raw) return;
+      try {
+        var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        var status = data.status || 'pending';
+        var info = STATUS_LABELS[status] || STATUS_LABELS['pending'];
+        var badge = document.getElementById('track_' + key);
+        if (badge) {
+          badge.textContent = info.text;
+          badge.className = 'status-badge ' + info.css;
+        }
+      } catch(e) { console.error('tracking parse error:', e); }
+    });
+    trackingListeners.push({ ref: ref, cb: unsub });
+  });
+}
+
+function stopTracking() {
+  trackingListeners.forEach(function(t) {
+    try { t.ref.off('value', t.cb); } catch(e) {}
+  });
+  trackingListeners = [];
+}
+
+window.resetForm = function() {
+  stopTracking();
+  document.getElementById('successWrap').classList.remove('show');
+  document.getElementById('stopsWrap').innerHTML = '';
+  document.getElementById('mainWrap').style.display = 'block';
+  document.getElementById('btnSubmit').disabled = false;
+  document.getElementById('btnWhatsApp').style.display = 'none';
+  lastSubmittedKeys = [];
+  stopCount = 0;
+  window.addStop();
+  window.scrollTo(0,0);
+};
+
+// Enviar para WhatsApp
+window.sendWhatsApp = function() {
+  if (!lastSubmittedStops.length) return;
+  var message = '🛵 *SPEEDBOY - Novo Pedido Recebido*\n\n';
+  message += '📦 *' + lastSubmittedStops.length + ' entrega(s):*\n\n';
+  
+  lastSubmittedStops.forEach(function(s, i) {
+    var type = s.serviceType === 'retirada' ? '📦 Retirada' : s.serviceType === 'troca' ? '🔄 Troca' : '🛵 Entrega';
+    message += (i+1) + '. *' + s.name + '*\n';
+    message += '   ' + type + '\n';
+    message += '   📍 ' + s.address + '\n';
+    if (s.reference) message += '   🔍 Ref: ' + s.reference + '\n';
+    if (s.timeFrom || s.timeTo) message += '   ⏰ ' + (s.timeFrom||'?') + ' - ' + (s.timeTo||'?') + '\n';
+    if (s.deliveryDate) message += '   📅 ' + s.deliveryDate + '\n';
+    if (s.productValue > 0) message += '   💰 R$ ' + s.productValue.toFixed(2).replace('.',',') + ' (' + (s.productPaid ? 'pago' : 'a cobrar') + ')\n';
+    message += '\n';
+  });
+  
+  message += '✅ Pedido enviado via SPEEDBOY';
+  
+  var encodedMessage = encodeURIComponent(message);
+  var whatsappUrl = 'https://wa.me/' + LUAN_PHONE + '?text=' + encodedMessage;
+  
+  window.open(whatsappUrl, '_blank');
+};
+
+// ═══════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════
+window.maskPhone = function(el) {
+  var v = el.value.replace(/\D/g,'');
+  if(v.length>11) v=v.substring(0,11);
+  if(v.length>7)  v='('+v.substring(0,2)+') '+v.substring(2,7)+'-'+v.substring(7);
+  else if(v.length>2) v='('+v.substring(0,2)+') '+v.substring(2);
+  el.value=v;
+};
+
+window.maskMoney = function(el) {
+  var v=el.value.replace(/[^0-9,]/g,'');
+  var p=v.split(',');
+  if(p.length>2) v=p[0]+','+p.slice(1).join('');
+  if(p[1]&&p[1].length>2) v=p[0]+','+p[1].substring(0,2);
+  el.value=v;
+};
+
+function parseMoney(s) {
+  return parseFloat(String(s||'').replace(',','.')) || 0;
+}
+
+var _toastTimer;
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ t.className='toast'; }, 3500);
+}
+
+// ═══════════════════════════════════════════════════
+//  TEMA CLARO / ESCURO
+// ═══════════════════════════════════════════════════
+window.toggleTheme = function() {
+  var isLight = document.body.classList.toggle('light');
+  var btn = document.getElementById('themeBtn');
+  btn.textContent = isLight ? '🌙 Escuro' : '☀️ Claro';
+  localStorage.setItem('sb_pedido_theme', isLight ? 'light' : 'dark');
+};
+
+// ═══════════════════════════════════════════════════
+//  HISTÓRICO DO CLIENTE (localStorage por loja)
+// ═══════════════════════════════════════════════════
+function getClientHistory() {
+  var key = 'sb_client_hist_' + (STORE_NAME||'default');
+  try { return JSON.parse(localStorage.getItem(key)||'[]'); } catch(e) { return []; }
+}
+function saveClientHistory(list) {
+  var key = 'sb_client_hist_' + (STORE_NAME||'default');
+  localStorage.setItem(key, JSON.stringify(list.slice(0,30))); // keeps last 30
+}
+function addToClientHistory(stops, keys) {
+  var hist = getClientHistory();
+  var entry = {
+    date: new Date().toLocaleDateString('pt-BR'),
+    time: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+    room: ROOM,
+    stops: stops.map(function(s, i){ return {name:s.name, address:s.address, serviceType:s.serviceType, city:s.city, deliveryDate:s.deliveryDate, reference:s.reference, key:(keys&&keys[i])||''}; })
+  };
+  hist.unshift(entry);
+  saveClientHistory(hist);
+}
+window.toggleHistory = function() {
+  var panel = document.getElementById('histPanel');
+  var arrow = document.getElementById('histArrow');
+  var isOpen = panel.classList.toggle('open');
+  if (arrow) arrow.textContent = isOpen ? '▲' : '▼';
+  if (isOpen) renderClientHistory();
+};
+function renderClientHistory() {
+  var hist = getClientHistory();
+  var count = document.getElementById('histCount');
+  if (count) count.textContent = hist.length ? '(' + hist.length + ')' : '';
+  var list = document.getElementById('histList');
+  if (!hist.length) { list.innerHTML = '<div class="hist-empty">Nenhum pedido ainda.</div>'; return; }
+  list.innerHTML = hist.map(function(entry) {
+    var stopsHtml = entry.stops.map(function(s, i) {
+      var type    = s.serviceType==='retirada'?'📦':s.serviceType==='troca'?'🔄':'🛵';
+      var refStr  = s.reference ? ' · 🔍 ' + s.reference : '';
+      var trackUrl = (s.key && entry.room) ? 'rastreio.html?room=' + encodeURIComponent(entry.room) + '&key=' + encodeURIComponent(s.key) : '';
+      var trackBtn = trackUrl
+        ? '<br><a href="' + trackUrl + '" target="_blank" style="display:inline-block;margin-top:6px;padding:8px 16px;border-radius:12px;font-size:13px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;border:1.5px solid rgba(59,130,246,.4);text-decoration:none;">📍 Rastrear</a>'
+        : '';
+      var badge = s.key ? '<span class="status-badge status-pending" id="hist_track_'+s.key+'" style="margin-top:4px;display:inline-block;">⏳</span>' : '';
+      return '<div style="margin-top:6px">' +
+        type + ' ' + (i+1) + '. <strong>' + s.name + '</strong> — ' + (s.city||'') +
+        (s.deliveryDate?' · 📅 '+s.deliveryDate:'') + refStr +
+        trackBtn + '<br>' + badge +
+        '</div>';
+    }).join('');
+    return '<div class="hist-item"><div class="hist-item-name">📅 ' + entry.date + ' às ' + entry.time + '</div><div class="hist-item-info">' + stopsHtml + '</div></div>';
+  }).join('');
+  // Atualizar status em tempo real para pedidos com key
+  startHistoryTracking(hist);
+}
+
+var histTrackListeners = [];
+function startHistoryTracking(hist) {
+  histTrackListeners.forEach(function(t){ try{t.ref.off('value',t.cb);}catch(e){} });
+  histTrackListeners = [];
+  if (!db) return;
+  hist.forEach(function(entry) {
+    if (!entry.room) return;
+    (entry.stops || []).forEach(function(s) {
+      if (!s.key) return;
+      var ref = db.ref('rooms/' + entry.room + '/tracking/' + s.key);
+      var cb = ref.on('value', function(snap) {
+        var badge = document.getElementById('hist_track_' + s.key);
+        if (!badge) return;
+        var raw = snap.val();
+        if (!raw) return;
+        try {
+          var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          var status = data.status || 'pending';
+          var info = STATUS_LABELS[status] || STATUS_LABELS['pending'];
+          badge.textContent = info.text;
+          badge.className = 'status-badge ' + info.css;
+        } catch(e) {}
+      });
+      histTrackListeners.push({ref: ref, cb: cb});
+    });
+  });
+}
+function initClientHistory() {
+  var hist = getClientHistory();
+  var count = document.getElementById('histCount');
+  if (count && hist.length) count.textContent = '(' + hist.length + ')';
+}
+
+// ═══════════════════════════════════════════════════
+//  START
+// ═══════════════════════════════════════════════════
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
