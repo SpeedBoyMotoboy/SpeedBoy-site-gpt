@@ -792,8 +792,16 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 //  Preencha abaixo para ocultar Firebase das configurações.
 //  Deixe null/''/0 para usar o formulário normal.
 // ═══════════════════════════════════════════════════════
-const EMBEDDED_FB_CONFIG = null;   // ex: {"apiKey":"...","databaseURL":"...","projectId":"..."}
-const EMBEDDED_ROOM      = '';     // ex: 'SB-ABCD'  — sala que abre automaticamente
+const EMBEDDED_FB_CONFIG = {
+  apiKey:"AIzaSyDL8c28T9Q-IAK9JihzEXtT-OPiYOx24Jg",
+  authDomain:"speedboy-3c1c6.firebaseapp.com",
+  projectId:"speedboy-3c1c6",
+  storageBucket:"speedboy-3c1c6.firebasestorage.app",
+  messagingSenderId:"702743802978",
+  appId:"1:702743802978:web:7b99217bebcc89f9bc8d3b",
+  databaseURL:"https://speedboy-3c1c6-default-rtdb.firebaseio.com"
+};
+const EMBEDDED_ROOM = 'SB-PARC'
 
 // ═══════════════════════════════════════════════════════
 //  STATE
@@ -1065,7 +1073,6 @@ function renderHome(){
             ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togPaid(${i})">${s.paid?'💸 Ok':'💰 Paga?'}</button>`:''}
             ${s.productValue>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''}" onclick="togProductPaid(${i})">${s.productPaid?'✅ Ok':'💳 Cobrar'}</button>`:''}
             <button class="btn-act ba-edit" onclick="goForm(${i})">✏️ Editar</button>
-            ${s._trackKey?`<button class="btn-act" onclick="sendTrackingLink(${i})" style="background:var(--card2);color:var(--blue);border:1px solid var(--blue);">📍 Rastreio</button>`:''}
             <button class="btn-act ba-del"  onclick="delStop(${i})">🗑️ Remover</button>
           </div>
         </div>
@@ -1218,22 +1225,8 @@ function updateHistStopValue(di,si,rawVal){
 
 function togDone(i){
   stops[i].done=!stops[i].done; saveStops(); renderHome();
-  if(stops[i]._trackKey) updateTracking(stops[i]._trackKey, stops[i].done?'entregue':'aceito');
 }
 
-function sendTrackingLink(i){
-  const s=stops[i];
-  if(!s._trackKey){toast('Este pedido não tem rastreio disponível','error');return;}
-  const room=localStorage.getItem('sb_room_code')||'';
-  const base=window.location.href.replace(/\/[^/?#]*(\?.*)?$/,'/rastreio.html');
-  const link=`${base}?room=${encodeURIComponent(room)}&key=${encodeURIComponent(s._trackKey)}`;
-  const msg=`📦 Olá ${s.name||''}! Rastreie sua entrega em tempo real pelo link abaixo:\n\n${link}\n\n🛵 SPEEDBOY Entregas`;
-  if(s.phone){
-    window.open(`https://wa.me/55${s.phone}?text=${encodeURIComponent(msg)}`,'_blank');
-  }else{
-    navigator.clipboard?.writeText(link).then(()=>toast('📋 Link de rastreio copiado!','success')).catch(()=>toast('Link: '+link,''));
-  }
-}
 function togPaid(i)        { stops[i].paid=!stops[i].paid; saveStops(); renderHome(); }
 function togProductPaid(i) { stops[i].productPaid=!stops[i].productPaid; saveStops(); renderHome(); }
 function delStop(i){ if(!confirm(`Remover ${stops[i].name}?`))return; stops.splice(i,1); saveStops(); renderHome(); }
@@ -2894,7 +2887,6 @@ async function acceptPending(key){
     if(match){s.value=match.taxa;toast('💰 Taxa ARITANA: R$ '+match.taxa+' — '+match.bairro,'success');}
   }
   saveStops();
-  await updateTracking(key,'aceito',{name:s.name||'',address:s.address||'',store:s.store||''});
   await rmPending(key);
   toast('✅ Entrega de '+s.name+' adicionada!','success'); renderHome();
 }
