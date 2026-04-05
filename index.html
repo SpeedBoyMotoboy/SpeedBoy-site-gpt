@@ -835,7 +835,7 @@ let pendingData = {};
 //  UTILS
 // ═══════════════════════════════════════════════════════
 function saveStops()   { localStorage.setItem('sb_stops',   JSON.stringify(stops)); fbPush(); }
-function saveHistory() { localStorage.setItem('sb_history', JSON.stringify(history)); }
+function saveHistory() { localStorage.setItem('sb_history', JSON.stringify(history)); fbPushHistory(); }
 function saveCfg()     { localStorage.setItem('sb_cfg',     JSON.stringify(cfg)); }
 
 function fmtMoney(v) { return 'R$ ' + (parseFloat(v)||0).toFixed(2).replace('.',','); }
@@ -2216,11 +2216,90 @@ function drawChartOffscreen(flatStops,w,h){
 function renderHistory(){
   const list=document.getElementById('historyList');
   if(!history.length){ list.innerHTML='<div style="text-align:center;padding:50px;color:var(--muted);font-size:13px">Nenhum histórico ainda.<br>Os dias anteriores aparecem aqui automaticamente.</div>'; return; }
-  list.innerHTML=history.map((day,di)=>{
+
+  // ── Por Loja (últimos 30 dias) ──
+  const cutoff30=new Date(); cutoff30.setDate(cutoff30.getDate()-30); cutoff30.setHours(0,0,0,0);
+  const recent=history.filter(d=>{try{return parseDate(d.date)>=cutoff30;}catch(e){return false;}});
+  const lojaTotals={};
+  recent.forEach(d=>d.stops.forEach(s=>{
+    const loja=s.store||'Sem loja';
+    if(!lojaTotals[loja])lojaTotals[loja]={total:0,received:0,count:0,days:[]};
+    const v=parseMoney(s.value);
+    lojaTotals[loja].total+=v;
+    if(s.paid)lojaTotals[loja].received+=v;
+    lojaTotals[loja].count++;
+    if(!lojaTotals[loja].days.includes(d.date))lojaTotals[loja].days.push(d.date);
+  }));
+  const lojas=Object.keys(lojaTotals).sort((a,b)=>lojaTotals[b].total-lojaTotals[a].total);
+
+  let html='';
+  if(lojas.length){
+    html+=`<div style="padding:12px 0 6px"><div style="font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--muted);margin-bottom:8px;">📦 POR LOJA — ÚLTIMOS 30 DIAS</div>`;
+    lojas.forEach(loja=>{
+      const lt=lojaTotals[loja];
+      const allPaid=lt.received>=lt.total&&lt.total>0;
+      const pct=lt.total>0?Math.round(lt.received/lt.total*100):0;
+      html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:13px;">${loja}</div>
+          <div style="font-size:11px;color:var(--muted);">${lt.count} entrega${lt.count!==1?'s':''} · recebido ${fmtMoney(lt.received)} de ${fmtMoney(lt.total)} (${pct}%)</div>
+        </div>
+        <button onclick="markStoreReceived('${loja.replace(/'/g,"\\'")}');event.stopPropagation();" style="padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:${allPaid?'var(--green)':'var(--accent)'};color:#fff;">${allPaid?'✓ Pago':'Marcar pago'}</button>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // ── Por dia ──
+  html+=history.map((day,di)=>{
     const total=day.stops.reduce((a,s)=>a+parseMoney(s.value),0);
-    const rows=day.stops.map(s=>`<div class="hstop"><div><div style="font-weight:600">${s.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${(s.address||'').substring(0,34)}</div></div>${parseMoney(s.value)>0?`<div class="hstop-val">${fmtMoney(parseMoney(s.value))}</div>`:''}</div>`).join('');
-    return `<div class="hday" id="hd${di}"><div class="hday-header" onclick="document.getElementById('hd${di}').classList.toggle('open')"><div class="hday-date">${day.date}</div><div style="text-align:right"><div class="hday-val">${fmtMoney(total)}</div><div class="hday-cnt">${day.stops.length} entrega(s)</div></div></div><div class="hday-list">${rows}</div></div>`;
+    const received=day.stops.filter(s=>s.paid).reduce((a,s)=>a+parseMoney(s.value),0);
+    const allPaid=total>0&&received>=total;
+    const rows=day.stops.map((s,si)=>{
+      const val=parseMoney(s.value);
+      const prodVal=parseMoney(s.productValue);
+      return `<div class="hstop" style="display:flex;flex-direction:column;gap:4px;padding:8px 12px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:13px;">${s.name||'—'}</div>
+            ${s.store?`<div style="font-size:11px;color:#ff6b00;font-weight:600;">${s.store}</div>`:''}
+            <div style="font-size:11px;color:var(--muted);">${(s.address||s.street||'').substring(0,40)}</div>
+          </div>
+          ${val>0?`<div style="font-weight:800;font-size:13px;color:${s.paid?'var(--green)':'var(--accent)'};">${fmtMoney(val)}</div>`:''}
+        </div>
+        ${(val>0||prodVal>0)?`<div style="display:flex;gap:6px;">
+          ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togHistPaid(${di},${si});renderHistory();" style="flex:1;padding:5px 8px;font-size:11px;">${s.paid?'💸 Taxa ok':'💰 Taxa?'}</button>`:''}
+          ${prodVal>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''}" onclick="togHistProductPaid(${di},${si});renderHistory();" style="flex:1;padding:5px 8px;font-size:11px;">${s.productPaid?'✅ Cobrado':'💳 Cobrar'}</button>`:''}
+        </div>`:''}
+      </div>`;
+    }).join('');
+    return `<div class="hday" id="hd${di}">
+      <div class="hday-header" onclick="document.getElementById('hd${di}').classList.toggle('open')">
+        <div class="hday-date">${day.date}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="text-align:right">
+            <div class="hday-val" style="color:${allPaid?'var(--green)':'inherit'}">${fmtMoney(received>0?received:total)}${total>received&&received>0?` / ${fmtMoney(total)}`:''}</div>
+            <div class="hday-cnt">${day.stops.length} entrega(s)</div>
+          </div>
+          <button onclick="markDayReceived(${di});event.stopPropagation();" style="padding:4px 8px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:${allPaid?'var(--green)':'rgba(255,107,0,.15)'};color:${allPaid?'#fff':'var(--accent)'};">${allPaid?'✓':'Pagar dia'}</button>
+        </div>
+      </div>
+      <div class="hday-list">${rows}</div>
+    </div>`;
   }).join('');
+
+  list.innerHTML=html;
+}
+
+function markStoreReceived(storeName){
+  history.forEach(day=>day.stops.forEach(s=>{if(s.store===storeName)s.paid=true;}));
+  saveHistory();renderHistory();toast('✅ '+storeName+' marcado como recebido','success');
+}
+function markDayReceived(di){
+  if(!history[di])return;
+  const allPaid=history[di].stops.every(s=>parseMoney(s.value)===0||s.paid);
+  history[di].stops.forEach(s=>{s.paid=!allPaid;});
+  saveHistory();renderHistory();
 }
 
 function saveToHistory(date){
@@ -2826,6 +2905,39 @@ function fbPush(){
     .finally(()=>fbPushing=false);
 }
 
+function fbPushHistory(){
+  if(!fbDb)return;
+  const room=localStorage.getItem('sb_room_code')||'';
+  if(!room)return;
+  fbMods.set(fbMods.ref(fbDb,'rooms/'+room+'/history'),JSON.stringify(history))
+    .catch(e=>console.error('fbPushHistory:',e));
+}
+
+async function loadHistoryFromFirebase(room){
+  if(!fbDb||!room)return;
+  try{
+    const {ref,get}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    const snap=await get(ref(fbDb,'rooms/'+room+'/history'));
+    const raw=snap.val();
+    if(!raw)return;
+    let remote;
+    try{remote=typeof raw==='string'?JSON.parse(raw):raw;}catch(e){return;}
+    if(!Array.isArray(remote)||!remote.length)return;
+    // Merge: for each remote day, update local if remote has equal or more stops
+    const local=history.slice();
+    remote.forEach(rd=>{
+      const li=local.findIndex(ld=>ld.date===rd.date);
+      if(li<0){local.push(rd);}
+      else if(rd.stops&&rd.stops.length>=local[li].stops.length){local[li]=rd;}
+    });
+    local.sort((a,b)=>{try{return parseDate(b.date)-parseDate(a.date);}catch(e){return 0;}});
+    history=local.slice(0,60);
+    localStorage.setItem('sb_history',JSON.stringify(history));
+    renderHome();
+    if(document.getElementById('historyList'))renderHistory();
+  }catch(e){console.error('loadHistoryFromFirebase:',e);}
+}
+
 function genRoomCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let r='SB-';for(let i=0;i<4;i++)r+=c[Math.floor(Math.random()*c.length)];return r;}
 function newRoom(){const code=genRoomCode();localStorage.setItem('sb_room_code',code);document.getElementById('roomCode').textContent=code;document.getElementById('cfgRoom').value=code;if(fbDb)startSync(code);toast('🔄 Novo código: '+code,'success');}
 function copyRoom(){const c=document.getElementById('roomCode').textContent;if(c==='——'){toast('Salve as configurações primeiro','error');return;}navigator.clipboard?.writeText(c).then(()=>toast('📋 Código copiado: '+c,'success')).catch(()=>toast('Código: '+c,'success'));}
@@ -3039,7 +3151,7 @@ async function initFirebase(){
     const ok=await initFb(JSON.stringify(EMBEDDED_FB_CONFIG));
     if(ok){
       const room=EMBEDDED_ROOM||localStorage.getItem('sb_room_code')||'';
-      if(room){ localStorage.setItem('sb_room_code',room); startSync(room); }
+      if(room){ localStorage.setItem('sb_room_code',room); startSync(room); setTimeout(()=>loadHistoryFromFirebase(room),800); }
     }
     return;
   }
@@ -3047,7 +3159,7 @@ async function initFirebase(){
   const room=localStorage.getItem('sb_room_code');
   if(!saved)return;
   const ok=await initFb(saved);
-  if(ok&&room)startSync(room);
+  if(ok&&room){ startSync(room); setTimeout(()=>loadHistoryFromFirebase(room),800); }
 }
 
 checkNewDay();
