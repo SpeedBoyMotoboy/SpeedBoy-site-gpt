@@ -695,6 +695,21 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 
 
 
+<!-- ══ HISTÓRICO ══ -->
+<div class="screen" id="historyScreen">
+  <div class="history-body">
+    <div class="section-title">📋 Histórico</div>
+    <!-- Floating action bar (shown when items are selected) -->
+    <div id="histSelBar" style="display:none;position:sticky;top:0;z-index:50;background:var(--card2);border:1.5px solid var(--accent);border-radius:12px;padding:10px 14px;margin-bottom:12px;flex-direction:row;align-items:center;gap:8px;">
+      <span id="histSelCount" style="flex:1;font-weight:800;font-size:14px;color:var(--accent);"></span>
+      <button onclick="markSelectionPaid(true)" style="padding:7px 12px;border-radius:9px;border:none;background:var(--green);color:#fff;font-weight:800;font-size:12px;cursor:pointer;">✅ Marcar pagas</button>
+      <button onclick="markSelectionPaid(false)" style="padding:7px 12px;border-radius:9px;border:none;background:rgba(100,100,100,.2);color:var(--text);font-weight:800;font-size:12px;cursor:pointer;">↩️ Desmarcar</button>
+      <button onclick="clearHistSel()" style="padding:7px 10px;border-radius:9px;border:none;background:transparent;color:var(--muted);font-weight:800;font-size:16px;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
 <!-- ══ REPASSAR ══ -->
 <div class="screen" id="repassScreen">
   <div class="config-body">
@@ -735,6 +750,12 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     </div>
     <input type="hidden" id="cfgOrigin" />
     <input type="hidden" id="cfgWpp" />
+    <div class="cfg-section">
+      <div class="cfg-title">🔗 Links das Lojas</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Gere um link por loja para clientes fazerem pedidos.</div>
+      <div id="linksList"></div>
+      <button class="btn-new-link" onclick="genLink()" style="width:100%;margin-top:6px;">🔗 Gerar link para nova loja</button>
+    </div>
     <div class="cfg-section">
       <div class="cfg-title">🏬 Minhas lojas</div>
       <div class="stores-list" id="storesList"></div>
@@ -780,8 +801,8 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 <nav class="bottom-nav">
   <button class="nav-btn active" id="nav-home"    onclick="goNav('homeScreen','nav-home')"><span class="icon">📦</span>Entregas</button>
   <button class="nav-btn"        id="nav-finance" onclick="goNav('financeScreen','nav-finance')"><span class="icon">💰</span>Ganhos</button>
+  <button class="nav-btn"        id="nav-history" onclick="goNav('historyScreen','nav-history')"><span class="icon">📋</span>Histórico</button>
   <button class="nav-btn"        id="nav-report"  onclick="goNav('reportScreen','nav-report')"><span class="icon">📄</span>Relatório</button>
-  <button class="nav-btn"        id="nav-links"   onclick="goNav('linkgenScreen','nav-links')"><span class="icon">🔗</span>Links</button>
   <button class="nav-btn"        id="nav-cfg"     onclick="goNav('configScreen','nav-cfg')"><span class="icon">⚙️</span>Config</button>
 </nav>
 
@@ -895,6 +916,7 @@ function goNav(screenId, navId) {
   // render hooks
   if(screenId==='homeScreen')    renderHome();
   if(screenId==='financeScreen') renderFinance();
+  if(screenId==='historyScreen') { histSel={}; renderHistory(); }
   if(screenId==='reportScreen')  renderReport();
   if(screenId==='linkgenScreen') renderLinks();
   if(screenId==='repassScreen')  renderRepassList();
@@ -1858,17 +1880,11 @@ function renderFinance(){
   const m1=new Date(now.getFullYear(),now.getMonth(),1);
   const r7=new Date(now); r7.setDate(now.getDate()-6); r7.setHours(0,0,0,0);
 
-  // Lista plana deduplicada — usa deliveryDate como data efetiva se disponível
+  // Lista plana — usa deliveryDate como data efetiva se disponível
   const allDays=[{date:todayStr,stops},...history];
-  const seen={};
   const flatStops=[];
   allDays.forEach(day=>day.stops.forEach(s=>{
-    // _trackKey (Firebase) é único — dedup direto.
-    // Sem trackKey: inclui a data efetiva no fingerprint para não mesclar
-    // entregas diferentes do mesmo cliente em dias diferentes.
     const effDate=s.deliveryDate||day.date;
-    const key=s._trackKey?('tk_'+s._trackKey):('c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||'')+'|'+effDate);
-    if(seen[key])return; seen[key]=true;
     flatStops.push({...s,_effDate:effDate});
   }));
   const tryDt=s=>{try{return parseDate(s._effDate);}catch(e){return new Date(0);}};
@@ -2228,6 +2244,57 @@ function drawChartOffscreen(flatStops,w,h){
 // ═══════════════════════════════════════════════════════
 //  HISTORY
 // ═══════════════════════════════════════════════════════
+let histSel={}; // {di_si: true}
+
+function toggleHistSel(di,si){
+  const k=di+'_'+si;
+  if(histSel[k])delete histSel[k]; else histSel[k]=true;
+  _updateHistSelBar();
+  // update just the checkbox without full re-render
+  const cb=document.getElementById('hcb_'+k);
+  if(cb)cb.checked=!!histSel[k];
+}
+function selectDayHist(di){
+  if(!history[di])return;
+  const allSel=history[di].stops.every((_,si)=>histSel[di+'_'+si]);
+  history[di].stops.forEach((_,si)=>{
+    const k=di+'_'+si;
+    if(allSel)delete histSel[k]; else histSel[k]=true;
+    const cb=document.getElementById('hcb_'+k);
+    if(cb)cb.checked=!allSel;
+  });
+  _updateHistSelBar();
+}
+function selectStoreHist(storeName){
+  // Select all stops from this store across the last 30 days
+  const cutoff30=new Date(); cutoff30.setDate(cutoff30.getDate()-30); cutoff30.setHours(0,0,0,0);
+  const toSel=[];
+  history.forEach((day,di)=>{
+    try{if(parseDate(day.date)<cutoff30)return;}catch(e){return;}
+    day.stops.forEach((s,si)=>{if(s.store===storeName)toSel.push(di+'_'+si);});
+  });
+  const allSel=toSel.every(k=>histSel[k]);
+  toSel.forEach(k=>{ if(allSel)delete histSel[k]; else histSel[k]=true; const cb=document.getElementById('hcb_'+k); if(cb)cb.checked=!allSel; });
+  _updateHistSelBar();
+}
+function _updateHistSelBar(){
+  const n=Object.keys(histSel).length;
+  const bar=document.getElementById('histSelBar');
+  if(!bar)return;
+  if(n===0){bar.style.display='none';}
+  else{bar.style.display='flex';document.getElementById('histSelCount').textContent=n+' selecionada'+(n!==1?'s':'');}
+}
+function markSelectionPaid(paid){
+  Object.keys(histSel).forEach(k=>{
+    const [di,si]=k.split('_').map(Number);
+    if(history[di]&&history[di].stops[si])history[di].stops[si].paid=paid;
+  });
+  histSel={};
+  saveHistory();renderHistory();
+  toast((paid?'✅ Marcadas como recebidas':'↩️ Desmarcadas como recebidas'),'success');
+}
+function clearHistSel(){histSel={};renderHistory();}
+
 function renderHistory(){
   const list=document.getElementById('historyList');
   if(!history.length){ list.innerHTML='<div style="text-align:center;padding:50px;color:var(--muted);font-size:13px">Nenhum histórico ainda.<br>Os dias anteriores aparecem aqui automaticamente.</div>'; return; }
@@ -2267,6 +2334,7 @@ function renderHistory(){
           <button id="fat7_${loja.replace(/\W/g,'')}" onclick="genFaturaLoja('${lojaEsc}','semana',document.getElementById('fat7_${loja.replace(/\W/g,'')}'));event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.35);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📄 7 dias</button>
           <button id="fatM_${loja.replace(/\W/g,'')}" onclick="genFaturaLoja('${lojaEsc}','mes',document.getElementById('fatM_${loja.replace(/\W/g,'')}'));event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.35);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📄 Mês</button>
           <button onclick="cobrancaWppLoja('${lojaEsc}');event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(37,211,102,.35);background:transparent;color:#25d366;font-size:11px;font-weight:700;cursor:pointer;">💬 Cobrar</button>
+          <button onclick="selectStoreHist('${lojaEsc}');event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(100,100,100,.3);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;">☑️ Selec.</button>
         </div>
       </div>`;
     });
@@ -2281,8 +2349,11 @@ function renderHistory(){
     const rows=day.stops.map((s,si)=>{
       const val=parseMoney(s.value);
       const prodVal=parseMoney(s.productValue);
-      return `<div class="hstop" style="display:flex;flex-direction:column;gap:4px;padding:8px 12px;border-bottom:1px solid var(--border);">
+      const selKey=di+'_'+si;
+      const isSelected=!!histSel[selKey];
+      return `<div class="hstop" style="display:flex;flex-direction:column;gap:4px;padding:8px 12px;border-bottom:1px solid var(--border);background:${isSelected?'rgba(255,107,0,.07)':'transparent'};">
         <div style="display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="hcb_${selKey}" ${isSelected?'checked':''} onchange="toggleHistSel(${di},${si})" style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation()" />
           <div style="flex:1;min-width:0;">
             <div style="font-weight:600;font-size:13px;">${s.name||'—'}</div>
             ${s.store?`<div style="font-size:11px;color:#ff6b00;font-weight:600;">${s.store}</div>`:''}
@@ -2290,7 +2361,7 @@ function renderHistory(){
           </div>
           ${val>0?`<div style="font-weight:800;font-size:13px;color:${s.paid?'var(--green)':'var(--accent)'};">${fmtMoney(val)}</div>`:''}
         </div>
-        ${(val>0||prodVal>0)?`<div style="display:flex;gap:6px;">
+        ${(val>0||prodVal>0)?`<div style="display:flex;gap:6px;margin-left:24px;">
           ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togHistPaid(${di},${si});renderHistory();" style="flex:1;padding:5px 8px;font-size:11px;">${s.paid?'💸 Taxa ok':'💰 Taxa?'}</button>`:''}
           ${prodVal>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''}" onclick="togHistProductPaid(${di},${si});renderHistory();" style="flex:1;padding:5px 8px;font-size:11px;">${s.productPaid?'✅ Cobrado':'💳 Cobrar'}</button>`:''}
         </div>`:''}
@@ -2298,7 +2369,10 @@ function renderHistory(){
     }).join('');
     return `<div class="hday" id="hd${di}">
       <div class="hday-header" onclick="document.getElementById('hd${di}').classList.toggle('open')">
-        <div class="hday-date">${day.date}</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" onchange="selectDayHist(${di})" onclick="event.stopPropagation()" style="width:17px;height:17px;accent-color:var(--accent);cursor:pointer;" />
+          <div class="hday-date">${day.date}</div>
+        </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div style="text-align:right">
             <div class="hday-val" style="color:${allPaid?'var(--green)':'inherit'}">${fmtMoney(received>0?received:total)}${total>received&&received>0?` / ${fmtMoney(total)}`:''}</div>
@@ -2360,21 +2434,14 @@ function getReportData(){
   else cutoff=new Date(now.getFullYear(),now.getMonth(),1);
   const days=allDays.filter(d=>parseDate(d.date)>=cutoff);
   let total=0,received=0,deliveries=0; const allStops=[]; const sm={};
-  const seenKeys={};let dupCount=0;
   days.forEach(day=>day.stops.forEach(s=>{
-    // Chave de deduplicação: _trackKey tem prioridade; senão inclui a data para não mesclar pedidos iguais de dias diferentes
-    const _ed2=s.deliveryDate||day.date;
-    const dedupKey=s._trackKey?('tk_'+s._trackKey):('c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||'')+'|'+_ed2);
-    if(seenKeys[dedupKey]){dupCount++;return;}
-    seenKeys[dedupKey]=true;
     const v=parseMoney(s.value); total+=v; if(s.paid)received+=v; if(s.done)deliveries++;
-    // Usa deliveryDate como data de referência no relatório (se disponível)
     const reportDate=s.deliveryDate||day.date;
     allStops.push({...s,_date:reportDate});
     const k=s.store||'Sem loja'; if(!sm[k])sm[k]={t:0,c:0,r:0}; sm[k].t+=v; sm[k].c++; if(s.paid)sm[k].r+=v;
   }));
   const range=days.length?days[days.length-1].date+' — '+days[0].date:'Sem dados';
-  return {total,received,pending:total-received,deliveries,allStops,sm,range,label:reportPeriod==='week'?'Últimos 7 dias':'Mês atual',dupCount};
+  return {total,received,pending:total-received,deliveries,allStops,sm,range,label:reportPeriod==='week'?'Últimos 7 dias':'Mês atual'};
 }
 
 function genReportNumber(){
@@ -2407,10 +2474,9 @@ function renderReport(){
   if(!d.allStops.length){ div.innerHTML='<div class="no-data">📭 Sem dados para o período.<br>Complete algumas entregas primeiro!</div>'; return; }
   const storeRows=Object.entries(d.sm).map(([n,v])=>`<tr><td>🏪 ${n}</td><td>${v.c}</td><td>${fmtMoney(v.t)}</td><td style="color:var(--green)">${fmtMoney(v.r)}</td><td>${fmtMoney(v.t-v.r)}</td></tr>`).join('');
   const recent=d.allStops.slice(0,8).map(s=>`<tr><td>${s._date}</td><td>${s.name||'—'}</td><td>${s.store||'—'}</td><td style="color:${s.paid?'var(--green)':'var(--accent)'}">${fmtMoney(parseMoney(s.value))}</td></tr>`).join('');
-  const dupWarn=d.dupCount>0?`<div style="background:rgba(255,61,61,.1);border:1px solid var(--red);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--red);">⚠️ ${d.dupCount} entrega(s) duplicada(s) removida(s) automaticamente deste relatório</div>`:'';
-  div.innerHTML=`${dupWarn}<div class="report-card">
+  div.innerHTML=`<div class="report-card">
     <div class="report-title">🛵 SPEEDBOY — ${d.label}</div>
-    <div class="report-sub">${d.range} · ${d.allStops.length} entregas únicas</div>
+    <div class="report-sub">${d.range} · ${d.allStops.length} entrega(s)</div>
     <div class="rstat-row"><div class="rstat"><div class="rstat-lbl">Total</div><div class="rstat-val ac">${fmtMoney(d.total)}</div></div><div class="rstat"><div class="rstat-lbl">Recebido</div><div class="rstat-val gr">${fmtMoney(d.received)}</div></div></div>
     <div class="rstat-row"><div class="rstat"><div class="rstat-lbl">A receber</div><div class="rstat-val">${fmtMoney(d.pending)}</div></div><div class="rstat"><div class="rstat-lbl">Entregas</div><div class="rstat-val">${d.deliveries}</div></div></div>
     ${Object.keys(d.sm).length>0?`<div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin:12px 0 6px">Por loja</div><div style="overflow-x:auto"><table class="rtable"><tr><th>Loja</th><th>Qtd</th><th>Total</th><th>Recebido</th><th>A Receber</th></tr>${storeRows}</table></div>`:''}
@@ -2531,12 +2597,6 @@ async function genPDF(){
       doc.setFontSize(12);doc.setTextColor(...b.c);doc.text(b.val,x+bw4/2,y+18,{align:'center'});
     });
     y+=28;
-    if(d.dupCount>0){
-      doc.setFillColor(60,10,10);doc.roundedRect(14,y,PW-28,10,2,2,'F');
-      doc.setFontSize(8);doc.setFont('helvetica','italic');doc.setTextColor(255,100,100);
-      doc.text(`⚠ ${d.dupCount} duplicata(s) removida(s) automaticamente deste relatório`,PW/2,y+7,{align:'center'});
-      y+=14;
-    }
     // Gráfico 1: por dia (offscreen, funciona mesmo com tela oculta)
     const offChart=drawChartOffscreen(d.allStops,PW-28,35);
     if(offChart){
