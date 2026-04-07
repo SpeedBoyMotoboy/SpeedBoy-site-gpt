@@ -1493,7 +1493,7 @@ function quickAddStop(i){
     store:s.name,city:s.city,serviceType:'entrega',deliveryDate:'',
     complement:'',reference:'',timeFrom:'',timeTo:'',phone:'',
     value:s.taxa||0,paid:false,productValue:0,productPaid:false,
-    notes:'',done:false,_order:stops.length
+    notes:'',done:false,_order:stops.length,_addedDate:new Date().toLocaleDateString('pt-BR')
   });
   saveStops();
   toast('⚡ '+s.name+(s.taxa?' · '+fmtMoney(s.taxa):'')+' adicionada!','success');
@@ -1552,7 +1552,7 @@ function saveQuickPanel(){
   qs.forEach((s,i)=>{
     const count=_qCounts[i]||0;
     for(let j=0;j<count;j++){
-      stops.push({name:s.name,store:s.name,address:[s.rua,s.bairro,CITY_MAP[s.city]||s.city].filter(Boolean).join(', '),street:s.rua,neighborhood:s.bairro,city:s.city,value:s.taxa||0,paid:false,done:false,_order:stops.length,serviceType:'entrega'});
+      stops.push({name:s.name,store:s.name,address:[s.rua,s.bairro,CITY_MAP[s.city]||s.city].filter(Boolean).join(', '),street:s.rua,neighborhood:s.bairro,city:s.city,value:s.taxa||0,paid:false,done:false,_order:stops.length,serviceType:'entrega',_addedDate:new Date().toLocaleDateString('pt-BR')});
       added++;
     }
   });
@@ -1610,7 +1610,8 @@ function saveStop(){
     productPaid:  document.getElementById('fProductPaid').value==='1',
     notes:        document.getElementById('fNotes').value.trim(),
     done:         idx>=0 && idx<stops.length ? stops[idx].done : false,
-    _order:       idx>=0 && idx<stops.length ? (stops[idx]._order||idx) : stops.length
+    _order:       idx>=0 && idx<stops.length ? (stops[idx]._order||idx) : stops.length,
+    _addedDate:   idx>=0 && idx<stops.length ? (stops[idx]._addedDate||new Date().toLocaleDateString('pt-BR')) : new Date().toLocaleDateString('pt-BR')
   };
   if(idx>=0) stops[idx]=s; else stops.push(s);
   if(s.city && bairro) addCustomBairro(s.city, bairro);
@@ -1880,11 +1881,11 @@ function renderFinance(){
   const m1=new Date(now.getFullYear(),now.getMonth(),1);
   const r7=new Date(now); r7.setDate(now.getDate()-6); r7.setHours(0,0,0,0);
 
-  // Lista plana — usa deliveryDate como data efetiva se disponível
+  // Lista plana — usa _addedDate > deliveryDate > day.date como data efetiva
   const allDays=[{date:todayStr,stops},...history];
   const flatStops=[];
   allDays.forEach(day=>day.stops.forEach(s=>{
-    const effDate=s.deliveryDate||day.date;
+    const effDate=s.deliveryDate||(day===allDays[0]?(s._addedDate||day.date):day.date);
     flatStops.push({...s,_effDate:effDate});
   }));
   const tryDt=s=>{try{return parseDate(s._effDate);}catch(e){return new Date(0);}};
@@ -3256,7 +3257,7 @@ async function acceptPending(key){
   const btn=document.querySelector(`#pc_${key} .btn-accept`);
   if(btn){ if(btn.disabled)return; btn.disabled=true; }
   s.city=resolveCityCode(s.city||s.cityId||'');
-  s.status='confirmed'; s._order=stops.length; s.done=false;
+  s.status='confirmed'; s._order=stops.length; s.done=false; s._addedDate=new Date().toLocaleDateString('pt-BR');
   s._trackKey=key;
   stops.push(s);
   // Auto-taxa ARITANA
@@ -3344,7 +3345,17 @@ function deduplicateStops(){
 function checkNewDay(){
   const last=localStorage.getItem('sb_last_date');
   const today=new Date().toLocaleDateString('pt-BR');
-  if(last&&last!==today&&stops.length>0){saveToHistory(last);if(confirm(`Bom dia! 🌅 Você tem ${stops.length} parada(s) de ${last}. Deseja limpar para começar zerado?`)){stops=[];saveStops();}}
+  if(last&&last!==today&&stops.length>0){
+    // Salva todos no histórico do dia anterior
+    saveToHistory(last);
+    // Remove paradas já finalizadas — ficam no histórico
+    const pending=stops.filter(s=>!s.done);
+    const doneCount=stops.length-pending.length;
+    stops=pending;
+    saveStops();
+    if(doneCount>0) toast(`🌅 Novo dia! ${doneCount} entrega(s) de ${last} movidas para o histórico.`,'success');
+    if(pending.length>0) toast(`📋 ${pending.length} parada(s) pendente(s) de ${last} mantidas.`,'');
+  }
   localStorage.setItem('sb_last_date',today);
 }
 
