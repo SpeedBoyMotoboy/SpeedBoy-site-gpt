@@ -439,7 +439,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <!-- ROW 2: Loja (full) -->
     <div class="field-group">
       <div class="field-label">🏪 Loja de origem</div>
-      <select class="field-input" id="fStore" onchange="autoTaxaAritana()"><option value="">— Sem loja específica —</option></select>
+      <select class="field-input" id="fStore" onchange="autoTaxaAritana();autoTaxaKS()"><option value="">— Sem loja específica —</option></select>
     </div>
 
     <!-- ROW 3: Nome + Tipo -->
@@ -479,7 +479,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <div class="field-row">
       <div class="field-group">
         <div class="field-label">Cidade <span class="req">*</span></div>
-        <select class="field-input" id="fCity" onchange="onCityChange()">
+        <select class="field-input" id="fCity" onchange="onCityChange();autoTaxaKS()">
           <option value="">— Selecione —</option>
           <option value="SRR">Serra</option>
           <option value="VIX">Vitória</option>
@@ -1338,6 +1338,9 @@ function resolveCityCode(val){
 }
 function cityName(code){ return CITY_MAP[code]||code||''; }
 
+// ═══════════════ KS AUTO-TAXA POR CIDADE ═══════════════
+const KS_TAXAS_BY_CITY = { VIX:25, SRR:35, CCA:35, VV:35 };
+
 // ═══════════════ ARITANA AUTO-TAXA ═══════════════
 const ARITANA_TAXAS = {
   "araçás":20,"argolas":20,"aribiri":20,"ataíde":20,"boa vista":20,"brisamar":20,"cavalieri":20,"centro":20,"chácara do conde":20,"cocal":20,"coqueiral de itaparica":20,"cristóvão colombo":20,"darly santos":20,"divino espírito santo":20,"dom joão batista":20,"garoto":20,"glória":20,"guaranhuns":20,"ibes":20,"ilha da conceição":20,"ilha das flores":20,"ilha dos ayres":20,"ilha dos bentos":20,"itaparica":20,"itapuã":20,"jaburuna":20,"jardim asteca":20,"jardim colorado":20,"jardim guadalajara":20,"jardim guaranhuns":20,"jockey de itaparica":20,"nossa senhora da penha":20,"nova itaparica":20,"novo méxico":20,"olaria":20,"paul":20,"pedra dos búzios":20,"pontal das garças":20,"praia da costa":20,"praia das gaivotas":20,"praia de itaparica":20,"primeiro de maio":20,"residencial coqueiral":20,"sagrada família":20,"santa inês":20,"santa mônica":20,"santa mônica popular":20,"santa rita":20,"santos dumont":20,"soteco":20,"vila batista":20,"vila garrido":20,"vila guaranhuns":20,"vila nova":20,"vista da penha":20,"zumbi dos palmares":20,
@@ -1373,6 +1376,18 @@ function autoTaxaAritana(){
   if(!match)return;
   fValue.value=match.taxa.toFixed(2).replace('.',',');
   toast('🛵 Taxa ARITANA: R$ '+match.taxa+' — '+match.bairro,'success');
+}
+function autoTaxaKS(){
+  const store=(document.getElementById('fStore')?.value||'').toUpperCase();
+  if(store!=='KS')return;
+  const city=document.getElementById('fCity')?.value||'';
+  const code=resolveCityCode(city);
+  const fValue=document.getElementById('fValue');
+  if(!fValue||fValue.value)return;
+  const taxa=KS_TAXAS_BY_CITY[code];
+  if(!taxa)return;
+  fValue.value=taxa.toFixed(2).replace('.',',');
+  toast('🛵 Taxa KS: R$ '+taxa+' — '+cityName(code),'success');
 }
 
 // ═══════════════ QUICK STORES ═══════════════
@@ -2230,12 +2245,20 @@ function renderHistory(){
       const lt=lojaTotals[loja];
       const allPaid=lt.received>=lt.total&&lt.total>0;
       const pct=lt.total>0?Math.round(lt.received/lt.total*100):0;
-      html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;font-size:13px;">${loja}</div>
-          <div style="font-size:11px;color:var(--muted);">${lt.count} entrega${lt.count!==1?'s':''} · recebido ${fmtMoney(lt.received)} de ${fmtMoney(lt.total)} (${pct}%)</div>
+      const lojaEsc=loja.replace(/'/g,"\\'");
+      html+=`<div style="padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:13px;">${loja}</div>
+            <div style="font-size:11px;color:var(--muted);">${lt.count} entrega${lt.count!==1?'s':''} · recebido ${fmtMoney(lt.received)} de ${fmtMoney(lt.total)} (${pct}%)</div>
+          </div>
+          <button onclick="markStoreReceived('${lojaEsc}');event.stopPropagation();" style="padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:${allPaid?'var(--green)':'var(--accent)'};color:#fff;white-space:nowrap;">${allPaid?'✓ Pago':'Marcar pago'}</button>
         </div>
-        <button onclick="markStoreReceived('${loja.replace(/'/g,"\\'")}');event.stopPropagation();" style="padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:${allPaid?'var(--green)':'var(--accent)'};color:#fff;">${allPaid?'✓ Pago':'Marcar pago'}</button>
+        <div style="display:flex;gap:5px;">
+          <button id="fat7_${loja.replace(/\W/g,'')}" onclick="genFaturaLoja('${lojaEsc}','semana',document.getElementById('fat7_${loja.replace(/\W/g,'')}'));event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.35);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📄 7 dias</button>
+          <button id="fatM_${loja.replace(/\W/g,'')}" onclick="genFaturaLoja('${lojaEsc}','mes',document.getElementById('fatM_${loja.replace(/\W/g,'')}'));event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.35);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📄 Mês</button>
+          <button onclick="cobrancaWppLoja('${lojaEsc}');event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(37,211,102,.35);background:transparent;color:#25d366;font-size:11px;font-weight:700;cursor:pointer;">💬 Cobrar</button>
+        </div>
       </div>`;
     });
     html+=`</div>`;
@@ -2290,6 +2313,38 @@ function markDayReceived(di){
   const allPaid=history[di].stops.every(s=>parseMoney(s.value)===0||s.paid);
   history[di].stops.forEach(s=>{s.paid=!allPaid;});
   saveHistory();renderHistory();
+}
+
+function cobrancaWppLoja(storeName){
+  const cutoff30=new Date(); cutoff30.setDate(cutoff30.getDate()-30); cutoff30.setHours(0,0,0,0);
+  const recent=history.filter(d=>{try{return parseDate(d.date)>=cutoff30;}catch(e){return false;}});
+  const allStops=[];
+  recent.forEach(d=>d.stops.forEach(s=>{if(s.store===storeName)allStops.push({...s,_date:d.date});}));
+  if(!allStops.length){toast('Nenhuma entrega de '+storeName+' nos últimos 30 dias','error');return;}
+  const total=allStops.reduce((a,s)=>a+parseMoney(s.value),0);
+  const received=allStops.filter(s=>s.paid).reduce((a,s)=>a+parseMoney(s.value),0);
+  const pending=total-received;
+  const pendStops=allStops.filter(s=>!s.paid&&parseMoney(s.value)>0);
+  const dateRange=allStops.length?allStops[0]._date+' — '+allStops[allStops.length-1]._date:'';
+  let msg=`🛵 *SPEEDBOY — Cobrança ${storeName}*\n\n`;
+  msg+=`📅 Período: ${dateRange}\n`;
+  msg+=`📦 Entregas realizadas: ${allStops.length}\n`;
+  msg+=`💰 Total do período: *${fmtMoney(total)}*\n`;
+  if(received>0)msg+=`✅ Já recebido: ${fmtMoney(received)}\n`;
+  msg+=`⏳ *A receber: ${fmtMoney(pending)}*\n`;
+  if(pendStops.length){
+    msg+=`\nPendências:\n`;
+    pendStops.slice(0,10).forEach(s=>{ msg+=`• ${s._date} — ${s.name||'—'} — ${fmtMoney(parseMoney(s.value))}\n`; });
+    if(pendStops.length>10)msg+=`... e mais ${pendStops.length-10} entrega(s)\n`;
+  }
+  msg+=`\n📲 SpeedBoy Entregas`;
+  const storedPhone=localStorage.getItem('sb_wpp_loja_'+storeName)||'';
+  const phone=prompt('WhatsApp da loja '+storeName+' (ex: 27999999999):',storedPhone);
+  if(phone===null)return;
+  if(phone.trim())localStorage.setItem('sb_wpp_loja_'+storeName,phone.trim());
+  const digits=phone.replace(/\D/g,'');
+  const url=digits?`https://wa.me/55${digits}?text=${encodeURIComponent(msg)}`:`https://wa.me/?text=${encodeURIComponent(msg)}`;
+  window.open(url,'_blank');
 }
 
 function saveToHistory(date){
@@ -2625,6 +2680,93 @@ async function genPDF(){
   finally{btn.innerHTML='📄 Baixar PDF';btn.disabled=false;}
 }
 
+async function genFaturaLoja(storeName, periodo, btnEl){
+  if(btnEl){btnEl.disabled=true;const orig=btnEl.innerHTML;btnEl.innerHTML='⏳';setTimeout(()=>{btnEl.innerHTML=orig;btnEl.disabled=false;},8000);}
+  try{
+    if(!window.jsPDF){
+      await loadJS('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+      await loadJS('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+    }
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const PW=doc.internal.pageSize.getWidth();
+    const PH=doc.internal.pageSize.getHeight();
+    const now=new Date();
+    let cutoff, periodoLabel;
+    if(periodo==='semana'){
+      cutoff=new Date(now); cutoff.setDate(now.getDate()-7); cutoff.setHours(0,0,0,0);
+      periodoLabel='Últimos 7 dias';
+    } else {
+      cutoff=new Date(now.getFullYear(),now.getMonth(),1);
+      periodoLabel='Mês Atual ('+now.toLocaleString('pt-BR',{month:'long',year:'numeric'})+')';
+    }
+    const todayStr=now.toLocaleDateString('pt-BR');
+    const allDays=[{date:todayStr,stops},...history];
+    const seen={};
+    const fatStops=[];
+    allDays.forEach(day=>{
+      day.stops.forEach(s=>{
+        if((s.store||'')!==storeName)return;
+        const dDate=s.deliveryDate||day.date;
+        try{if(parseDate(dDate)<cutoff)return;}catch(e){return;}
+        const dk=s._trackKey?('tk_'+s._trackKey):('c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||'')+'|'+dDate);
+        if(seen[dk])return; seen[dk]=true;
+        fatStops.push({...s,_date:dDate});
+      });
+    });
+    if(!fatStops.length){ toast('Nenhuma entrega de '+storeName+' no período','error'); if(btnEl){btnEl.disabled=false;} return; }
+    fatStops.sort((a,b)=>{try{return parseDate(a._date)-parseDate(b._date);}catch(e){return 0;}});
+    const fTotal=fatStops.reduce((a,s)=>a+parseMoney(s.value),0);
+    const fReceived=fatStops.filter(s=>s.paid).reduce((a,s)=>a+parseMoney(s.value),0);
+    const fPending=fTotal-fReceived;
+    const dateRange=fatStops.length?fatStops[0]._date+' — '+fatStops[fatStops.length-1]._date:'';
+    const fatNum='FAT-'+storeName.replace(/\s/g,'').substring(0,6).toUpperCase()+'-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0');
+    const prestNome=cfg.prestNome||''; const prestPix=cfg.prestPix||'';
+    const emitDate=now.toLocaleString('pt-BR');
+    let y=0;
+    doc.setFillColor(8,8,12);doc.rect(0,0,PW,40,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(245,197,24);doc.text('SPEEDBOY',14,18);
+    doc.setFontSize(11);doc.setTextColor(255,255,255);doc.text('FATURA — '+storeName.toUpperCase(),14,28);
+    doc.setFontSize(8);doc.setTextColor(160,160,160);doc.text(periodoLabel,14,36);
+    doc.setFontSize(8);doc.setTextColor(245,197,24);doc.text(fatNum,PW-14,14,{align:'right'});
+    doc.setTextColor(130,130,130);doc.text(dateRange,PW-14,21,{align:'right'});
+    doc.text('Emitido: '+emitDate,PW-14,28,{align:'right'});
+    y=46;
+    if(prestNome||prestPix){
+      doc.setFillColor(18,18,24);doc.roundedRect(14,y,PW-28,18,3,3,'F');
+      doc.setFont('helvetica','bold');doc.setFontSize(8);
+      let lx=20;
+      if(prestNome){doc.setTextColor(245,197,24);doc.text(prestNome,lx,y+8);lx+=doc.getTextWidth(prestNome)+10;}
+      if(prestPix){doc.setTextColor(130,130,130);doc.text('PIX: ',lx,y+8);doc.setTextColor(0,230,118);doc.text(prestPix,lx+doc.getTextWidth('PIX: '),y+8);}
+      y+=24;
+    }
+    const boxes=[['ENTREGAS',fatStops.length+'',null],['TOTAL',fmtMoney(fTotal),null],['RECEBIDO',fmtMoney(fReceived),[0,200,100]],['A RECEBER',fmtMoney(fPending),fPending>0?[245,197,24]:[0,200,100]]];
+    const bw=(PW-28-9)/4; let bx=14;
+    boxes.forEach(([lbl,val,color])=>{
+      doc.setFillColor(18,18,24);doc.roundedRect(bx,y,bw,22,3,3,'F');
+      doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(120,120,120);doc.text(lbl,bx+bw/2,y+7,{align:'center'});
+      doc.setFont('helvetica','bold');doc.setFontSize(9);
+      if(color)doc.setTextColor(...color); else doc.setTextColor(220,220,220);
+      doc.text(val,bx+bw/2,y+16,{align:'center'});
+      bx+=bw+3;
+    });
+    y+=28;
+    const tableRows=fatStops.map((s,i)=>[i+1,s._date,(s.name||'—').substring(0,22),((s.street||s.neighborhood||s.address||'').substring(0,28)),cityName(resolveCityCode(s.city||s.cityId||'')),fmtMoney(parseMoney(s.value)),s.paid?'✓':'—']);
+    doc.autoTable({startY:y,head:[['Nº','Data','Cliente','Endereço','Cidade','Valor','Pago']],body:tableRows,theme:'plain',styles:{font:'helvetica',fontSize:7.5,textColor:[200,200,200],cellPadding:2.5,fillColor:[14,14,20]},headStyles:{fillColor:[30,30,36],textColor:[245,197,24],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[10,10,16]},columnStyles:{0:{cellWidth:7,halign:'center'},1:{cellWidth:20},5:{cellWidth:18,halign:'right'},6:{cellWidth:10,halign:'center'}},margin:{left:14,right:14},didDrawPage:()=>{const pg=doc.internal.getCurrentPageInfo().pageNumber;const tp=doc.internal.getNumberOfPages();doc.setFillColor(14,14,20);doc.rect(0,PH-12,PW,12,'F');doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text('SPEEDBOY · Fatura '+fatNum+' · Gerado em '+emitDate,14,PH-5);doc.text(pg+'/'+tp,PW-14,PH-5,{align:'right'});}});
+    const lastY=doc.lastAutoTable.finalY+8;
+    const footH=prestPix?24:16;
+    if(lastY+footH<PH-20){
+      doc.setFillColor(8,30,8);doc.roundedRect(14,lastY,PW-28,footH,3,3,'F');
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(0,230,118);
+      doc.text('TOTAL A RECEBER: '+fmtMoney(fPending),PW/2,lastY+9,{align:'center'});
+      if(prestPix){doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(160,160,160);doc.text('PIX: '+prestPix+(prestNome?' — '+prestNome:''),PW/2,lastY+18,{align:'center'});}
+    }
+    const fileDate=todayStr.replace(/\//g,'-');
+    doc.save(`fatura_${storeName.replace(/\s/g,'_')}_${periodo}_${fileDate}.pdf`);
+    toast('✅ Fatura '+storeName+' gerada!','success');
+  }catch(e){console.error(e);toast('Erro: '+e.message,'error');}
+  finally{if(btnEl){btnEl.disabled=false;}}
+}
 
 // ═══════════════════════════════════════════════════════
 //  REPASSAR ENTREGAS
@@ -2993,6 +3135,12 @@ async function acceptPending(key){
   if((s.store||'').toUpperCase()==='ARITANA'&&!s.value){
     const match=detectarTaxaAritana(s.address||'');
     if(match){s.value=match.taxa;toast('💰 Taxa ARITANA: R$ '+match.taxa+' — '+match.bairro,'success');}
+  }
+  // Auto-taxa KS por cidade
+  if((s.store||'').toUpperCase()==='KS'&&!s.value){
+    const _kscode=resolveCityCode(s.city||s.cityId||'');
+    const _kstaxa=KS_TAXAS_BY_CITY[_kscode];
+    if(_kstaxa){s.value=_kstaxa;toast('💰 Taxa KS: R$ '+_kstaxa+' — '+cityName(_kscode),'success');}
   }
   saveStops();
   await rmPending(key);
