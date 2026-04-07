@@ -683,15 +683,6 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   </div>
 </div>
 
-<!-- ══ LINKS ══ -->
-<div class="screen" id="linkgenScreen">
-  <div class="links-body">
-    <div class="section-title">🔗 Links das Lojas</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">Gere um link por loja. Mande pelo WhatsApp — elas abrem e fazem pedidos sem configurar nada.</div>
-    <div id="linksList"></div>
-    <button class="btn-new-link" onclick="genLink()">🔗 Gerar link para nova loja</button>
-  </div>
-</div>
 
 
 
@@ -918,7 +909,6 @@ function goNav(screenId, navId) {
   if(screenId==='financeScreen') renderFinance();
   if(screenId==='historyScreen') { histSel={}; renderHistory(); }
   if(screenId==='reportScreen')  renderReport();
-  if(screenId==='linkgenScreen') renderLinks();
   if(screenId==='repassScreen')  renderRepassList();
   if(screenId==='configScreen')  loadConfig();
 }
@@ -3053,6 +3043,7 @@ function loadConfig(){
   document.getElementById('cfgRoom').value=room;
   renderStores();
   renderQuickStoresConfig();
+  renderLinks();
 }
 function saveConfig(){
   cfg.origin=document.getElementById('cfgOrigin').value.trim();
