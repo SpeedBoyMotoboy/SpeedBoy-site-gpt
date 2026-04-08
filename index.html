@@ -2306,6 +2306,9 @@ function renderHistory(){
     if(!lojaTotals[loja].days.includes(d.date))lojaTotals[loja].days.push(d.date);
   }));
   const lojas=Object.keys(lojaTotals).sort((a,b)=>lojaTotals[b].total-lojaTotals[a].total);
+  const _now=new Date();
+  const _fatDeDefault=new Date(_now.getFullYear(),_now.getMonth(),1).toISOString().slice(0,10);
+  const _fatAteDefault=_now.toISOString().slice(0,10);
 
   let html='';
   if(lojas.length){
@@ -2315,6 +2318,7 @@ function renderHistory(){
       const allPaid=lt.received>=lt.total&&lt.total>0;
       const pct=lt.total>0?Math.round(lt.received/lt.total*100):0;
       const lojaEsc=loja.replace(/'/g,"\\'");
+      const lojaId=loja.replace(/\W/g,'');
       html+=`<div style="padding:8px 0;border-bottom:1px solid var(--border);">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
           <div style="flex:1;min-width:0;">
@@ -2323,10 +2327,13 @@ function renderHistory(){
           </div>
           <button onclick="markStoreReceived('${lojaEsc}');event.stopPropagation();" style="padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:${allPaid?'var(--green)':'var(--accent)'};color:#fff;white-space:nowrap;">${allPaid?'✓ Pago':'Marcar pago'}</button>
         </div>
+        <div style="display:flex;gap:4px;align-items:center;margin-bottom:4px;">
+          <input type="date" id="fatDe_${lojaId}" value="${_fatDeDefault}" onclick="event.stopPropagation();" style="flex:1;min-width:0;background:transparent;border:1.5px solid #e53935;border-radius:8px;padding:5px 4px;color:#ef5350;font-size:10px;font-family:'Barlow',sans-serif;font-weight:700;cursor:pointer;">
+          <span style="color:var(--muted);font-size:10px;flex-shrink:0;">→</span>
+          <input type="date" id="fatAte_${lojaId}" value="${_fatAteDefault}" onclick="event.stopPropagation();" style="flex:1;min-width:0;background:transparent;border:1.5px solid #e53935;border-radius:8px;padding:5px 4px;color:#ef5350;font-size:10px;font-family:'Barlow',sans-serif;font-weight:700;cursor:pointer;">
+          <button onclick="genFaturaLojaRange('${lojaEsc}','${lojaId}');event.stopPropagation();" style="padding:5px 10px;border-radius:8px;border:none;background:#111;color:#fff;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">📄 Gerar PDF</button>
+        </div>
         <div style="display:flex;gap:5px;">
-          <button id="fat7_${loja.replace(/\W/g,'')}" onclick="genFaturaLoja('${lojaEsc}','semana',document.getElementById('fat7_${loja.replace(/\W/g,'')}'));event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.35);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📄 7d</button>
-          <button id="fatM_${loja.replace(/\W/g,'')}" onclick="genFaturaLoja('${lojaEsc}','mes',document.getElementById('fatM_${loja.replace(/\W/g,'')}'));event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.35);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📄 Mês</button>
-          <button onclick="openFatModal('${lojaEsc}');event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.55);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📅 Data</button>
           <button onclick="cobrancaWppLoja('${lojaEsc}');event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(37,211,102,.35);background:transparent;color:#25d366;font-size:11px;font-weight:700;cursor:pointer;">💬 Cobrar</button>
           <button onclick="selectStoreHist('${lojaEsc}');event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(100,100,100,.3);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;">☑️ Selec.</button>
         </div>
@@ -2857,6 +2864,15 @@ async function genFaturaLoja(storeName, periodo, btnEl){
     toast('✅ Fatura '+storeName+' gerada!','success');
   }catch(e){console.error(e);toast('Erro: '+e.message,'error');}
   finally{if(btnEl){btnEl.disabled=false;}}
+}
+
+// ── Gerar fatura com datas inline ──
+function genFaturaLojaRange(storeName, lojaId){
+  const from=document.getElementById('fatDe_'+lojaId)?.value;
+  const to=document.getElementById('fatAte_'+lojaId)?.value;
+  if(!from||!to){toast('Selecione as datas','error');return;}
+  if(from>to){toast('Data inicial deve ser antes da final','error');return;}
+  genFaturaLoja(storeName,{from,to});
 }
 
 // ── Modal de período customizado para fatura ──
