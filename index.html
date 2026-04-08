@@ -1094,7 +1094,6 @@ function renderHome(){
             ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togPaid(${i})">${s.paid?'💸 Ok':'💰 Paga?'}</button>`:''}
             ${s.productValue>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''}" onclick="togProductPaid(${i})">${s.productPaid?'✅ Ok':'💳 Cobrar'}</button>`:''}
             <button class="btn-act ba-edit" onclick="goForm(${i})">✏️ Editar</button>
-            ${s._trackKey?`<button class="btn-act" onclick="sendTrackingLink(${i})" style="background:var(--card2);color:var(--blue);border:1px solid var(--blue);">📍 Rastreio</button>`:''}
             <button class="btn-act ba-del"  onclick="delStop(${i})">🗑️ Remover</button>
           </div>
         </div>
@@ -1250,19 +1249,6 @@ function togDone(i){
   if(stops[i]._trackKey) updateTracking(stops[i]._trackKey, stops[i].done?'entregue':'aceito');
 }
 
-function sendTrackingLink(i){
-  const s=stops[i];
-  if(!s._trackKey){toast('Este pedido não tem rastreio disponível','error');return;}
-  const room=localStorage.getItem('sb_room_code')||'';
-  const base=window.location.href.replace(/\/[^/?#]*(\?.*)?$/,'/rastreio.html');
-  const link=`${base}?room=${encodeURIComponent(room)}&key=${encodeURIComponent(s._trackKey)}`;
-  const msg=`📦 Olá ${s.name||''}! Rastreie sua entrega em tempo real pelo link abaixo:\n\n${link}\n\n🛵 SPEEDBOY Entregas`;
-  if(s.phone){
-    window.open(`https://wa.me/55${s.phone}?text=${encodeURIComponent(msg)}`,'_blank');
-  }else{
-    navigator.clipboard?.writeText(link).then(()=>toast('📋 Link de rastreio copiado!','success')).catch(()=>toast('Link: '+link,''));
-  }
-}
 function togPaid(i)        { stops[i].paid=!stops[i].paid; saveStops(); renderHome(); }
 function togProductPaid(i) { stops[i].productPaid=!stops[i].productPaid; saveStops(); renderHome(); }
 function delStop(i){ if(!confirm(`Remover ${stops[i].name}?`))return; stops.splice(i,1); saveStops(); renderHome(); }
