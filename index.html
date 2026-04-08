@@ -2324,8 +2324,9 @@ function renderHistory(){
           <button onclick="markStoreReceived('${lojaEsc}');event.stopPropagation();" style="padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:${allPaid?'var(--green)':'var(--accent)'};color:#fff;white-space:nowrap;">${allPaid?'✓ Pago':'Marcar pago'}</button>
         </div>
         <div style="display:flex;gap:5px;">
-          <button id="fat7_${loja.replace(/\W/g,'')}" onclick="genFaturaLoja('${lojaEsc}','semana',document.getElementById('fat7_${loja.replace(/\W/g,'')}'));event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.35);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📄 7 dias</button>
+          <button id="fat7_${loja.replace(/\W/g,'')}" onclick="genFaturaLoja('${lojaEsc}','semana',document.getElementById('fat7_${loja.replace(/\W/g,'')}'));event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.35);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📄 7d</button>
           <button id="fatM_${loja.replace(/\W/g,'')}" onclick="genFaturaLoja('${lojaEsc}','mes',document.getElementById('fatM_${loja.replace(/\W/g,'')}'));event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.35);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📄 Mês</button>
+          <button onclick="openFatModal('${lojaEsc}');event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.55);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📅 Data</button>
           <button onclick="cobrancaWppLoja('${lojaEsc}');event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(37,211,102,.35);background:transparent;color:#25d366;font-size:11px;font-weight:700;cursor:pointer;">💬 Cobrar</button>
           <button onclick="selectStoreHist('${lojaEsc}');event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(100,100,100,.3);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;">☑️ Selec.</button>
         </div>
@@ -2728,10 +2729,15 @@ async function genFaturaLoja(storeName, periodo, btnEl){
 
     // ── Período ──
     const now=new Date();
-    let cutoff, periodoLabel;
+    let cutoff, toDate=null, periodoLabel;
     if(periodo==='semana'){
       cutoff=new Date(now); cutoff.setDate(now.getDate()-7); cutoff.setHours(0,0,0,0);
       periodoLabel='Últimos 7 dias';
+    } else if(typeof periodo==='object'&&periodo.from){
+      cutoff=new Date(periodo.from+'T00:00:00');
+      toDate=new Date(periodo.to+'T23:59:59');
+      const fmt=d=>d.split('-').reverse().join('/');
+      periodoLabel=fmt(periodo.from)+' — '+fmt(periodo.to);
     } else {
       cutoff=new Date(now.getFullYear(),now.getMonth(),1);
       periodoLabel='Mês Atual ('+now.toLocaleString('pt-BR',{month:'long',year:'numeric'})+')';
@@ -2745,7 +2751,11 @@ async function genFaturaLoja(storeName, periodo, btnEl){
       day.stops.forEach(s=>{
         if((s.store||'')!==storeName)return;
         const dDate=s.deliveryDate||day.date;
-        try{if(parseDate(dDate)<cutoff)return;}catch(e){return;}
+        try{
+          const d=parseDate(dDate);
+          if(d<cutoff)return;
+          if(toDate&&d>toDate)return;
+        }catch(e){return;}
         fatStops.push({...s,_date:dDate});
       });
     });
@@ -2847,6 +2857,32 @@ async function genFaturaLoja(storeName, periodo, btnEl){
     toast('✅ Fatura '+storeName+' gerada!','success');
   }catch(e){console.error(e);toast('Erro: '+e.message,'error');}
   finally{if(btnEl){btnEl.disabled=false;}}
+}
+
+// ── Modal de período customizado para fatura ──
+let _fatModalStore=null;
+function openFatModal(storeName){
+  _fatModalStore=storeName;
+  document.getElementById('fatModalLoja').textContent='Loja: '+storeName;
+  const now=new Date();
+  const first=new Date(now.getFullYear(),now.getMonth(),1);
+  const toISO=d=>d.toISOString().slice(0,10);
+  document.getElementById('fatFrom').value=toISO(first);
+  document.getElementById('fatTo').value=toISO(now);
+  const el=document.getElementById('fatModalOverlay');
+  el.style.display='flex';
+}
+function closeFatModal(){
+  document.getElementById('fatModalOverlay').style.display='none';
+  _fatModalStore=null;
+}
+function confirmFatModal(){
+  const from=document.getElementById('fatFrom').value;
+  const to=document.getElementById('fatTo').value;
+  if(!from||!to){toast('Selecione as datas','error');return;}
+  if(from>to){toast('Data inicial deve ser antes da final','error');return;}
+  closeFatModal();
+  genFaturaLoja(_fatModalStore,{from,to});
 }
 
 function cobrancaWppLoja(storeName){
@@ -3452,5 +3488,28 @@ if(localStorage.getItem('sb_theme')==='light'){
   document.getElementById('themeToggleBtn').textContent='🌙';
 }
 </script>
+
+<!-- Modal: Fatura por período customizado -->
+<div id="fatModalOverlay" onclick="if(event.target===this)closeFatModal();" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.78);align-items:center;justify-content:center;">
+  <div style="background:var(--card);border-radius:18px;padding:22px 20px;width:calc(100% - 36px);max-width:340px;box-shadow:0 10px 48px rgba(0,0,0,.6);">
+    <div style="font-weight:800;font-size:15px;margin-bottom:4px;color:var(--accent);">📅 Fatura por período</div>
+    <div id="fatModalLoja" style="font-size:12px;color:var(--muted);margin-bottom:16px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px;">De</div>
+        <input type="date" id="fatFrom" style="width:100%;box-sizing:border-box;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:9px 8px;color:var(--fg);font-size:14px;font-family:'Barlow',sans-serif;">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px;">Até</div>
+        <input type="date" id="fatTo" style="width:100%;box-sizing:border-box;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:9px 8px;color:var(--fg);font-size:14px;font-family:'Barlow',sans-serif;">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="closeFatModal()" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;">Cancelar</button>
+      <button onclick="confirmFatModal()" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--accent);color:#000;font-size:15px;font-weight:800;cursor:pointer;">📄 Gerar PDF</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
