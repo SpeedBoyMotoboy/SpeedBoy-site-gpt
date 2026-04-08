@@ -743,9 +743,11 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <input type="hidden" id="cfgWpp" />
     <div class="cfg-section">
       <div class="cfg-title">🔗 Links das Lojas</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Gere um link por loja para clientes fazerem pedidos.</div>
-      <div id="linksList"></div>
-      <button class="btn-new-link" onclick="genLink()" style="width:100%;margin-top:6px;">🔗 Gerar link para nova loja</button>
+      <div id="linksList" style="display:none;margin-bottom:6px;"></div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-new-link" onclick="genLink()" style="flex:1;margin-top:0;">🔗 Gerar nova loja</button>
+        <button class="btn-new-link" id="btnVerLinks" onclick="toggleLinksList()" style="flex:1;margin-top:0;background:var(--card2);color:var(--accent);border:1px solid var(--accent);">📋 Ver links</button>
+      </div>
     </div>
     <div class="cfg-section">
       <div class="cfg-title">🏬 Minhas lojas</div>
@@ -2738,15 +2740,12 @@ async function genFaturaLoja(storeName, periodo, btnEl){
 
     // ── Coletar paradas ──
     const allDays=[{date:todayStr,stops},...history];
-    const seen={};
     const fatStops=[];
     allDays.forEach(day=>{
       day.stops.forEach(s=>{
         if((s.store||'')!==storeName)return;
         const dDate=s.deliveryDate||day.date;
         try{if(parseDate(dDate)<cutoff)return;}catch(e){return;}
-        const dk=s._trackKey?('tk_'+s._trackKey):('c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||'')+'|'+dDate);
-        if(seen[dk])return; seen[dk]=true;
         fatStops.push({...s,_date:dDate});
       });
     });
@@ -2760,92 +2759,88 @@ async function genFaturaLoja(storeName, periodo, btnEl){
     const dateRange=fatStops.length?fatStops[0]._date+' — '+fatStops[fatStops.length-1]._date:'';
 
     const fatNum='FAT-'+storeName.replace(/\s/g,'').substring(0,6).toUpperCase()+'-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0');
-    const prestNome=cfg.prestNome||'';
     const prestPix=cfg.prestPix||'';
-    const emitDate=now.toLocaleString('pt-BR');
+    const emitDate=now.toLocaleDateString('pt-BR');
+
+    // ── Dimensões fixas das seções ──
+    const HEADER_H=30, BOXES_H=24, FOOT_H=22;
+    // Calcular font size para caber em 1 página
+    const tableAvail=PH - HEADER_H - BOXES_H - FOOT_H - 8/*head row*/ - 12/*margens top+bot*/;
+    const n=fatStops.length;
+    let fontSize=8, cellPad=2.2;
+    if(n>35){fontSize=7;cellPad=1.8;}
+    if(n>50){fontSize=6;cellPad=1.4;}
+    if(n>70){fontSize=5.5;cellPad=1.2;}
 
     // ── CABEÇALHO ──
-    let y=0;
-    doc.setFillColor(8,8,12);doc.rect(0,0,PW,40,'F');
-    doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(245,197,24);doc.text('SPEEDBOY',14,18);
-    doc.setFontSize(11);doc.setTextColor(255,255,255);doc.text('FATURA — '+storeName.toUpperCase(),14,28);
-    doc.setFontSize(8);doc.setTextColor(160,160,160);doc.text(periodoLabel,14,36);
-    doc.setFontSize(8);doc.setTextColor(245,197,24);doc.text(fatNum,PW-14,14,{align:'right'});
-    doc.setTextColor(130,130,130);doc.text(dateRange,PW-14,21,{align:'right'});
-    doc.text('Emitido: '+emitDate,PW-14,28,{align:'right'});
-    y=46;
-
-    // ── Prestador info ──
-    if(prestNome||prestPix){
-      doc.setFillColor(18,18,24);doc.roundedRect(14,y,PW-28,18,3,3,'F');
-      doc.setFont('helvetica','bold');doc.setFontSize(8);
-      let lx=20;
-      if(prestNome){doc.setTextColor(245,197,24);doc.text(prestNome,lx,y+8);lx+=doc.getTextWidth(prestNome)+10;}
-      if(prestPix){doc.setTextColor(130,130,130);doc.text('PIX: ',lx,y+8);doc.setTextColor(0,230,118);doc.text(prestPix,lx+doc.getTextWidth('PIX: '),y+8);}
-      y+=24;
-    }
+    doc.setFillColor(8,8,12);doc.rect(0,0,PW,HEADER_H,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(17);doc.setTextColor(245,197,24);doc.text('SPEEDBOY',14,13);
+    doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text('FATURA — '+storeName.toUpperCase(),14,21);
+    doc.setFontSize(7);doc.setTextColor(160,160,160);doc.text(periodoLabel,14,27);
+    doc.setFontSize(7);doc.setTextColor(245,197,24);doc.text(fatNum,PW-14,10,{align:'right'});
+    doc.setTextColor(130,130,130);doc.text(dateRange,PW-14,17,{align:'right'});
+    doc.text('Emitido: '+emitDate,PW-14,24,{align:'right'});
 
     // ── 4 Boxes de resumo ──
+    let y=HEADER_H+2;
     const boxes=[
-      ['ENTREGAS',fatStops.length+'','',null],
-      ['TOTAL',fmtMoney(fTotal),'',null],
-      ['RECEBIDO',fmtMoney(fReceived),'',[0,200,100]],
-      ['A RECEBER',fmtMoney(fPending),'',fPending>0?[245,197,24]:[0,200,100]],
+      ['ENTREGAS',String(fatStops.length),null],
+      ['TOTAL',fmtMoney(fTotal),null],
+      ['RECEBIDO',fmtMoney(fReceived),[0,200,100]],
+      ['A RECEBER',fmtMoney(fPending),fPending>0?[245,197,24]:[0,200,100]],
     ];
     const bw=(PW-28-9)/4; let bx=14;
-    boxes.forEach(([lbl,val,,color])=>{
-      doc.setFillColor(18,18,24);doc.roundedRect(bx,y,bw,22,3,3,'F');
-      doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(120,120,120);doc.text(lbl,bx+bw/2,y+7,{align:'center'});
-      doc.setFont('helvetica','bold');doc.setFontSize(9);
+    boxes.forEach(([lbl,val,color])=>{
+      doc.setFillColor(18,18,24);doc.roundedRect(bx,y,bw,BOXES_H-2,3,3,'F');
+      doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(120,120,120);doc.text(lbl,bx+bw/2,y+7,{align:'center'});
+      doc.setFont('helvetica','bold');doc.setFontSize(8.5);
       if(color)doc.setTextColor(...color); else doc.setTextColor(220,220,220);
       doc.text(val,bx+bw/2,y+16,{align:'center'});
       bx+=bw+3;
     });
-    y+=28;
+    y+=BOXES_H;
 
-    // ── Tabela de entregas ──
+    // ── Tabela de entregas — colunas: Nº, Cliente, Cidade, Bairro, Data, Valor ──
     const tableRows=fatStops.map((s,i)=>[
       i+1,
-      s._date,
-      (s.name||'—').substring(0,22),
-      ((s.street||s.neighborhood||s.address||'').substring(0,28)),
+      (s.name||'—').substring(0,26),
       cityName(resolveCityCode(s.city||s.cityId||'')),
+      (s.neighborhood||s.street||s.address||'—').substring(0,22),
+      s._date,
       fmtMoney(parseMoney(s.value)),
-      s.paid?'✓':'—'
     ]);
+
     doc.autoTable({
       startY:y,
-      head:[['Nº','Data','Cliente','Endereço','Cidade','Valor','Pago']],
+      head:[['Nº','Nome do cliente','Cidade','Bairro','Data','Valor']],
       body:tableRows,
       theme:'plain',
-      styles:{font:'helvetica',fontSize:7.5,textColor:[200,200,200],cellPadding:2.5,fillColor:[14,14,20]},
-      headStyles:{fillColor:[30,30,36],textColor:[245,197,24],fontStyle:'bold',fontSize:7.5},
+      styles:{font:'helvetica',fontSize,textColor:[200,200,200],cellPadding:cellPad,fillColor:[14,14,20]},
+      headStyles:{fillColor:[30,30,36],textColor:[245,197,24],fontStyle:'bold',fontSize},
       alternateRowStyles:{fillColor:[10,10,16]},
-      columnStyles:{0:{cellWidth:7,halign:'center'},1:{cellWidth:20},5:{cellWidth:18,halign:'right'},6:{cellWidth:10,halign:'center'}},
+      columnStyles:{
+        0:{cellWidth:8,halign:'center'},
+        1:{}, // auto
+        2:{cellWidth:24},
+        3:{}, // auto
+        4:{cellWidth:20},
+        5:{cellWidth:20,halign:'right'},
+      },
       margin:{left:14,right:14},
-      didDrawPage:(data)=>{
-        // Footer em cada página
-        const pg=doc.internal.getCurrentPageInfo().pageNumber;
-        const tp=doc.internal.getNumberOfPages();
-        doc.setFillColor(14,14,20);doc.rect(0,PH-12,PW,12,'F');
-        doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(80,80,80);
-        doc.text('SPEEDBOY · Fatura '+fatNum+' · Gerado em '+emitDate,14,PH-5);
-        doc.text(pg+'/'+tp,PW-14,PH-5,{align:'right'});
-      }
+      pageBreak:'avoid',
     });
 
-    // ── Rodapé de cobrança ──
-    const lastY=doc.lastAutoTable.finalY+8;
-    const footH=prestPix?24:16;
-    if(lastY+footH<PH-20){
-      doc.setFillColor(8,30,8);doc.roundedRect(14,lastY,PW-28,footH,3,3,'F');
-      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(0,230,118);
-      doc.text('TOTAL A RECEBER: '+fmtMoney(fPending),PW/2,lastY+9,{align:'center'});
-      if(prestPix){
-        doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(160,160,160);
-        doc.text('PIX: '+prestPix+(prestNome?' — '+prestNome:''),PW/2,lastY+18,{align:'center'});
-      }
-    }
+    // ── Rodapé de pagamento (hardcoded) ──
+    const lastY=doc.lastAutoTable.finalY+4;
+    const footY=Math.min(lastY, PH-FOOT_H-4);
+    const pixPart=prestPix?'PIX: '+prestPix+' · ':'';
+    const footText=pixPart+'CNPJ: 46.178.859/0001-96 · Luan Vieira Dias · Banco Inter';
+
+    doc.setFillColor(8,30,8);doc.roundedRect(14,footY,PW-28,FOOT_H,3,3,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(0,230,118);
+    doc.text('TOTAL A RECEBER: '+fmtMoney(fPending),PW/2,footY+9,{align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(160,160,160);
+    doc.text(footText,PW/2,footY+17,{align:'center'});
 
     const fileDate=todayStr.replace(/\//g,'-');
     doc.save(`fatura_${storeName.replace(/\s/g,'_')}_${periodo}_${fileDate}.pdf`);
@@ -2996,14 +2991,20 @@ function genLink(){
   const link=buildLink(name.trim());
   const links=getLinks();
   links.push({name:name.trim(),link,date:new Date().toLocaleDateString('pt-BR')});
-  saveLinks(links); renderLinks();
+  saveLinks(links);
+  const el=document.getElementById('linksList');
+  if(el) el.style.display='';
+  renderLinks();
   toast('✅ Link da '+name.trim()+' gerado!','success');
 }
 
 function renderLinks(){
   const list=document.getElementById('linksList');
   const links=getLinks();
-  if(!links.length){ list.innerHTML=`<div class="links-empty">Nenhum link gerado ainda.<br>Toque em "Gerar link" abaixo e mande pelo WhatsApp da loja! 🚀</div>`; return; }
+  const btn=document.getElementById('btnVerLinks');
+  if(btn) btn.innerHTML='📋 Ver links ('+links.length+')';
+  if(!list)return;
+  if(!links.length){ list.innerHTML=`<div class="links-empty">Nenhum link gerado ainda.<br>Toque em "Gerar nova loja" e mande pelo WhatsApp! 🚀</div>`; return; }
   list.innerHTML=links.map((l,i)=>`
     <div class="link-card">
       <div style="display:flex;align-items:center;justify-content:space-between;"><div class="link-name">🏪 ${l.name}</div><div class="link-date">Criado ${l.date}</div></div>
@@ -3014,6 +3015,17 @@ function renderLinks(){
         <button class="btn-del-link"  onclick="delLink(${i})">🗑️</button>
       </div>
     </div>`).join('');
+}
+
+function toggleLinksList(){
+  const el=document.getElementById('linksList');
+  const btn=document.getElementById('btnVerLinks');
+  const links=getLinks();
+  if(!el)return;
+  const visible=el.style.display!=='none';
+  el.style.display=visible?'none':'';
+  if(!visible) renderLinks();
+  if(btn) btn.innerHTML='📋 '+(visible?'Ver':'Ocultar')+' links ('+links.length+')';
 }
 
 function copyLink(i){ const l=getLinks()[i]?.link; if(!l)return; navigator.clipboard?.writeText(l).then(()=>toast('📋 Link copiado!','success')).catch(()=>toast('Link: '+l,'success')); }
