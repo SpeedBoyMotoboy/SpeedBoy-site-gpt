@@ -753,7 +753,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
     <div class="cfg-section">
       <div class="cfg-title">🔗 Links das Lojas</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Gere um link por loja para clientes fazerem pedidos.</div>
-      <div id="linksList"></div>
+      <div id="linksListCfg"></div>
       <button class="btn-new-link" onclick="genLink()" style="width:100%;margin-top:6px;">🔗 Gerar link para nova loja</button>
     </div>
     <div class="cfg-section">
@@ -781,6 +781,13 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       </div>
       <div id="fbJoinRow" class="fb-join-row"><input class="finput" id="cfgRoom" placeholder="SB-XXXX" style="letter-spacing:2px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;" /><button class="btn-join" onclick="joinRoom()">Entrar</button></div>
       <div class="fb-status"><div class="sync-dot" id="cfgSyncDot"></div><span id="cfgSyncLbl">Firebase não configurado</span></div>
+    </div>
+    <div class="cfg-section">
+      <div class="cfg-title">💸 Dados para recebimento (PIX)</div>
+      <div class="info-box">Exibidos nas faturas PDF enviadas às lojas.</div>
+      <div class="field"><div class="flabel">Seu nome / empresa</div><input class="finput" id="cfgPrestNome" placeholder="Ex: João Motoboy" maxlength="50" /></div>
+      <div class="field"><div class="flabel">Chave PIX</div><input class="finput" id="cfgPrestPix" placeholder="CPF, e-mail, telefone ou chave aleatória" maxlength="80" /></div>
+      <div class="field"><div class="flabel">Telefone (opcional)</div><input class="finput" id="cfgPrestTel" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" /></div>
     </div>
     <button class="btn-cfg-save" onclick="saveConfig()">💾 Salvar configurações</button>
     <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
@@ -915,7 +922,7 @@ function goNav(screenId, navId) {
   window.scrollTo(0,0);
   // render hooks
   if(screenId==='homeScreen')    renderHome();
-  if(screenId==='financeScreen') renderFinance();
+  if(screenId==='financeScreen') { checkNewDay(); renderFinance(); }
   if(screenId==='historyScreen') { histSel={}; renderHistory(); }
   if(screenId==='reportScreen')  renderReport();
   if(screenId==='linkgenScreen') renderLinks();
@@ -2331,9 +2338,10 @@ function renderHistory(){
           </div>
           <button onclick="markStoreReceived('${lojaEsc}');event.stopPropagation();" style="padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:${allPaid?'var(--green)':'var(--accent)'};color:#fff;white-space:nowrap;">${allPaid?'✓ Pago':'Marcar pago'}</button>
         </div>
-        <div style="display:flex;gap:5px;">
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
           <button id="fat7_${loja.replace(/\W/g,'')}" onclick="genFaturaLoja('${lojaEsc}','semana',document.getElementById('fat7_${loja.replace(/\W/g,'')}'));event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.35);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📄 7 dias</button>
           <button id="fatM_${loja.replace(/\W/g,'')}" onclick="genFaturaLoja('${lojaEsc}','mes',document.getElementById('fatM_${loja.replace(/\W/g,'')}'));event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.35);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📄 Mês</button>
+          <button onclick="abrirFaturaPersonalizada('${lojaEsc}');event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(245,197,24,.35);background:transparent;color:#f5c518;font-size:11px;font-weight:700;cursor:pointer;">📅 Período</button>
           <button onclick="cobrancaWppLoja('${lojaEsc}');event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(37,211,102,.35);background:transparent;color:#25d366;font-size:11px;font-weight:700;cursor:pointer;">💬 Cobrar</button>
           <button onclick="selectStoreHist('${lojaEsc}');event.stopPropagation();" style="flex:1;padding:5px 0;border-radius:8px;border:1px solid rgba(100,100,100,.3);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;">☑️ Selec.</button>
         </div>
@@ -2719,10 +2727,38 @@ async function genPDF(){
   finally{btn.innerHTML='📄 Baixar PDF';btn.disabled=false;}
 }
 
+function abrirFaturaPersonalizada(storeName){
+  const hoje=new Date();
+  const fmtISO=d=>d.toISOString().slice(0,10);
+  const ini=new Date(hoje); ini.setDate(hoje.getDate()-30);
+  const ov=document.createElement('div');
+  ov.id='_fatModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;width:100%;max-width:340px;">
+    <div style="font-weight:800;font-size:16px;margin-bottom:4px;">📅 Período personalizado</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Loja: <strong>${storeName}</strong></div>
+    <div class="field" style="margin-bottom:10px;"><div class="flabel">Data inicial</div><input type="date" id="_fatIni" class="finput" value="${fmtISO(ini)}" /></div>
+    <div class="field" style="margin-bottom:18px;"><div class="flabel">Data final</div><input type="date" id="_fatFim" class="finput" value="${fmtISO(hoje)}" /></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="document.getElementById('_fatModal').remove()" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-weight:700;font-size:14px;cursor:pointer;">Cancelar</button>
+      <button id="_fatOkBtn" style="flex:2;padding:11px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:800;font-size:14px;cursor:pointer;">📄 Gerar PDF</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  document.getElementById('_fatOkBtn').onclick=function(){
+    const di=document.getElementById('_fatIni').value;
+    const df=document.getElementById('_fatFim').value;
+    if(!di||!df){toast('Selecione as duas datas','error');return;}
+    if(di>df){toast('Data inicial deve ser antes da final','error');return;}
+    ov.remove();
+    genFaturaLoja(storeName,'custom',null,{dataInicio:di,dataFim:df});
+  };
+}
+
 // ═══════════════════════════════════════════════════════
 //  FATURA POR LOJA
 // ═══════════════════════════════════════════════════════
-async function genFaturaLoja(storeName, periodo, btnEl){
+async function genFaturaLoja(storeName, periodo, btnEl, opts={}){
   if(btnEl){btnEl.disabled=true;const orig=btnEl.innerHTML;btnEl.innerHTML='⏳';setTimeout(()=>{btnEl.innerHTML=orig;btnEl.disabled=false;},8000);}
   try{
     if(!window.jsPDF){
@@ -2736,10 +2772,15 @@ async function genFaturaLoja(storeName, periodo, btnEl){
 
     // ── Período ──
     const now=new Date();
-    let cutoff, periodoLabel;
+    let cutoff, endDateLimit=null, periodoLabel;
     if(periodo==='semana'){
       cutoff=new Date(now); cutoff.setDate(now.getDate()-7); cutoff.setHours(0,0,0,0);
       periodoLabel='Últimos 7 dias';
+    } else if(periodo==='custom'&&opts.dataInicio&&opts.dataFim){
+      cutoff=new Date(opts.dataInicio+'T00:00:00');
+      endDateLimit=new Date(opts.dataFim+'T23:59:59');
+      const fmt=d=>d.split('-').reverse().join('/');
+      periodoLabel=fmt(opts.dataInicio)+' a '+fmt(opts.dataFim);
     } else {
       cutoff=new Date(now.getFullYear(),now.getMonth(),1);
       periodoLabel='Mês Atual ('+now.toLocaleString('pt-BR',{month:'long',year:'numeric'})+')';
@@ -2754,7 +2795,11 @@ async function genFaturaLoja(storeName, periodo, btnEl){
       day.stops.forEach(s=>{
         if((s.store||'')!==storeName)return;
         const dDate=s.deliveryDate||day.date;
-        try{if(parseDate(dDate)<cutoff)return;}catch(e){return;}
+        try{
+          const dt=parseDate(dDate);
+          if(dt<cutoff)return;
+          if(endDateLimit&&dt>endDateLimit)return;
+        }catch(e){return;}
         const dk=s._trackKey?('tk_'+s._trackKey):('c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||'')+'|'+dDate);
         if(seen[dk])return; seen[dk]=true;
         fatStops.push({...s,_date:dDate});
@@ -3011,10 +3056,9 @@ function genLink(){
 }
 
 function renderLinks(){
-  const list=document.getElementById('linksList');
   const links=getLinks();
-  if(!links.length){ list.innerHTML=`<div class="links-empty">Nenhum link gerado ainda.<br>Toque em "Gerar link" abaixo e mande pelo WhatsApp da loja! 🚀</div>`; return; }
-  list.innerHTML=links.map((l,i)=>`
+  const html=links.length
+    ? links.map((l,i)=>`
     <div class="link-card">
       <div style="display:flex;align-items:center;justify-content:space-between;"><div class="link-name">🏪 ${l.name}</div><div class="link-date">Criado ${l.date}</div></div>
       <div class="link-url">${l.link}</div>
@@ -3023,7 +3067,9 @@ function renderLinks(){
         <button class="btn-wpp-link"  onclick="shareLink(${i})">💬 WhatsApp</button>
         <button class="btn-del-link"  onclick="delLink(${i})">🗑️</button>
       </div>
-    </div>`).join('');
+    </div>`).join('')
+    : `<div class="links-empty">Nenhum link gerado ainda.<br>Toque em "Gerar link" abaixo e mande pelo WhatsApp da loja! 🚀</div>`;
+  ['linksList','linksListCfg'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=html;});
 }
 
 function copyLink(i){ const l=getLinks()[i]?.link; if(!l)return; navigator.clipboard?.writeText(l).then(()=>toast('📋 Link copiado!','success')).catch(()=>toast('Link: '+l,'success')); }
@@ -3051,12 +3097,19 @@ function loadConfig(){
   localStorage.setItem('sb_room_code',room);
   document.getElementById('roomCode').textContent=room;
   document.getElementById('cfgRoom').value=room;
+  document.getElementById('cfgPrestNome').value=cfg.prestNome||'';
+  document.getElementById('cfgPrestPix').value=cfg.prestPix||'';
+  document.getElementById('cfgPrestTel').value=cfg.prestTel||'';
   renderStores();
   renderQuickStoresConfig();
+  renderLinks();
 }
 function saveConfig(){
   cfg.origin=document.getElementById('cfgOrigin').value.trim();
   cfg.wppMsg=document.getElementById('cfgWpp').value.trim();
+  cfg.prestNome=document.getElementById('cfgPrestNome').value.trim();
+  cfg.prestPix=document.getElementById('cfgPrestPix').value.trim();
+  cfg.prestTel=document.getElementById('cfgPrestTel').value.trim();
   saveCfg();
   if(!EMBEDDED_FB_CONFIG){
     const fbStr=document.getElementById('cfgFb').value.trim();
@@ -3350,6 +3403,8 @@ function checkNewDay(){
     saveToHistory(last);
     // Remove paradas já finalizadas — ficam no histórico
     const pending=stops.filter(s=>!s.done);
+    // Garante que paradas pendentes sem _addedDate usem a data correta (ontem)
+    pending.forEach(s=>{ if(!s._addedDate) s._addedDate=last; });
     const doneCount=stops.length-pending.length;
     stops=pending;
     saveStops();
