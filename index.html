@@ -1876,9 +1876,20 @@ function renderFinance(){
   const r7=new Date(now); r7.setDate(now.getDate()-6); r7.setHours(0,0,0,0);
 
   // Lista plana — usa _addedDate > deliveryDate > day.date como data efetiva
+  // Constrói índice de stops já arquivados no histórico para evitar duplicação
+  const archivedKeys=new Set();
+  history.forEach(day=>day.stops.forEach(s=>{
+    archivedKeys.add(s._trackKey?'tk_'+s._trackKey:'c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||''));
+  }));
   const allDays=[{date:todayStr,stops},...history];
   const flatStops=[];
   allDays.forEach(day=>day.stops.forEach(s=>{
+    // Paradas finalizadas sem _addedDate nos stops atuais que já estão no histórico
+    // são de dias anteriores — ignora para evitar contagem duplicada
+    if(day===allDays[0]&&s.done&&!s._addedDate){
+      const k=s._trackKey?'tk_'+s._trackKey:'c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||'');
+      if(archivedKeys.has(k))return;
+    }
     const effDate=s.deliveryDate||(day===allDays[0]?(s._addedDate||day.date):day.date);
     flatStops.push({...s,_effDate:effDate});
   }));
@@ -3185,6 +3196,21 @@ function startSync(code){
           if(seen[r._trackKey])return false;
           seen[r._trackKey]=true;return true;
         });
+        // Se checkNewDay já rodou hoje, remove stops finalizadas que já estão no histórico
+        // (Firebase pode restaurar dados de ontem sobrescrevendo o que checkNewDay fez)
+        const todayNow=new Date().toLocaleDateString('pt-BR');
+        if(localStorage.getItem('sb_last_date')===todayNow){
+          const archKeys=new Set();
+          history.forEach(day=>day.stops.forEach(s=>{
+            archKeys.add(s._trackKey?'tk_'+s._trackKey:'c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||''));
+          }));
+          remote=remote.filter(function(r){
+            if(!r.done)return true;
+            if(r._addedDate===todayNow)return true;
+            const k=r._trackKey?'tk_'+r._trackKey:'c_'+(r.name||'')+'|'+(r.address||'')+'|'+(r.value||'');
+            return !archKeys.has(k);
+          });
+        }
         if(JSON.stringify(remote)!==JSON.stringify(stops)){stops=remote;localStorage.setItem('sb_stops',JSON.stringify(stops));renderHome();toast('🔄 Lista sincronizada!','success');
           if (document.hidden) sendNotify('🔄 SPEEDBOY — Lista atualizada!', 'Sua esposa atualizou a lista de entregas', 'sync');}
       }catch(e){console.error(e);}
