@@ -1063,12 +1063,13 @@ function renderHome(){
               ${valInput}
             </div>
             <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
+              ${s.store?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(255,107,0,.18);color:#ff6b00;">🏪 ${s.store}</span>`:''}
               ${cityLabel?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;">${cityLabel}</span>`:''}
               <span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(255,107,0,.15);color:#ff6b00;">${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</span>
               ${prodVal>0?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:${s.productPaid?'rgba(0,230,118,.15)':'rgba(245,197,24,.12)'};color:${s.productPaid?'var(--green)':'var(--accent)'};">${s.productPaid?'✓ Cobrado':'💰 R$'+prodVal.toFixed(2).replace('.',',')}</span>`:''}
               ${s.deliveryDate?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(161,100,220,.15);color:#a164dc;">${delivDateLabel(s.deliveryDate)}</span>`:''}
             </div>
-            ${(s.street||s.number||s.complement)?`<div style="font-size:13px;color:var(--muted);margin-bottom:2px;">${[s.street,s.number,s.complement].filter(Boolean).join(' ')}</div>`:''}
+            ${(s.street||s.number||s.complement||s.neighborhood)?`<div style="font-size:13px;color:var(--muted);margin-bottom:2px;">${[s.street,s.number,s.complement].filter(Boolean).join(' ')}${s.neighborhood?`<span style="color:var(--muted);opacity:.75;"> · ${s.neighborhood}</span>`:''}</div>`:''}
             ${(s.reference||s.notes)?`<div style="font-size:12px;color:var(--muted);opacity:.75;">${[s.reference,s.notes].filter(Boolean).join(' · ')}</div>`:''}
           </div>
           <div class="stop-dot" style="margin-top:4px;flex-shrink:0;"></div>
@@ -3278,10 +3279,11 @@ function renderPending(){
     return`<div class="pending-card" id="pc_${k}">
       <div class="pending-info">
         <div class="pending-name">${s.name||'Sem nome'}</div>
-        <div class="pending-addr">${s.address||''}</div>
+        ${s.store?`<div style="font-size:12px;font-weight:700;color:#ff6b00;margin-bottom:2px;">🏪 ${s.store}</div>`:''}
+        <div class="pending-addr">${s.address||''}${s.neighborhood?` · <span style="opacity:.8;">${s.neighborhood}</span>`:''}</div>
         ${tags?`<div style="font-size:11px;color:var(--accent);font-weight:700;margin-top:2px;">${tags}</div>`:''}
         ${arrStr}
-        <div class="pending-store">🏪 ${s.store||''} ${prodStr}</div>
+        ${prodStr?`<div class="pending-store">${prodStr}</div>`:''}
       </div>
       <button class="btn-reject" onclick="rejectPending('${k}')">✕</button>
       <button class="btn-accept" onclick="acceptPending('${k}')">✅ Aceitar</button>
