@@ -2148,8 +2148,8 @@ async function downloadStoreReportPDF(){
     y+=5;
     doc.autoTable({
       startY:y,
-      head:[['Data','Cliente','Endereço','Valor','Pago']],
-      body:storeStops.map(s=>[s._date,s.name||'—',(s.address||'').substring(0,30),fmtMoney(parseMoney(s.value)),s.paid?'Sim':'Não']),
+      head:[['Data','Cliente','Bairro','Valor','Pago']],
+      body:storeStops.map(s=>[s._date,s.name||'—',(s.neighborhood||'').substring(0,30),fmtMoney(parseMoney(s.value)),s.paid?'Sim':'Não']),
       styles:{fontSize:8,cellPadding:2.5,textColor:[220,220,220],fillColor:[24,24,24]},
       headStyles:{fillColor:[30,30,30],textColor:[150,150,150],fontStyle:'bold',fontSize:7.5},
       alternateRowStyles:{fillColor:[20,20,20]},
@@ -2644,10 +2644,10 @@ async function genPDF(){
       // Tabela de entregas da loja
       doc.autoTable({
         startY:sy,
-        head:[['Nº','Data','Cliente','Endereço / Bairro','Cidade','Tipo','Valor','Pago']],
+        head:[['Nº','Data','Cliente','Bairro','Cidade','Tipo','Valor','Pago']],
         body:storeStops.map((s,i)=>[
           String(i+1),s._date,s.name||'—',
-          ((s.street||s.address||'').substring(0,20)+(s.neighborhood?' - '+s.neighborhood:'')).substring(0,28),
+          (s.neighborhood||'').substring(0,28),
           cityName(resolveCityCode(s.city||s.cityId))||'—',
           s.serviceType==='retirada'?'Retirada':s.serviceType==='troca'?'Troca':'Entrega',
           fmtMoney(parseMoney(s.value)),s.paid?'✓':'—'
@@ -2849,14 +2849,14 @@ async function genFaturaLoja(storeName, periodo, btnEl, opts={}){
       i+1,
       s._date,
       (s.name||'—').substring(0,22),
-      ((s.street||s.neighborhood||s.address||'').substring(0,28)),
+      (s.neighborhood||'').substring(0,28),
       cityName(resolveCityCode(s.city||s.cityId||'')),
       fmtMoney(parseMoney(s.value)),
       s.paid?'✓':'—'
     ]);
     doc.autoTable({
       startY:y,
-      head:[['Nº','Data','Cliente','Endereço','Cidade','Valor','Pago']],
+      head:[['Nº','Data','Cliente','Bairro','Cidade','Valor','Pago']],
       body:tableRows,
       theme:'plain',
       styles:{font:'helvetica',fontSize:7.5,textColor:[200,200,200],cellPadding:2.5,fillColor:[14,14,20]},
