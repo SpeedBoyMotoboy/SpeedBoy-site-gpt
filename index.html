@@ -1881,9 +1881,14 @@ function renderFinance(){
   history.forEach(day=>day.stops.forEach(s=>{
     archivedKeys.add(s._trackKey?'tk_'+s._trackKey:'c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||''));
   }));
+  const todayDt0=new Date(); todayDt0.setHours(0,0,0,0);
   const allDays=[{date:todayStr,stops},...history];
   const flatStops=[];
   allDays.forEach(day=>day.stops.forEach(s=>{
+    // Entregas agendadas para dias futuros ainda não realizadas não contam nos ganhos
+    if(!s.done&&s.deliveryDate){
+      try{if(parseDate(s.deliveryDate)>todayDt0)return;}catch(e){}
+    }
     // Paradas finalizadas sem _addedDate nos stops atuais que já estão no histórico
     // são de dias anteriores — ignora para evitar contagem duplicada
     if(day===allDays[0]&&s.done&&!s._addedDate){
@@ -2440,8 +2445,11 @@ function getReportData(){
   if(reportPeriod==='week'){ cutoff=new Date(now); cutoff.setDate(now.getDate()-7); }
   else cutoff=new Date(now.getFullYear(),now.getMonth(),1);
   const days=allDays.filter(d=>parseDate(d.date)>=cutoff);
+  const todayDtR=new Date(); todayDtR.setHours(0,0,0,0);
   let total=0,received=0,deliveries=0; const allStops=[]; const sm={};
   days.forEach(day=>day.stops.forEach(s=>{
+    // Excluir agendadas futuras não realizadas
+    if(!s.done&&s.deliveryDate){try{if(parseDate(s.deliveryDate)>todayDtR)return;}catch(e){}}
     const v=parseMoney(s.value); total+=v; if(s.paid)received+=v; if(s.done)deliveries++;
     const reportDate=s.deliveryDate||day.date;
     allStops.push({...s,_date:reportDate});
