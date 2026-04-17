@@ -1895,7 +1895,7 @@ function renderFinance(){
       const k=s._trackKey?'tk_'+s._trackKey:'c_'+(s.name||'')+'|'+(s.address||'')+'|'+(s.value||'');
       if(archivedKeys.has(k))return;
     }
-    const effDate=s.deliveryDate||(day===allDays[0]?(s._addedDate||day.date):day.date);
+    const effDate=day===allDays[0]?(s.deliveryDate||s._addedDate||day.date):day.date;
     flatStops.push({...s,_effDate:effDate});
   }));
   const tryDt=s=>{try{return parseDate(s._effDate);}catch(e){return new Date(0);}};
@@ -2451,7 +2451,7 @@ function getReportData(){
     // Excluir agendadas futuras não realizadas
     if(!s.done&&s.deliveryDate){try{if(parseDate(s.deliveryDate)>todayDtR)return;}catch(e){}}
     const v=parseMoney(s.value); total+=v; if(s.paid)received+=v; if(s.done)deliveries++;
-    const reportDate=s.deliveryDate||day.date;
+    const reportDate=day===days[0]?(s.deliveryDate||s._addedDate||day.date):day.date;
     allStops.push({...s,_date:reportDate});
     const k=s.store||'Sem loja'; if(!sm[k])sm[k]={t:0,c:0,r:0}; sm[k].t+=v; sm[k].c++; if(s.paid)sm[k].r+=v;
   }));
@@ -2800,7 +2800,7 @@ async function genFaturaLoja(storeName, periodo, btnEl, opts={}){
     allDays.forEach(day=>{
       day.stops.forEach(s=>{
         if((s.store||'')!==storeName)return;
-        const dDate=s.deliveryDate||day.date;
+        const dDate=day===allDays[0]?(s.deliveryDate||s._addedDate||day.date):day.date;
         try{
           const dt=parseDate(dDate);
           if(dt<cutoff)return;
