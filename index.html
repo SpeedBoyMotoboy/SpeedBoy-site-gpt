@@ -3298,7 +3298,7 @@ function renderPending(){
   if(!keys.length)return;
   // Notify if new pending orders appeared
   const prevCount = parseInt(document.getElementById('pendingBadge').textContent) || 0;
-  if (keys.length > prevCount && prevCount >= 0 && document.hidden) {
+  if (keys.length > prevCount && prevCount >= 0) {
     sendNotify('🔔 SPEEDBOY — Novo pedido!', `${keys.length} pedido(s) aguardando confirmação`, 'pending');
   }
   badge.textContent=keys.length;
@@ -3482,17 +3482,29 @@ function requestNotify() {
   });
 }
 
+let _swReg = null;
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(r => { _swReg = r; }).catch(() => {});
+}
+
 function sendNotify(title, body, tag) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  try {
-    new Notification(title, {
-      body,
-      icon: 'https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico',
-      tag:  tag || 'speedboy',
-      renotify: true,
-      badge: 'https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico'
+  const opts = {
+    body,
+    icon: 'https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico',
+    tag:  tag || 'speedboy',
+    renotify: true,
+    badge: 'https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico'
+  };
+  if (_swReg) {
+    _swReg.showNotification(title, opts).catch(() => {
+      try { new Notification(title, opts); } catch(e) {}
     });
-  } catch(e) { console.log('Notify error:', e); }
+  } else {
+    navigator.serviceWorker.ready.then(r => r.showNotification(title, opts)).catch(() => {
+      try { new Notification(title, opts); } catch(e) {}
+    });
+  }
 }
 
 // ═══════════════════════════════════════════════════════
