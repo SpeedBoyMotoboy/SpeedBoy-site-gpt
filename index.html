@@ -3289,18 +3289,19 @@ function listenPending(){
     renderPending();
   });
 }
+let _pendingInitialized = false;
 function renderPending(){
   const sec=document.getElementById('pendingSection');
   const list=document.getElementById('pendingList');
   const badge=document.getElementById('pendingBadge');
   const keys=Object.keys(pendingData);
   sec.style.display=keys.length?'block':'none';
-  if(!keys.length)return;
-  // Notify if new pending orders appeared
-  const prevCount = parseInt(document.getElementById('pendingBadge').textContent) || 0;
-  if (keys.length > prevCount && prevCount >= 0) {
+  if(!keys.length){ _pendingInitialized=true; return; }
+  const prevCount = parseInt(badge.textContent) || 0;
+  if (_pendingInitialized && keys.length > prevCount) {
     sendNotify('🔔 SPEEDBOY — Novo pedido!', `${keys.length} pedido(s) aguardando confirmação`, 'pending');
   }
+  _pendingInitialized = true;
   badge.textContent=keys.length;
   list.innerHTML=keys.map(k=>{
     const s=pendingData[k];
@@ -3482,9 +3483,8 @@ function requestNotify() {
   });
 }
 
-let _swReg = null;
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(r => { _swReg = r; }).catch(() => {});
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 
 function sendNotify(title, body, tag) {
@@ -3496,14 +3496,12 @@ function sendNotify(title, body, tag) {
     renotify: true,
     badge: 'https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico'
   };
-  if (_swReg) {
-    _swReg.showNotification(title, opts).catch(() => {
-      try { new Notification(title, opts); } catch(e) {}
-    });
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready
+      .then(reg => reg.showNotification(title, opts))
+      .catch(() => { try { new Notification(title, opts); } catch(e) {} });
   } else {
-    navigator.serviceWorker.ready.then(r => r.showNotification(title, opts)).catch(() => {
-      try { new Notification(title, opts); } catch(e) {}
-    });
+    try { new Notification(title, opts); } catch(e) {}
   }
 }
 
