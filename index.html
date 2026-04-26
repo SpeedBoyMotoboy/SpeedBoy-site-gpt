@@ -3220,7 +3220,7 @@ function startSync(code){
           });
         }
         if(JSON.stringify(remote)!==JSON.stringify(stops)){stops=remote;localStorage.setItem('sb_stops',JSON.stringify(stops));renderHome();toast('🔄 Lista sincronizada!','success');
-          if (document.hidden) sendNotify('🔄 SPEEDBOY — Lista atualizada!', 'Sua esposa atualizou a lista de entregas', 'sync');}
+          sendNotify('🔄 SPEEDBOY — Lista atualizada!', 'Sua esposa atualizou a lista de entregas', 'sync');}
       }catch(e){console.error(e);}
     }
     setSyncUI('synced','🟢 Sala: '+code);
@@ -3494,15 +3494,17 @@ function sendNotify(title, body, tag) {
     icon: 'https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico',
     tag:  tag || 'speedboy',
     renotify: true,
-    badge: 'https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico'
+    requireInteraction: false,
+    badge: 'https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico',
+    vibrate: [300, 100, 300, 100, 300]
   };
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready
-      .then(reg => reg.showNotification(title, opts))
-      .catch(() => { try { new Notification(title, opts); } catch(e) {} });
-  } else {
-    try { new Notification(title, opts); } catch(e) {}
-  }
+  const fallback = () => { try { new Notification(title, opts); } catch(e) {} };
+  if (!('serviceWorker' in navigator)) { fallback(); return; }
+  let done = false;
+  const timer = setTimeout(() => { if (!done) { done = true; fallback(); } }, 2500);
+  navigator.serviceWorker.ready
+    .then(reg => { clearTimeout(timer); done = true; return reg.showNotification(title, opts); })
+    .catch(() => { if (!done) { done = true; clearTimeout(timer); fallback(); } });
 }
 
 // ═══════════════════════════════════════════════════════
