@@ -1916,7 +1916,7 @@ function renderFinance(){
     const pctRaw=(todayTotal/meta*100);
     document.getElementById('metaBar').style.width=pct+'%';
     document.getElementById('metaBar').style.background=pct>=100?'var(--green)':'var(--accent)';
-    pctEl.textContent=pctRaw.toFixed(0)+'% da meta';
+    pctEl.textContent='R$ '+todayTotal.toFixed(2).replace('.',',')+'  ·  '+pctRaw.toFixed(0)+'% da meta';
     pctEl.style.color=pct>=100?'var(--green)':'var(--accent)';
   } else {
     document.getElementById('metaBar').style.width='0%';
@@ -1931,7 +1931,7 @@ function renderFinance(){
     const pctWkRaw=(wkTotal/metaWeek*100);
     document.getElementById('metaBarWeek').style.width=pctWk+'%';
     document.getElementById('metaBarWeek').style.background=pctWk>=100?'var(--green)':'var(--blue)';
-    pctWkEl.textContent=pctWkRaw.toFixed(0)+'% da meta semanal';
+    pctWkEl.textContent='R$ '+wkTotal.toFixed(2).replace('.',',')+'  ·  '+pctWkRaw.toFixed(0)+'% da meta semanal';
     pctWkEl.style.color=pctWk>=100?'var(--green)':'var(--blue)';
   } else {
     document.getElementById('metaBarWeek').style.width='0%';
