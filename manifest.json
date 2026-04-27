@@ -1,0 +1,30 @@
+{
+  "name": "SpeedBoy Motoboy",
+  "short_name": "SpeedBoy",
+  "description": "Gerenciador de entregas para motoboy",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0d0d",
+  "theme_color": "#f5c518",
+  "icons": [
+    {
+      "src": "https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico",
+      "sizes": "192x192",
+      "type": "image/x-icon",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico",
+      "sizes": "512x512",
+      "type": "image/x-icon",
+      "purpose": "any maskable"
+    }
+  ]
+}

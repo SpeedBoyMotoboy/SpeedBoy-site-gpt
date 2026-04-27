@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SPEEDBOY</title>
+<title>SpeedBoy Motoboy</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#f5c518">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SpeedBoy">
+<link rel="apple-touch-icon" href="https://speedboymotoboy.github.io/SpeedBoy-APP/favicon.ico">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -1968,22 +1975,29 @@ function region(addr){ if(!addr)return'zzz'; const p=addr.split(',').map(x=>x.tr
 //  WHATSAPP QUICK MESSAGES
 // ═══════════════════════════════════════════════════════
 const QM={
-  caminho:   'Olá, {nome}. Sou o motoboy da {loja}e estou a caminho com o seu serviço de {tipo}. Por gentileza, fique atenta à chegada, pois estarei aí em breve. Obrigado.',
-  localizacao:'Olá, {nome}. Para chegar com precisão ao seu endereço, poderia compartilhar sua localização em tempo real ou enviar um pin pelo Google Maps? Agradeço a colaboração.',
-  presenca:  'Olá, {nome}. Estou me aproximando do endereço informado. Há alguém no local para receber o {tipo}? Caso haja instrução de acesso ou ponto de referência adicional, por favor me informe. Obrigado.',
+  caminho:   'Olá, {nome}. Sou o motoboy da {loja}e estou a caminho com a sua {tipo}. Por gentileza, fique atenta à chegada, pois estarei aí em breve. Obrigado.',
+  localizacao:'Olá, {nome}. Para agilizar a sua {tipo}, poderia compartilhar sua localização via WhatsApp (atual ou em tempo real)? Caso prefira, envie um pin pelo Google Maps. Assim consigo chegar com mais rapidez e precisão. Obrigado.',
+  presenca:  'Olá, {nome}. Estou me aproximando do endereço informado. Há alguém no local para receber a {tipo}? Caso haja instrução de acesso ou ponto de referência adicional, por favor me informe. Obrigado.',
   ausente:   'Olá, {nome}. Estive no endereço indicado, porém não encontrei ninguém disponível para o recebimento. Podemos combinar um novo horário? Fico à disposição.',
   entregue:  'Olá, {nome}. O seu {tipo} da {loja}foi concluído com sucesso. Agradecemos a preferência! Caso precise novamente, estarei à disposição.'
 };
 function openWpp(i){ wppStop=stops[i]; document.getElementById('wppName').textContent='💬 '+wppStop.name; document.getElementById('wppPhone').textContent=fmtPhone(wppStop.phone); document.getElementById('wppCustom').value=''; document.getElementById('wppModal').classList.remove('hidden'); }
 function closeWpp(){ document.getElementById('wppModal').classList.add('hidden'); wppStop=null; }
 document.getElementById('wppModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeWpp();});
+function primeiroSegundoNome(full){
+  const prep=new Set(['de','da','do','das','dos','e','di','del']);
+  const words=(full||'').trim().split(/\s+/);
+  const sig=words.filter(w=>!prep.has(w.toLowerCase()));
+  return sig.slice(0,2).join(' ');
+}
 function sendQ(type){
   if(!wppStop)return;
   const loja=wppStop.store?`${wppStop.store}. `:'';
   const tipoMap={entrega:'entrega',retirada:'retirada',troca:'troca'};
   const tipo=tipoMap[wppStop.serviceType]||'serviço';
+  const nome=primeiroSegundoNome(wppStop.name);
   const msg=QM[type]
-    .replace(/{nome}/g,wppStop.name||'')
+    .replace(/{nome}/g,nome)
     .replace(/{loja}/g,loja)
     .replace(/{tipo}/g,tipo);
   window.open(`https://wa.me/55${wppStop.phone}?text=${encodeURIComponent(msg)}`,'_blank');
