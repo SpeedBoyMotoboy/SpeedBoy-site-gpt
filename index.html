@@ -107,14 +107,22 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .stop-val.unpaid{color:var(--accent);}
 .stop-dot{width:8px;height:8px;border-radius:50%;background:var(--border);}
 .stop-card.done .stop-dot{background:var(--green);}
-.stop-detail{display:none;padding:0 14px 12px;font-size:13px;color:var(--text);line-height:1.8;background:var(--card2);margin:0 -12px -12px -12px;padding:12px;border-radius:0 0 var(--radius) var(--radius);}
+.stop-detail{display:none;background:var(--card2);border-top:1px solid var(--border);padding:12px;}
 .stop-card.expanded .stop-detail{display:block;}
-.stop-detail strong{color:var(--text);font-size:11px;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.detail-chip{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.4;display:flex;flex-direction:column;gap:1px;}
+.detail-chip-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.detail-chip.full{grid-column:1/-1;}
 .paid-badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;}
 .paid-badge.yes{background:rgba(0,230,118,.15);color:var(--green);border:1px solid var(--green);}
 .paid-badge.no{background:rgba(245,197,24,.1);color:var(--accent);border:1px solid var(--accent);}
-.stop-actions{display:none;padding:0 12px 12px;flex-wrap:wrap;gap:7px;}
+.stop-actions{display:none;padding:10px 12px 12px;flex-direction:column;gap:7px;background:var(--card2);border-top:1px solid var(--border);}
 .stop-card.expanded .stop-actions{display:flex;}
+.act-row{display:grid;gap:6px;}
+.act-row-3{grid-template-columns:1fr 1fr 1fr;}
+.act-row-2{grid-template-columns:1fr 1fr;}
+.btn-act-sec{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:10px 8px;font-family:'Barlow',sans-serif;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;}
+.btn-act-sec:active{transform:scale(.95);}
 .btn-act{flex:1;min-width:calc(50% - 4px);padding:14px 12px;border-radius:9px;border:none;font-family:'Barlow',sans-serif;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .1s;}
 .btn-act:active{transform:scale(.95);filter:brightness(1.15);}
 .ba-wpp{background:#25d366;color:#fff;}
@@ -562,45 +570,81 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
       <div class="modal-name" id="qsModalTitle">⚡ Nova loja rápida</div>
       <button class="modal-close" onclick="closeQsModal()">✕</button>
     </div>
-    <input type="hidden" id="qsEditIdx" value="-1" />
-    <div class="field" style="margin-bottom:10px;">
-      <div class="field-label">Nome da loja <span class="req">*</span></div>
-      <select class="field-input" id="qsName" onchange="onQsNameChange(this)">
-        <option value="">— Selecione ou digite abaixo —</option>
-      </select>
-      <input class="field-input" id="qsNameCustom" placeholder="Ou digite um nome personalizado..." maxlength="40" style="margin-top:6px;display:none;" />
-    </div>
-    <div class="field" style="margin-bottom:10px;">
-      <div class="field-label">Sua taxa (R$)</div>
-      <input class="field-input" id="qsTaxa" type="text" inputmode="decimal" placeholder="0,00" oninput="maskMoney(this)" />
-    </div>
-    <div class="field" style="margin-bottom:10px;">
-      <div class="field-label">Cidade</div>
-      <select class="field-input" id="qsCity">
-        <option value="">— Selecione —</option>
-        <option value="SRR">Serra</option>
-        <option value="VIX">Vitória</option>
-        <option value="VV">Vila Velha</option>
-        <option value="CCA">Cariacica</option>
-        <option value="VIA">Viana</option>
-        <option value="OUT">Outra</option>
-      </select>
-    </div>
-    <div class="field" style="margin-bottom:10px;">
-      <div class="field-label">Bairro</div>
-      <input class="field-input" id="qsBairro" placeholder="Ex: Boa Vista" />
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <div class="field" style="flex:2;margin-bottom:0;">
-        <div class="field-label">Rua / Avenida</div>
-        <input class="field-input" id="qsRua" placeholder="Ex: Rua das Flores" />
+    <!-- Vista: lista de endereços da empresa -->
+    <div id="qsListView">
+      <div class="field" style="margin-bottom:12px;">
+        <div class="field-label">Nome da empresa / loja <span class="req">*</span></div>
+        <select class="field-input" id="qsName" onchange="onQsNameChange(this)">
+          <option value="">— Selecione —</option>
+        </select>
+        <input class="field-input" id="qsNameCustom" placeholder="Nome personalizado..." maxlength="40" style="margin-top:6px;display:none;" />
       </div>
-      <div class="field" style="flex:1;margin-bottom:0;">
-        <div class="field-label">Número</div>
-        <input class="field-input" id="qsNumero" placeholder="123" inputmode="numeric" />
-      </div>
+      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px;">ENDEREÇOS DE ENTREGA</div>
+      <div id="qsAddrList"></div>
+      <button onclick="openQsAddrForm(-1)" style="width:100%;padding:11px;background:var(--card2);border:1.5px dashed var(--border);border-radius:10px;color:var(--accent);font-weight:700;font-size:14px;cursor:pointer;margin-top:4px;">+ Adicionar endereço</button>
+      <button onclick="saveQsModal()" style="width:100%;margin-top:10px;padding:14px;background:var(--accent);color:#000;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;cursor:pointer;">💾 Salvar empresa</button>
     </div>
-    <button onclick="saveQsModal()" style="width:100%;margin-top:6px;padding:14px;background:var(--accent);color:#000;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;cursor:pointer;">💾 Salvar loja</button>
+    <!-- Vista: editar um endereço -->
+    <div id="qsAddrView" style="display:none;">
+      <div style="margin-bottom:14px;"><button onclick="closeQsAddrForm()" style="background:none;border:none;color:var(--accent);font-weight:700;font-size:14px;cursor:pointer;padding:0;">← Voltar</button></div>
+      <div class="field" style="margin-bottom:10px;">
+        <div class="field-label">Rótulo (identificação) <span class="req">*</span></div>
+        <input class="field-input" id="qsAddrLabel" placeholder="Ex: PELLEGRINO – IBES VV" maxlength="50" />
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <div class="field-label">Taxa (R$)</div>
+        <input class="field-input" id="qsAddrTaxa" type="text" inputmode="decimal" placeholder="0,00" oninput="maskMoney(this)" />
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <div class="field-label">Cidade</div>
+        <select class="field-input" id="qsAddrCity">
+          <option value="">— Selecione —</option>
+          <option value="SRR">Serra</option>
+          <option value="VIX">Vitória</option>
+          <option value="VV">Vila Velha</option>
+          <option value="CCA">Cariacica</option>
+          <option value="VIA">Viana</option>
+          <option value="OUT">Outra</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <div class="field-label">Bairro</div>
+        <input class="field-input" id="qsAddrBairro" placeholder="Ex: Boa Vista" />
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <div class="field" style="flex:2;margin-bottom:0;">
+          <div class="field-label">Rua / Avenida</div>
+          <input class="field-input" id="qsAddrRua" placeholder="Ex: Rua das Flores" />
+        </div>
+        <div class="field" style="flex:1;margin-bottom:0;">
+          <div class="field-label">Número</div>
+          <input class="field-input" id="qsAddrNumero" placeholder="123" inputmode="numeric" />
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <div class="field-label">Complemento</div>
+        <input class="field-input" id="qsAddrComplement" placeholder="Apto, bloco..." />
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <div class="field-label">Referência</div>
+        <input class="field-input" id="qsAddrReference" placeholder="Próximo a..." />
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <div class="field" style="flex:1;margin-bottom:0;">
+          <div class="field-label">Nome destinatário</div>
+          <input class="field-input" id="qsAddrCustomerName" placeholder="Opcional" maxlength="50" />
+        </div>
+        <div class="field" style="flex:1;margin-bottom:0;">
+          <div class="field-label">Telefone</div>
+          <input class="field-input" id="qsAddrPhone" placeholder="(XX) XXXXX-XXXX" type="tel" oninput="maskPhone(this)" maxlength="15" />
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:14px;">
+        <div class="field-label">Observações</div>
+        <input class="field-input" id="qsAddrNotes" placeholder="Ligar antes, etc." />
+      </div>
+      <button onclick="saveQsAddrForm()" style="width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:var(--radius);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;cursor:pointer;">✓ Salvar endereço</button>
+    </div>
   </div>
 </div>
 
@@ -1080,27 +1124,32 @@ function renderHome(){
           <div class="stop-dot" style="margin-top:4px;flex-shrink:0;"></div>
         </div>
         <div class="stop-detail">
-          ${s.phone?`<div><strong>TEL</strong> ${fmtPhone(s.phone)}</div>`:''}
-          ${s.complement?`<div><strong>COMPL</strong> ${s.complement}</div>`:''}
-          ${s.reference?`<div><strong>REF</strong> ${s.reference}</div>`:''}
-          ${(s.timeFrom||s.timeTo)?`<div><strong>HORÁRIO</strong> ⏰ ${s.timeFrom||'?'} até ${s.timeTo||'?'}</div>`:''}
-          ${s.deliveryDate?`<div><strong>DATA</strong> 📅 ${s.deliveryDate}</div>`:''}
-          ${s.serviceType?`<div><strong>TIPO</strong> ${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</div>`:''}
-          ${s.city?`<div><strong>CIDADE</strong> 🏙️ ${cityName(resolveCityCode(s.city||s.cityId))}</div>`:''}
-          ${s.arrivedAt?`<div><strong>CHEGOU</strong> 📨 ${s.arrivedAt}</div>`:''}
-          ${s.notes?`<div><strong>OBS</strong> ${s.notes}</div>`:''}
-          ${valStr?`<div><strong>TAXA</strong> <span class="paid-badge ${s.paid?'yes':'no'}">${s.paid?'✓ Recebida':'⏳ A receber'}</span></div>`:''}
-          ${s.productValue>0?`<div><strong>PRODUTO</strong> R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')} <span class="paid-badge ${s.productPaid?'yes':'no'}">${s.productPaid?'✓ Pago':'💰 A cobrar'}</span></div>`:''}
+          <div class="detail-grid">
+            ${s.phone?`<div class="detail-chip"><span class="detail-chip-lbl">📞 Telefone</span>${fmtPhone(s.phone)}</div>`:''}
+            ${s.city?`<div class="detail-chip"><span class="detail-chip-lbl">🏙️ Cidade</span>${cityName(resolveCityCode(s.city||s.cityId))}</div>`:''}
+            ${s.deliveryDate?`<div class="detail-chip"><span class="detail-chip-lbl">📅 Data</span>${s.deliveryDate}</div>`:''}
+            ${(s.timeFrom||s.timeTo)?`<div class="detail-chip"><span class="detail-chip-lbl">⏰ Horário</span>${s.timeFrom||'?'} – ${s.timeTo||'?'}</div>`:''}
+            ${s.serviceType?`<div class="detail-chip"><span class="detail-chip-lbl">Tipo</span>${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</div>`:''}
+            ${s.arrivedAt?`<div class="detail-chip"><span class="detail-chip-lbl">📨 Chegou</span>${s.arrivedAt}</div>`:''}
+            ${valStr?`<div class="detail-chip"><span class="detail-chip-lbl">💰 Taxa</span>${valStr} <span class="paid-badge ${s.paid?'yes':'no'}">${s.paid?'✓ Recebida':'A receber'}</span></div>`:''}
+            ${s.productValue>0?`<div class="detail-chip"><span class="detail-chip-lbl">💳 Produto</span>R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')} <span class="paid-badge ${s.productPaid?'yes':'no'}">${s.productPaid?'✓ Pago':'A cobrar'}</span></div>`:''}
+            ${s.complement?`<div class="detail-chip full"><span class="detail-chip-lbl">Complemento</span>${s.complement}</div>`:''}
+            ${s.reference?`<div class="detail-chip full"><span class="detail-chip-lbl">📍 Referência</span>${s.reference}</div>`:''}
+            ${s.notes?`<div class="detail-chip full"><span class="detail-chip-lbl">💬 Obs</span>${s.notes}</div>`:''}
+          </div>
         </div>
         <div class="stop-actions" onclick="event.stopPropagation()">
-          <button class="btn-quick-done" onclick="togDone(${i})" style="margin-bottom:0;">${s.done?'↩️ Reabrir':'✅ ENTREGUE'}</button>
-          <div style="display:flex;gap:7px;flex-wrap:wrap;">
-            <button class="btn-act ba-maps" onclick="openMapsWithAddress(${i})" style="flex:1;background:#4285f4;color:#fff;font-weight:800;padding:14px;font-size:14px;">🗺️ NAVEGAR</button>
+          <button class="btn-quick-done" onclick="togDone(${i})">${s.done?'↩️ Reabrir':'✅ ENTREGUE'}</button>
+          <div class="act-row act-row-${s.phone&&val>0?'3':(s.phone||val>0?'2':'2')}">
+            <button class="btn-act ba-maps" onclick="openMapsWithAddress(${i})" style="background:#4285f4;color:#fff;font-weight:800;">🗺️ Navegar</button>
             ${s.phone?`<button class="btn-act ba-wpp" onclick="openWpp(${i})">💬 WhatsApp</button>`:''}
-            ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togPaid(${i})">${s.paid?'💸 Ok':'💰 Paga?'}</button>`:''}
-            ${s.productValue>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''}" onclick="togProductPaid(${i})">${s.productPaid?'✅ Ok':'💳 Cobrar'}</button>`:''}
-            <button class="btn-act ba-edit" onclick="goForm(${i})">✏️ Editar</button>
-            <button class="btn-act ba-del"  onclick="delStop(${i})">🗑️ Remover</button>
+            ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togPaid(${i})">${s.paid?'💸 Recebida':'💰 Paga?'}</button>`:''}
+            ${s.productValue>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''}" onclick="togProductPaid(${i})">${s.productPaid?'✅ Cobrado':'💳 Cobrar'}</button>`:''}
+          </div>
+          <div class="act-row act-row-3">
+            <button class="btn-act-sec" onclick="goForm(${i})">✏️ Editar</button>
+            <button class="btn-act-sec" onclick="goRepass()" style="color:var(--accent);border-color:var(--accent);">🔄 Repassar</button>
+            <button class="btn-act-sec" onclick="delStop(${i})" style="color:var(--red);border-color:var(--red);">🗑️ Remover</button>
           </div>
         </div>
       </div>`;
@@ -1419,59 +1468,135 @@ function autoTaxaKS(){
 }
 
 // ═══════════════ QUICK STORES ═══════════════
-function getQuickStores(){try{return JSON.parse(localStorage.getItem('sb_quick_stores')||'[]');}catch(e){return[];}}
+function getQuickStores(){
+  try{
+    const raw=JSON.parse(localStorage.getItem('sb_quick_stores')||'[]');
+    // Migração: formato antigo {name,taxa,city,bairro,rua,numero} → novo {name, addresses:[]}
+    return raw.map(item=>{
+      if(item.addresses)return item;
+      return{name:item.name,addresses:[{
+        label:item.rua||item.bairro||'Principal',
+        taxa:item.taxa,city:item.city,bairro:item.bairro,
+        rua:item.rua,numero:item.numero,
+        complement:'',reference:'',notes:'',phone:'',customerName:''
+      }]};
+    });
+  }catch(e){return[];}
+}
 function saveQuickStores(list){localStorage.setItem('sb_quick_stores',JSON.stringify(list));}
+
+// ── Estado do modal ──
+let _qsEditIdx=-1;
+let _qsAddresses=[];
+let _qsAddrEditIdx=-1;
 
 function addQuickStore(){ openQsModal(-1); }
 function openQsModal(idx){
+  _qsEditIdx=idx;
   const qs=getQuickStores();
-  const s=idx>=0?qs[idx]:null;
-  document.getElementById('qsEditIdx').value=idx;
-  document.getElementById('qsModalTitle').textContent=idx>=0?'✏️ Editar loja rápida':'⚡ Nova loja rápida';
-  // Populate store select from cfg.stores
+  const company=idx>=0?qs[idx]:null;
+  _qsAddresses=company?JSON.parse(JSON.stringify(company.addresses)):[];
+  document.getElementById('qsModalTitle').textContent=idx>=0?'✏️ Editar empresa':'⚡ Nova loja rápida';
   const sel=document.getElementById('qsName');
-  sel.innerHTML='<option value="">— Selecione ou digite abaixo —</option>'+cfg.stores.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('')+'<option value="__custom__">✏️ Nome personalizado...</option>';
+  sel.innerHTML='<option value="">— Selecione —</option>'+cfg.stores.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('')+'<option value="__custom__">✏️ Nome personalizado...</option>';
   const customInput=document.getElementById('qsNameCustom');
-  const existingName=s?.name||'';
+  const existingName=company?.name||'';
   if(existingName&&cfg.stores.includes(existingName)){
     sel.value=existingName;customInput.style.display='none';customInput.value='';
-  } else if(existingName){
+  }else if(existingName){
     sel.value='__custom__';customInput.style.display='';customInput.value=existingName;
-  } else {
+  }else{
     sel.value='';customInput.style.display='none';customInput.value='';
   }
-  document.getElementById('qsTaxa').value=s?.taxa?String(s.taxa).replace('.',','):'';
-  document.getElementById('qsCity').value=s?.city||'';
-  document.getElementById('qsBairro').value=s?.bairro||'';
-  document.getElementById('qsRua').value=s?.rua||'';
-  document.getElementById('qsNumero').value=s?.numero||'';
+  document.getElementById('qsListView').style.display='';
+  document.getElementById('qsAddrView').style.display='none';
+  _renderQsAddrList();
   document.getElementById('qsModal').classList.remove('hidden');
-  setTimeout(()=>sel.focus(),100);
 }
 function onQsNameChange(sel){
-  const customInput=document.getElementById('qsNameCustom');
-  if(sel.value==='__custom__'){customInput.style.display='';customInput.focus();}
-  else{customInput.style.display='none';customInput.value='';}
+  const c=document.getElementById('qsNameCustom');
+  if(sel.value==='__custom__'){c.style.display='';c.focus();}
+  else{c.style.display='none';c.value='';}
 }
-function closeQsModal(){ document.getElementById('qsModal').classList.add('hidden'); }
+function closeQsModal(){document.getElementById('qsModal').classList.add('hidden');}
 document.getElementById('qsModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeQsModal();});
+
+function _renderQsAddrList(){
+  const el=document.getElementById('qsAddrList');
+  if(!_qsAddresses.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0;">Nenhum endereço. Adicione abaixo.</div>';
+    return;
+  }
+  el.innerHTML=_qsAddresses.map((a,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--card2);border-radius:10px;margin-bottom:6px;border:1px solid var(--border);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:14px;">${esc(a.label||'Sem rótulo')}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:1px;">${a.taxa?fmtMoney(a.taxa)+' · ':''} ${[a.bairro,CITY_MAP[a.city]||a.city].filter(Boolean).join(', ')}</div>
+      </div>
+      <button onclick="openQsAddrForm(${i})" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:18px;padding:4px;">✏️</button>
+      <button onclick="rmQsAddr(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:4px;">×</button>
+    </div>`).join('');
+}
+function rmQsAddr(i){
+  _qsAddresses.splice(i,1);
+  _renderQsAddrList();
+}
+
+function openQsAddrForm(addrIdx){
+  _qsAddrEditIdx=addrIdx;
+  const a=addrIdx>=0?_qsAddresses[addrIdx]:null;
+  document.getElementById('qsAddrLabel').value=a?.label||'';
+  document.getElementById('qsAddrTaxa').value=a?.taxa?String(a.taxa).replace('.',','):'';
+  document.getElementById('qsAddrCity').value=a?.city||'';
+  document.getElementById('qsAddrBairro').value=a?.bairro||'';
+  document.getElementById('qsAddrRua').value=a?.rua||'';
+  document.getElementById('qsAddrNumero').value=a?.numero||'';
+  document.getElementById('qsAddrComplement').value=a?.complement||'';
+  document.getElementById('qsAddrReference').value=a?.reference||'';
+  document.getElementById('qsAddrCustomerName').value=a?.customerName||'';
+  document.getElementById('qsAddrPhone').value=a?.phone||'';
+  document.getElementById('qsAddrNotes').value=a?.notes||'';
+  document.getElementById('qsListView').style.display='none';
+  document.getElementById('qsAddrView').style.display='';
+}
+function closeQsAddrForm(){
+  document.getElementById('qsListView').style.display='';
+  document.getElementById('qsAddrView').style.display='none';
+}
+function saveQsAddrForm(){
+  const label=document.getElementById('qsAddrLabel').value.trim();
+  if(!label){toast('Rótulo é obrigatório','error');return;}
+  const addr={
+    label,
+    taxa:parseMoney(document.getElementById('qsAddrTaxa').value)||0,
+    city:document.getElementById('qsAddrCity').value,
+    bairro:document.getElementById('qsAddrBairro').value.trim(),
+    rua:document.getElementById('qsAddrRua').value.trim(),
+    numero:document.getElementById('qsAddrNumero').value.trim(),
+    complement:document.getElementById('qsAddrComplement').value.trim(),
+    reference:document.getElementById('qsAddrReference').value.trim(),
+    customerName:document.getElementById('qsAddrCustomerName').value.trim(),
+    phone:document.getElementById('qsAddrPhone').value.trim(),
+    notes:document.getElementById('qsAddrNotes').value.trim(),
+  };
+  if(_qsAddrEditIdx>=0)_qsAddresses[_qsAddrEditIdx]=addr;
+  else _qsAddresses.push(addr);
+  closeQsAddrForm();
+  _renderQsAddrList();
+}
+
 function saveQsModal(){
   const selVal=document.getElementById('qsName').value;
   const name=selVal==='__custom__'?(document.getElementById('qsNameCustom').value.trim()):selVal.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
-  const taxa=parseMoney(document.getElementById('qsTaxa').value)||0;
-  const city=document.getElementById('qsCity').value;
-  const bairro=document.getElementById('qsBairro').value.trim();
-  const rua=document.getElementById('qsRua').value.trim();
-  const numero=document.getElementById('qsNumero').value.trim();
+  if(!_qsAddresses.length){toast('Adicione ao menos um endereço','error');return;}
   const qs=getQuickStores();
-  const idx=parseInt(document.getElementById('qsEditIdx').value);
-  const obj={name,taxa,city,bairro,rua,numero};
-  if(idx>=0) qs[idx]=obj; else qs.push(obj);
+  const obj={name,addresses:_qsAddresses};
+  if(_qsEditIdx>=0)qs[_qsEditIdx]=obj;else qs.push(obj);
   saveQuickStores(qs);
   closeQsModal();
   renderQuickStoresConfig();
-  toast((idx>=0?'✅ Loja atualizada!':'⚡ Loja "'+name+'" adicionada!'),'success');
+  toast((_qsEditIdx>=0?'✅ Empresa atualizada!':'⚡ "'+name+'" adicionada!'),'success');
 }
 function rmQuickStore(i){const qs=getQuickStores();if(!confirm('Remover '+qs[i]?.name+'?'))return;qs.splice(i,1);saveQuickStores(qs);renderQuickStoresConfig();}
 function renderQuickStoresConfig(){
@@ -1479,23 +1604,37 @@ function renderQuickStoresConfig(){
   if(!el)return;
   const qs=getQuickStores();
   if(!qs.length){el.innerHTML='<div style="font-size:12px;color:var(--muted)">Nenhuma loja rápida.</div>';return;}
-  el.innerHTML=qs.map((s,i)=>`<div class="store-chip">⚡ ${esc(s.name)} <span style="font-size:10px;color:var(--green)">${s.taxa?fmtMoney(s.taxa):''}</span> <span style="font-size:10px;color:var(--muted)">${CITY_MAP[s.city]||''}</span><button class="store-chip-del" onclick="openQsModal(${i})" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;padding:0 2px;">✏️</button><button class="store-chip-del" onclick="rmQuickStore(${i})">×</button></div>`).join('');
+  el.innerHTML=qs.map((s,i)=>{
+    const addrs=s.addresses||[];
+    const addrInfo=addrs.map(a=>`<span style="font-size:11px;color:var(--muted);">${esc(a.label)}${a.taxa?' · '+fmtMoney(a.taxa):''}</span>`).join('<br>');
+    return`<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:flex-start;gap:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:14px;">⚡ ${esc(s.name)}</div>
+        <div style="margin-top:3px;line-height:1.8;">${addrInfo}</div>
+      </div>
+      <button onclick="openQsModal(${i})" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:18px;padding:2px;">✏️</button>
+      <button onclick="rmQuickStore(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:2px;">×</button>
+    </div>`;
+  }).join('');
 }
-function quickAddStop(i){
+function quickAddStop(ci,ai){
   const qs=getQuickStores();
-  const s=qs[i];
-  if(!s)return;
-  const cName=cityName(s.city);
-  const address=s.rua+(s.numero?', '+s.numero:'')+(s.bairro?', '+s.bairro:'')+(cName?' - '+cName:'');
+  const company=qs[ci];
+  const addr=company?.addresses?.[ai];
+  if(!addr)return;
+  const cName=cityName(addr.city);
+  const address=[addr.rua,addr.numero,addr.bairro,cName].filter(Boolean).join(', ');
   stops.push({
-    name:'',address,street:s.rua,number:s.numero,neighborhood:s.bairro,
-    store:s.name,city:s.city,serviceType:'entrega',deliveryDate:'',
-    complement:'',reference:'',timeFrom:'',timeTo:'',phone:'',
-    value:s.taxa||0,paid:false,productValue:0,productPaid:false,
-    notes:'',done:false,_order:stops.length,_addedDate:new Date().toLocaleDateString('pt-BR')
+    name:addr.customerName||'',phone:addr.phone||'',
+    address,street:addr.rua,number:addr.numero,neighborhood:addr.bairro,
+    store:company.name,city:addr.city,serviceType:'entrega',deliveryDate:'',
+    complement:addr.complement||'',reference:addr.reference||'',
+    timeFrom:'',timeTo:'',notes:addr.notes||'',
+    value:addr.taxa||0,paid:false,productValue:0,productPaid:false,
+    done:false,_order:stops.length,_addedDate:new Date().toLocaleDateString('pt-BR')
   });
   saveStops();
-  toast('⚡ '+s.name+(s.taxa?' · '+fmtMoney(s.taxa):'')+' adicionada!','success');
+  toast('⚡ '+esc(addr.label)+(addr.taxa?' · '+fmtMoney(addr.taxa):'')+' adicionada!','success');
   renderHome();
 }
 function renderQuickButtons(){
@@ -1516,46 +1655,78 @@ function closeQuickPanel(){document.getElementById('quickPanel').classList.add('
 document.getElementById('quickPanel').addEventListener('click',e=>{if(e.target===e.currentTarget)closeQuickPanel();});
 function _renderQuickPanelBody(){
   const qs=getQuickStores();
-  const todayStr=new Date().toLocaleDateString('pt-BR');
-  // Count today's stops per store name
   const tripCount={};
-  stops.forEach(s=>{if(s.store){tripCount[s.store]=(tripCount[s.store]||0)+1;}});
-  document.getElementById('quickPanelBody').innerHTML=qs.map((s,i)=>{
-    const pickup=[s.rua,s.bairro,CITY_MAP[s.city]||s.city].filter(Boolean).join(', ');
-    const trips=tripCount[s.name]||0;
-    return`<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);">
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;font-size:15px;">${esc(s.name)}</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;">
-          ${s.taxa?`<span style="font-size:12px;color:var(--green);font-weight:700;">${fmtMoney(s.taxa)}</span>`:''}
-          ${trips>0?`<span style="font-size:11px;color:var(--accent);font-weight:700;">⚡${trips} hoje</span>`:''}
+  stops.forEach(s=>{if(s.store)tripCount[s.store]=(tripCount[s.store]||0)+1;});
+  const stepper=(key)=>`
+    <div style="display:flex;align-items:center;flex-shrink:0;">
+      <button onclick="qAdj('${key}',-1)" style="width:34px;height:34px;border-radius:8px 0 0 8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:20px;font-weight:700;cursor:pointer;">−</button>
+      <div id="qCount_${key}" style="min-width:40px;height:34px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;">${_qCounts[key]||0}</div>
+      <button onclick="qAdj('${key}',1)" style="width:34px;height:34px;border-radius:0 8px 8px 0;border:1px solid var(--border);background:var(--accent);color:#000;font-size:20px;font-weight:700;cursor:pointer;">+</button>
+    </div>`;
+  document.getElementById('quickPanelBody').innerHTML=qs.map((company,ci)=>{
+    const addrs=company.addresses||[];
+    const trips=tripCount[company.name]||0;
+    if(addrs.length===1){
+      const a=addrs[0];
+      const key=`${ci}_0`;
+      const loc=[a.bairro,CITY_MAP[a.city]||a.city].filter(Boolean).join(', ');
+      return`<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:15px;">${esc(company.name)}</div>
+          <div style="font-size:12px;color:var(--green);font-weight:700;margin-top:1px;">${a.taxa?fmtMoney(a.taxa):''}${trips>0?` · <span style="color:var(--accent)">⚡${trips} hoje</span>`:''}</div>
+          ${loc?`<div style="font-size:11px;color:var(--muted);">📍 ${esc(a.label)} · ${loc}</div>`:''}
         </div>
-        ${pickup?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">📍 ${pickup}</div>`:''}
+        ${stepper(key)}
+      </div>`;
+    }
+    const subRows=addrs.map((a,ai)=>{
+      const key=`${ci}_${ai}`;
+      const loc=[a.bairro,CITY_MAP[a.city]||a.city].filter(Boolean).join(', ');
+      return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0 8px 12px;border-bottom:1px solid var(--border);">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:13px;">${esc(a.label)}</div>
+          <div style="font-size:11px;color:var(--muted);">${a.taxa?fmtMoney(a.taxa)+' · ':''}${loc}</div>
+        </div>
+        ${stepper(key)}
+      </div>`;
+    }).join('');
+    return`<div style="border-bottom:1px solid var(--border);">
+      <div style="padding:10px 0 4px;display:flex;align-items:center;gap:8px;">
+        <div style="font-weight:800;font-size:15px;color:var(--accent);">🏭 ${esc(company.name)}</div>
+        ${trips>0?`<span style="font-size:11px;color:var(--accent);font-weight:700;">⚡${trips} hoje</span>`:''}
       </div>
-      <div style="display:flex;align-items:center;">
-        <button onclick="qAdj(${i},-1)" style="width:36px;height:36px;border-radius:8px 0 0 8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:20px;font-weight:700;cursor:pointer;">−</button>
-        <div id="qCount_${i}" style="min-width:44px;height:36px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;">${_qCounts[i]||0}</div>
-        <button onclick="qAdj(${i},1)" style="width:36px;height:36px;border-radius:0 8px 8px 0;border:1px solid var(--border);background:var(--accent);color:#000;font-size:20px;font-weight:700;cursor:pointer;">+</button>
-      </div>
+      ${subRows}
     </div>`;
   }).join('');
 }
-function qAdj(i,delta){
-  _qCounts[i]=Math.max(0,(_qCounts[i]||0)+delta);
-  const el=document.getElementById('qCount_'+i);
-  if(el)el.textContent=_qCounts[i];
+function qAdj(key,delta){
+  _qCounts[key]=Math.max(0,(_qCounts[key]||0)+delta);
+  const el=document.getElementById('qCount_'+key);
+  if(el)el.textContent=_qCounts[key];
 }
 function saveQuickPanel(){
   const qs=getQuickStores();
   let added=0;
-  qs.forEach((s,i)=>{
-    const count=_qCounts[i]||0;
-    for(let j=0;j<count;j++){
-      stops.push({name:s.name,store:s.name,address:[s.rua,s.bairro,CITY_MAP[s.city]||s.city].filter(Boolean).join(', '),street:s.rua,neighborhood:s.bairro,city:s.city,value:s.taxa||0,paid:false,done:false,_order:stops.length,serviceType:'entrega',_addedDate:new Date().toLocaleDateString('pt-BR')});
-      added++;
-    }
+  qs.forEach((company,ci)=>{
+    (company.addresses||[]).forEach((addr,ai)=>{
+      const count=_qCounts[`${ci}_${ai}`]||0;
+      for(let j=0;j<count;j++){
+        const cName=cityName(addr.city);
+        const address=[addr.rua,addr.numero,addr.bairro,cName].filter(Boolean).join(', ');
+        stops.push({
+          name:addr.customerName||'',phone:addr.phone||'',
+          address,street:addr.rua,number:addr.numero,neighborhood:addr.bairro,
+          store:company.name,city:addr.city,serviceType:'entrega',deliveryDate:'',
+          complement:addr.complement||'',reference:addr.reference||'',
+          timeFrom:'',timeTo:'',notes:addr.notes||'',
+          value:addr.taxa||0,paid:false,productValue:0,productPaid:false,
+          done:false,_order:stops.length,_addedDate:new Date().toLocaleDateString('pt-BR')
+        });
+        added++;
+      }
+    });
   });
-  if(!added){toast('Selecione ao menos uma loja','error');return;}
+  if(!added){toast('Selecione ao menos uma parada','error');return;}
   saveStops();
   renderHome();
   closeQuickPanel();
