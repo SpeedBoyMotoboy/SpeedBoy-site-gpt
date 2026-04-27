@@ -3296,12 +3296,10 @@ function delLink(i){ const links=getLinks(); if(!confirm('Remover link da loja '
 function loadConfig(){
   document.getElementById('cfgOrigin').value=cfg.origin||'';
   document.getElementById('cfgWpp').value=cfg.wppMsg||'';
-  // Se config embutida: esconde formulário Firebase e seção de troca de sala
+  // Se config embutida: esconde apenas o formulário de configuração do Firebase
   if(EMBEDDED_FB_CONFIG){
     document.getElementById('fbEmbeddedNotice').style.display='';
     document.getElementById('fbConfigSection').style.display='none';
-    document.getElementById('fbJoinRow').style.display='none';
-    document.getElementById('fbRoomBtns').style.display='none';
   } else {
     const fbSaved=localStorage.getItem('sb_firebase_cfg');
     if(fbSaved){try{document.getElementById('cfgFb').value=JSON.stringify(JSON.parse(fbSaved),null,2);}catch(e){}}
