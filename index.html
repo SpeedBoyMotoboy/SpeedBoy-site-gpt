@@ -3424,8 +3424,14 @@ function startSync(code){
             return !archKeys.has(k);
           });
         }
-        if(JSON.stringify(remote)!==JSON.stringify(stops)){stops=remote;localStorage.setItem('sb_stops',JSON.stringify(stops));renderHome();toast('🔄 Lista sincronizada!','success');
-          sendNotify('🔄 SPEEDBOY — Lista atualizada!', 'Sua esposa atualizou a lista de entregas', 'sync');}
+        if(JSON.stringify(remote)!==JSON.stringify(stops)){
+          const prevLen=stops.length;
+          stops=remote;localStorage.setItem('sb_stops',JSON.stringify(stops));renderHome();toast('🔄 Lista sincronizada!','success');
+          if(remote.length>prevLen){
+            const added=remote.length-prevLen;
+            sendNotify('🔔 SPEEDBOY — Nova entrega!',added===1?'1 nova entrega adicionada à lista':`${added} novas entregas adicionadas à lista`,'sync');
+          }
+        }
       }catch(e){console.error(e);}
     }
     setSyncUI('synced','🟢 Sala: '+code);
@@ -3483,6 +3489,7 @@ function copyRoom(){const c=document.getElementById('roomCode').textContent;if(c
 function joinRoom(){const code=document.getElementById('cfgRoom').value.trim().toUpperCase();if(!code){toast('Digite o código da sala','error');return;}startSync(code);}
 
 // PENDING ORDERS
+let _prevPendingCount = -1;
 function listenPending(){
   if(!fbDb)return;
   const room=localStorage.getItem('sb_room_code')||'';
@@ -3491,22 +3498,21 @@ function listenPending(){
     pendingData={};
     const data=snap.val();
     if(data)Object.entries(data).forEach(([k,v])=>{try{pendingData[k]=typeof v==='string'?JSON.parse(v):v;}catch(e){}});
+    const newCount=Object.keys(pendingData).length;
+    if(_prevPendingCount>=0&&newCount>_prevPendingCount){
+      sendNotify('🔔 SPEEDBOY — Novo pedido!',newCount===1?'1 pedido aguardando confirmação':`${newCount} pedidos aguardando confirmação`,'pending');
+    }
+    _prevPendingCount=newCount;
     renderPending();
   });
 }
-let _pendingInitialized = false;
 function renderPending(){
   const sec=document.getElementById('pendingSection');
   const list=document.getElementById('pendingList');
   const badge=document.getElementById('pendingBadge');
   const keys=Object.keys(pendingData);
   sec.style.display=keys.length?'block':'none';
-  if(!keys.length){ _pendingInitialized=true; return; }
-  const prevCount = parseInt(badge.textContent) || 0;
-  if (_pendingInitialized && keys.length > prevCount) {
-    sendNotify('🔔 SPEEDBOY — Novo pedido!', `${keys.length} pedido(s) aguardando confirmação`, 'pending');
-  }
-  _pendingInitialized = true;
+  if(!keys.length){ return; }
   badge.textContent=keys.length;
   list.innerHTML=keys.map(k=>{
     const s=pendingData[k];
