@@ -2,8 +2,12 @@ const CACHE = 'speedboy-v1';
 const CORE = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)));
   self.skipWaiting();
+  e.waitUntil(
+    caches.open(CACHE).then(c =>
+      Promise.allSettled(CORE.map(url => c.add(url).catch(() => {})))
+    )
+  );
 });
 
 self.addEventListener('activate', e => {

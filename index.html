@@ -107,20 +107,20 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .stop-header-next{border:3px solid var(--green);background:rgba(0,230,118,.08);}
 .stop-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;color:var(--accent);min-width:24px;}
 .stop-info{flex:1;min-width:0;}
-.stop-name{font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.stop-addr{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.stop-name{font-weight:600;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stop-addr{font-size:15px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
 .stop-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
-.stop-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;color:var(--green);}
+.stop-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:var(--green);}
 .stop-val.unpaid{color:var(--accent);}
 .stop-dot{width:8px;height:8px;border-radius:50%;background:var(--border);}
 .stop-card.done .stop-dot{background:var(--green);}
 .stop-detail{display:none;background:var(--card2);border-top:1px solid var(--border);padding:12px;}
 .stop-card.expanded .stop-detail{display:block;}
 .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.detail-chip{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.4;display:flex;flex-direction:column;gap:1px;}
-.detail-chip-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.detail-chip{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:15px;line-height:1.4;display:flex;flex-direction:column;gap:2px;}
+.detail-chip-lbl{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
 .detail-chip.full{grid-column:1/-1;}
-.paid-badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+.paid-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:700;}
 .paid-badge.yes{background:rgba(0,230,118,.15);color:var(--green);border:1px solid var(--green);}
 .paid-badge.no{background:rgba(245,197,24,.1);color:var(--accent);border:1px solid var(--accent);}
 .stop-actions{display:none;padding:10px 12px 12px;flex-direction:column;gap:7px;background:var(--card2);border-top:1px solid var(--border);}
@@ -128,9 +128,9 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 .act-row{display:grid;gap:6px;}
 .act-row-3{grid-template-columns:1fr 1fr 1fr;}
 .act-row-2{grid-template-columns:1fr 1fr;}
-.btn-act-sec{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:10px 8px;font-family:'Barlow',sans-serif;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;}
+.btn-act-sec{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:12px 8px;font-family:'Barlow',sans-serif;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;}
 .btn-act-sec:active{transform:scale(.95);}
-.btn-act{flex:1;min-width:calc(50% - 4px);padding:14px 12px;border-radius:9px;border:none;font-family:'Barlow',sans-serif;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .1s;}
+.btn-act{flex:1;min-width:calc(50% - 4px);padding:16px 12px;border-radius:9px;border:none;font-family:'Barlow',sans-serif;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .1s;}
 .btn-act:active{transform:scale(.95);filter:brightness(1.15);}
 .ba-wpp{background:#25d366;color:#fff;}
 .ba-maps{background:#4285f4;color:#fff;}
