@@ -1110,7 +1110,7 @@ function renderHome(){
       const prodVal=parseMoney(s.productValue);
       const valInput=val>0?`<div style="display:flex;align-items:center;gap:3px;" onclick="event.stopPropagation()"><input type="text" value="${valStr}" onblur="updateStopValue(${i},this.value)" style="width:65px;text-align:right;background:transparent;border:none;border-bottom:1px solid var(--border);color:${s.paid?'var(--green)':'var(--accent)'};font-weight:800;font-size:13px;font-family:'Barlow Condensed',sans-serif;outline:none;padding:1px 2px;" inputmode="decimal" />${s.paid?`<span style="color:var(--green);font-size:15px;font-weight:900;line-height:1;">✓</span>`:''}</div>`:'';
       html+=`<div class="stop-card ${s.done?'done':''}" id="sc${i}" onclick="toggleCard(${i})">
-        <div class="stop-header ${nextIdx === i ? 'stop-header-next' : ''}" style="align-items:flex-start;padding:12px 14px 10px;">
+        <div class="stop-header" style="align-items:flex-start;padding:12px 14px 10px;">
           <div class="stop-num">${i+1}</div>
           <div class="stop-info" style="flex:1;min-width:0;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -1129,6 +1129,20 @@ function renderHome(){
           </div>
           <div class="stop-dot" style="margin-top:4px;flex-shrink:0;"></div>
         </div>
+        <div class="stop-actions" onclick="event.stopPropagation()">
+          <button class="btn-quick-done" onclick="togDone(${i})">${s.done?'↩️ Reabrir':'✅ ENTREGUE'}</button>
+          <div class="act-row act-row-${s.phone&&val>0?'3':(s.phone||val>0?'2':'2')}">
+            <button class="btn-act ba-maps" onclick="openRoute()" style="background:#4285f4;color:#fff;font-weight:800;">🗺️ Navegar</button>
+            ${s.phone?`<button class="btn-act ba-wpp" onclick="openWpp(${i})">💬 WhatsApp</button>`:''}
+            ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togPaid(${i})">${s.paid?'💸 Recebida':'💰 Paga?'}</button>`:''}
+            ${s.productValue>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''}" onclick="togProductPaid(${i})">${s.productPaid?'✅ Cobrado':'💳 Cobrar'}</button>`:''}
+          </div>
+          <div class="act-row act-row-3">
+            <button class="btn-act-sec" onclick="goForm(${i})">✏️ Editar</button>
+            <button class="btn-act-sec" onclick="goRepass()" style="color:var(--accent);border-color:var(--accent);">🔄 Repassar</button>
+            <button class="btn-act-sec" onclick="delStop(${i})" style="color:var(--red);border-color:var(--red);">🗑️ Remover</button>
+          </div>
+        </div>
         <div class="stop-detail">
           <div class="detail-grid">
             ${s.phone?`<div class="detail-chip"><span class="detail-chip-lbl">📞 Telefone</span>${fmtPhone(s.phone)}</div>`:''}
@@ -1142,20 +1156,6 @@ function renderHome(){
             ${s.complement?`<div class="detail-chip full"><span class="detail-chip-lbl">Complemento</span>${s.complement}</div>`:''}
             ${s.reference?`<div class="detail-chip full"><span class="detail-chip-lbl">📍 Referência</span>${s.reference}</div>`:''}
             ${s.notes?`<div class="detail-chip full"><span class="detail-chip-lbl">💬 Obs</span>${s.notes}</div>`:''}
-          </div>
-        </div>
-        <div class="stop-actions" onclick="event.stopPropagation()">
-          <button class="btn-quick-done" onclick="togDone(${i})">${s.done?'↩️ Reabrir':'✅ ENTREGUE'}</button>
-          <div class="act-row act-row-${s.phone&&val>0?'3':(s.phone||val>0?'2':'2')}">
-            <button class="btn-act ba-maps" onclick="openMapsWithAddress(${i})" style="background:#4285f4;color:#fff;font-weight:800;">🗺️ Navegar</button>
-            ${s.phone?`<button class="btn-act ba-wpp" onclick="openWpp(${i})">💬 WhatsApp</button>`:''}
-            ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togPaid(${i})">${s.paid?'💸 Recebida':'💰 Paga?'}</button>`:''}
-            ${s.productValue>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''}" onclick="togProductPaid(${i})">${s.productPaid?'✅ Cobrado':'💳 Cobrar'}</button>`:''}
-          </div>
-          <div class="act-row act-row-3">
-            <button class="btn-act-sec" onclick="goForm(${i})">✏️ Editar</button>
-            <button class="btn-act-sec" onclick="goRepass()" style="color:var(--accent);border-color:var(--accent);">🔄 Repassar</button>
-            <button class="btn-act-sec" onclick="delStop(${i})" style="color:var(--red);border-color:var(--red);">🗑️ Remover</button>
           </div>
         </div>
       </div>`;
@@ -1275,12 +1275,6 @@ function renderHome(){
   }        // end if(history.length)
 
   list.innerHTML=html;
-  if(nextIdx !== -1) {
-    setTimeout(()=>{
-      const nextCard = document.getElementById('sc'+nextIdx);
-      if(nextCard) nextCard.scrollIntoView({behavior:'smooth',block:'nearest'});
-    }, 100);
-  }
 }
 
 function toggleCard(i){
