@@ -1797,10 +1797,15 @@ function saveStop(){
 // ═══════════════════════════════════════════════════════
 function buildMapsUrl(addrs,originOverride){
   if(!addrs.length)return null;
-  // /dir/ path format funciona universalmente — web e app mobile
   const origin=originOverride||cfg.origin||null;
-  const all=origin?[origin,...addrs]:addrs;
-  return 'https://www.google.com/maps/dir/'+all.map(a=>encodeURIComponent(a)).join('/');
+  // saddr/daddr+to: format passes multiple stops correctly to Android Maps app
+  if(origin){
+    return 'https://maps.google.com/maps?saddr='+encodeURIComponent(origin)+'&daddr='+addrs.map(a=>encodeURIComponent(a)).join('+to:');
+  }
+  if(addrs.length===1){
+    return 'https://maps.google.com/maps?daddr='+encodeURIComponent(addrs[0]);
+  }
+  return 'https://maps.google.com/maps?saddr=&daddr='+addrs.map(a=>encodeURIComponent(a)).join('+to:');
 }
 async function getGpsOrigin(){
   if(!navigator.geolocation)return null;
