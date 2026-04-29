@@ -1132,7 +1132,7 @@ function renderHome(){
         <div class="stop-actions" onclick="event.stopPropagation()">
           <button class="btn-quick-done" onclick="togDone(${i})">${s.done?'↩️ Reabrir':'✅ ENTREGUE'}</button>
           <div class="act-row act-row-${s.phone&&val>0?'3':(s.phone||val>0?'2':'2')}">
-            <button class="btn-act ba-maps" onclick="openRoute()" style="background:#4285f4;color:#fff;font-weight:800;">🗺️ Navegar</button>
+            <button class="btn-act ba-maps" onclick="openMapsWithAddress(${i})" style="background:#4285f4;color:#fff;font-weight:800;">🗺️ Navegar</button>
             ${s.phone?`<button class="btn-act ba-wpp" onclick="openWpp(${i})">💬 WhatsApp</button>`:''}
             ${val>0?`<button class="btn-act ba-paid ${s.paid?'received':''}" onclick="togPaid(${i})">${s.paid?'💸 Recebida':'💰 Paga?'}</button>`:''}
             ${s.productValue>0?`<button class="btn-act ba-paid ${s.productPaid?'received':''}" onclick="togProductPaid(${i})">${s.productPaid?'✅ Cobrado':'💳 Cobrar'}</button>`:''}
@@ -1796,16 +1796,16 @@ function saveStop(){
 //  ROUTE
 // ═══════════════════════════════════════════════════════
 function buildMapsUrl(addrs,originOverride){
-  if(!addrs.length)return null;
+  const clean=addrs.filter(a=>a&&a.trim());
+  if(!clean.length)return null;
   const origin=originOverride||cfg.origin||null;
-  // saddr/daddr+to: format passes multiple stops correctly to Android Maps app
   if(origin){
-    return 'https://maps.google.com/maps?saddr='+encodeURIComponent(origin)+'&daddr='+addrs.map(a=>encodeURIComponent(a)).join('+to:');
+    return 'https://maps.google.com/maps?saddr='+encodeURIComponent(origin)+'&daddr='+clean.map(encodeURIComponent).join('+to:');
   }
-  if(addrs.length===1){
-    return 'https://maps.google.com/maps?daddr='+encodeURIComponent(addrs[0]);
+  if(clean.length===1){
+    return 'https://maps.google.com/maps?daddr='+encodeURIComponent(clean[0]);
   }
-  return 'https://maps.google.com/maps?saddr=&daddr='+addrs.map(a=>encodeURIComponent(a)).join('+to:');
+  return 'https://maps.google.com/maps?daddr='+clean.map(encodeURIComponent).join('+to:');
 }
 async function getGpsOrigin(){
   if(!navigator.geolocation)return null;
