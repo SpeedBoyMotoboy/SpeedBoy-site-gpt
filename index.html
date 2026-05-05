@@ -736,8 +736,13 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 <!-- ══ REPORT ══ -->
 <div class="screen" id="reportScreen">
   <div class="report-body">
-    <div class="section-title">📊 Fechamento</div>
-    <input class="finput" id="histSearch" type="search" placeholder="🔍 Nome, telefone, endereço, bairro..." oninput="onHistSearch(this.value)" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <div class="section-title" style="margin:0;flex:1;">📊 Fechamento</div>
+      <button id="histSearchBtn" onclick="toggleHistSearch()" style="background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;width:42px;height:42px;font-size:20px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">🔍</button>
+    </div>
+    <div id="histSearchBox" style="display:none;margin-bottom:12px;">
+      <input class="finput" id="histSearch" type="search" placeholder="Nome, telefone, rua, bairro, cidade..." oninput="onHistSearch(this.value)" autofocus style="width:100%;box-sizing:border-box;">
+    </div>
     <div id="histSearchResults" style="display:none;"></div>
     <div id="reportPeriodBody">
       <div class="period-tabs">
@@ -986,6 +991,8 @@ function goNav(screenId, navId) {
   if(screenId==='reportScreen'){
     _histSearchQ='';
     const si=document.getElementById('histSearch'); if(si)si.value='';
+    const sb=document.getElementById('histSearchBox'); if(sb)sb.style.display='none';
+    const sbtn=document.getElementById('histSearchBtn'); if(sbtn)sbtn.style.background='transparent';
     const sr=document.getElementById('histSearchResults'); if(sr)sr.style.display='none';
     const pb=document.getElementById('reportPeriodBody'); if(pb)pb.style.display='';
     renderReport();
@@ -2539,14 +2546,26 @@ function _renderDays(d){
       const prodVal=parseMoney(s.productValue);
       const payFn=day.isToday?`togPaid(${si})`:`togHistPaid('${day.date}',${si})`;
       const prodFn=day.isToday?`togProductPaid(${si})`:`togHistProductPaid('${day.date}',${si})`;
-      return `<div class="fstop">
-        <div class="fstop-info">
-          <div class="fstop-name">${s.name||'Sem nome'}</div>
-          ${s.store?`<div class="fstop-store">${s.store}</div>`:''}
+      const wppNum=(s.phone||'').replace(/\D/g,'');
+      const addr=[s.street,s.number,s.complement,s.neighborhood].filter(Boolean).join(' ');
+      const city=cityName(resolveCityCode(s.city||s.cityId))||'';
+      const fullAddr=addr+(city?' · '+city:'');
+      return `<div class="fstop" style="flex-direction:column;align-items:stretch;gap:4px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+          <div style="min-width:0;">
+            <div class="fstop-name">${s.name||'Sem nome'}</div>
+            ${s.store?`<div class="fstop-store">${s.store}</div>`:''}
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            ${val>0?`<div class="fstop-val" style="color:${s.paid?'var(--green)':'var(--accent)'};">${fmtMoney(val)}</div>`:''}
+            ${val>0?`<button class="sc-btn ${s.paid?'paid':''}" style="font-size:12px;padding:5px 8px;" onclick="${payFn};renderReport();">${s.paid?'✓':'💰'}</button>`:''}
+            ${prodVal>0?`<button class="sc-btn" style="font-size:12px;padding:5px 8px;color:var(--blue);border-color:rgba(59,130,246,.4);" onclick="${prodFn};renderReport();">${s.productPaid?'✓ Prod':'💳 Prod'}</button>`:''}
+          </div>
         </div>
-        ${val>0?`<div class="fstop-val" style="color:${s.paid?'var(--green)':'var(--accent)'};">${fmtMoney(val)}</div>`:''}
-        ${val>0?`<button class="sc-btn ${s.paid?'paid':''}" style="font-size:12px;padding:5px 8px;flex-shrink:0;" onclick="${payFn};renderReport();">${s.paid?'✓':'💰'}</button>`:''}
-        ${prodVal>0?`<button class="sc-btn" style="font-size:12px;padding:5px 8px;flex-shrink:0;color:var(--blue);border-color:rgba(59,130,246,.4);" onclick="${prodFn};renderReport();">${s.productPaid?'✓ Prod':'💳 Prod'}</button>`:''}
+        ${wppNum?`<a href="https://wa.me/55${wppNum}" target="_blank" style="font-size:13px;color:#25d366;font-weight:700;text-decoration:none;">📞 ${fmtPhone(s.phone)}</a>`:(s.phone?`<div style="font-size:13px;color:var(--muted);">📞 ${s.phone}</div>`:'')}
+        ${fullAddr?`<div style="font-size:13px;color:var(--muted);">📍 ${fullAddr}</div>`:''}
+        ${s.address&&!addr?`<div style="font-size:13px;color:var(--muted);">📍 ${s.address}</div>`:''}
+        ${(s.reference||s.notes)?`<div style="font-size:12px;color:var(--muted);opacity:.8;">💬 ${[s.reference,s.notes].filter(Boolean).join(' · ')}</div>`:''}
       </div>`;
     }).join('');
     return `<div class="fday" id="${dayId}">
@@ -2566,6 +2585,15 @@ function _renderDays(d){
 }
 
 let _histSearchQ='';
+function toggleHistSearch(){
+  const box=document.getElementById('histSearchBox');
+  const btn=document.getElementById('histSearchBtn');
+  const open=box.style.display==='none';
+  box.style.display=open?'':'none';
+  btn.style.background=open?'rgba(245,197,24,.15)':'transparent';
+  if(open){document.getElementById('histSearch').focus();}
+  else{document.getElementById('histSearch').value='';onHistSearch('');}
+}
 function onHistSearch(val){
   _histSearchQ=val.trim().toLowerCase();
   const srEl=document.getElementById('histSearchResults');
