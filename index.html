@@ -737,15 +737,19 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 <div class="screen" id="reportScreen">
   <div class="report-body">
     <div class="section-title">📊 Fechamento</div>
-    <div class="period-tabs">
-      <button class="period-tab on" id="tabW"  onclick="setPeriod('week')">7 Dias</button>
-      <button class="period-tab"   id="tabM"  onclick="setPeriod('month')">Mês</button>
-      <button class="period-tab"   id="tab60" onclick="setPeriod('60d')">60 Dias</button>
+    <input class="finput" id="histSearch" type="search" placeholder="🔍 Nome, telefone, endereço, bairro..." oninput="onHistSearch(this.value)" style="margin-bottom:12px;">
+    <div id="histSearchResults" style="display:none;"></div>
+    <div id="reportPeriodBody">
+      <div class="period-tabs">
+        <button class="period-tab on" id="tabW"  onclick="setPeriod('week')">7 Dias</button>
+        <button class="period-tab"   id="tabM"  onclick="setPeriod('month')">Mês</button>
+        <button class="period-tab"   id="tab60" onclick="setPeriod('60d')">60 Dias</button>
+      </div>
+      <div id="reportSummary"></div>
+      <div id="reportStores"></div>
+      <div id="reportHistory"></div>
+      <button class="btn-pdf" id="btnPdf" onclick="genPDF()" style="margin-top:8px;">📄 Baixar PDF do período</button>
     </div>
-    <div id="reportSummary"></div>
-    <div id="reportStores"></div>
-    <div id="reportHistory"></div>
-    <button class="btn-pdf" id="btnPdf" onclick="genPDF()" style="margin-top:8px;">📄 Baixar PDF do período</button>
   </div>
 </div>
 
@@ -979,7 +983,13 @@ function goNav(screenId, navId) {
   // render hooks
   if(screenId==='homeScreen')    renderHome();
   if(screenId==='financeScreen') { checkNewDay(); renderFinance(); }
-  if(screenId==='reportScreen')  renderReport();
+  if(screenId==='reportScreen'){
+    _histSearchQ='';
+    const si=document.getElementById('histSearch'); if(si)si.value='';
+    const sr=document.getElementById('histSearchResults'); if(sr)sr.style.display='none';
+    const pb=document.getElementById('reportPeriodBody'); if(pb)pb.style.display='';
+    renderReport();
+  }
   if(screenId==='linkgenScreen') renderLinks();
   if(screenId==='repassScreen')  renderRepassList();
   if(screenId==='configScreen')  loadConfig();
@@ -2551,6 +2561,54 @@ function _renderDays(d){
         </div>
       </div>
       <div class="fday-list">${stops_html}</div>
+    </div>`;
+  }).join('');
+}
+
+let _histSearchQ='';
+function onHistSearch(val){
+  _histSearchQ=val.trim().toLowerCase();
+  const srEl=document.getElementById('histSearchResults');
+  const pbEl=document.getElementById('reportPeriodBody');
+  if(!_histSearchQ){
+    srEl.style.display='none'; pbEl.style.display=''; return;
+  }
+  srEl.style.display=''; pbEl.style.display='none';
+  _renderSearch(_histSearchQ);
+}
+
+function _renderSearch(q){
+  const el=document.getElementById('histSearchResults');
+  const todayStr=new Date().toLocaleDateString('pt-BR');
+  const allDays=[{date:todayStr,stops,isToday:true},...history];
+  const matches=[];
+  allDays.forEach(day=>{
+    (day.stops||[]).forEach((s,si)=>{
+      const hay=[s.name,s.phone,s.address,s.street,s.neighborhood,s.notes,s.reference,s.store,
+        cityName(resolveCityCode(s.city||s.cityId))].filter(Boolean).join(' ').toLowerCase();
+      if(hay.includes(q)) matches.push({day,s,si});
+    });
+  });
+  if(!matches.length){
+    el.innerHTML='<div class="no-data">Nenhum resultado para "'+q+'"</div>'; return;
+  }
+  el.innerHTML='<div class="fsec-title">'+matches.length+' resultado(s)</div>'+matches.map(({day,s,si})=>{
+    const val=parseMoney(s.value);
+    const wppNum=(s.phone||'').replace(/\D/g,'');
+    const wppLink=wppNum?`<a href="https://wa.me/55${wppNum}" target="_blank" style="color:#25d366;font-weight:700;font-size:13px;">💬 ${fmtPhone(s.phone)}</a>`:'';
+    const addr=[s.street,s.number,s.complement,s.neighborhood].filter(Boolean).join(' ');
+    const city=cityName(resolveCityCode(s.city||s.cityId))||'';
+    return `<div class="sc" style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;">${s.name||'Sem nome'}</div>
+        <div style="font-size:12px;color:var(--muted);text-align:right;flex-shrink:0;">${day.date}${day.isToday?' (hoje)':''}</div>
+      </div>
+      ${s.store?`<div style="font-size:12px;color:#ff6b00;font-weight:700;margin-bottom:4px;">${s.store}</div>`:''}
+      ${wppLink?`<div style="margin-bottom:4px;">${wppLink}</div>`:''}
+      ${addr?`<div style="font-size:13px;color:var(--muted);">${addr}${city?' · '+city:''}</div>`:''}
+      ${s.address&&!addr?`<div style="font-size:13px;color:var(--muted);">${s.address}</div>`:''}
+      ${s.notes||s.reference?`<div style="font-size:12px;color:var(--muted);opacity:.75;margin-top:2px;">${[s.reference,s.notes].filter(Boolean).join(' · ')}</div>`:''}
+      ${val>0?`<div style="margin-top:6px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${s.paid?'var(--green)':'var(--accent)'};">${fmtMoney(val)} ${s.paid?'· Recebida':'· A receber'}</div>`:''}
     </div>`;
   }).join('');
 }
