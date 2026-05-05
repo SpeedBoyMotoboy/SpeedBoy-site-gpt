@@ -1,4 +1,4 @@
-const CACHE = 'speedboy-v1';
+const CACHE = 'speedboy-v20260505';
 const CORE = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
@@ -28,7 +28,7 @@ self.addEventListener('fetch', e => {
         }
         return res;
       }).catch(() => cached);
-      return cached || network;
+      return network || cached;
     })
   );
 });
