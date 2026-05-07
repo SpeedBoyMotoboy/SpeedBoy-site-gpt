@@ -897,6 +897,7 @@ let history = JSON.parse(localStorage.getItem('sb_history') || '[]');
 let cfg     = JSON.parse(localStorage.getItem('sb_cfg')     || '{}');
 if (!cfg.stores) cfg.stores = [];
 if (!cfg.meta)   cfg.meta   = 0;
+if (!cfg.origin) cfg.origin = 'R. São Lucas, 52 - Jacaraípe, Serra - ES';
 
 let wppStop     = null;
 
