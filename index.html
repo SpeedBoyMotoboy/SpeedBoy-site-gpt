@@ -430,6 +430,7 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
   <div id="quickFab" style="display:none;"></div>
   <div class="stops-list" id="stopsList"></div>
   <div class="route-bar">
+    <button class="btn-route" id="optimizeBtn" onclick="optimizeAndOpenRoute()" disabled style="width:100%;margin-bottom:8px;background:rgba(245,197,24,.12);border-color:var(--accent);color:var(--accent);font-size:15px;">⚡ Otimizar Rota · GPS → entregas → 🏠 Casa</button>
     <div style="display:flex;gap:8px;">
       <button class="btn-route" id="routeBtn" onclick="openRoute()" disabled style="flex:1.2;">🗺️ Rota no Maps</button>
       <button class="btn-route" onclick="goRepass()" style="flex:1;background:rgba(255,107,0,.12);border-color:var(--accent2);color:var(--accent2);">🏍️ Repassar</button>
@@ -1065,6 +1066,7 @@ function renderHome(){
   badge.textContent = total+' parada(s)';
   badge.classList.toggle('full', false);
   document.getElementById('routeBtn').disabled = total===0;
+  const _ob=document.getElementById('optimizeBtn'); if(_ob) _ob.disabled=total===0;
   document.getElementById('sortBar').classList.toggle('visible', total>1);
   renderQuickButtons();
 
@@ -1892,11 +1894,12 @@ function nearestNeighborTSP(items,originCoords){
 //  OSRM Trip — otimização real por estradas (gratuito, sem API key)
 //  https://router.project-osrm.org
 // ─────────────────────────────────────────────────────────
-async function osrmTripOptimize(items, originCoords){
+async function osrmTripOptimize(items, originCoords, destCoords=null){
   const withCoords=items.filter(s=>s._coords);
   if(withCoords.length<2) return null;
   try{
     const pts=originCoords?[originCoords,...withCoords.map(s=>s._coords)]:withCoords.map(s=>s._coords);
+    if(destCoords) pts.push(destCoords);
     const coordStr=pts.map(c=>`${c.lng},${c.lat}`).join(';');
     const ctrl=new AbortController();
     const timer=setTimeout(()=>ctrl.abort(),8000);
@@ -1947,7 +1950,7 @@ async function optimizeAndOpenRoute(){
       return;
     }
 
-    // 2. Origem — GPS primeiro, cfg.origin como fallback
+    // 2. Origem GPS + destino casa
     let originCoords=null;
     let gpsOriginStr=null;
     try{
@@ -1959,9 +1962,12 @@ async function optimizeAndOpenRoute(){
     }
     if(!originCoords) originCoords=withCoords[0]._coords;
 
+    let destCoords=null;
+    if(cfg.origin){ toast('🏠 Geocodificando casa...',''); destCoords=await geocodeAddress(cfg.origin); }
+
     // 3. Otimizar: OSRM primeiro, Haversine como fallback
     toast('⚡ Otimizando via OSRM...','');
-    let ordered=await osrmTripOptimize(withCoords,originCoords);
+    let ordered=await osrmTripOptimize(withCoords,originCoords,destCoords);
     const method=ordered?'OSRM':'Haversine';
     if(!ordered) ordered=nearestNeighborTSP(withCoords,originCoords);
 
@@ -1972,10 +1978,12 @@ async function optimizeAndOpenRoute(){
     stops.filter(s=>s.done).forEach(s=>{s._order=newStops.length;newStops.push(s);});
     stops=newStops; saveStops(); renderHome();
 
-    // 5. Abrir no Maps com /dir/ format — origem = GPS atual
-    window.open(buildMapsUrl(finalOrder.map(s=>s.address),gpsOriginStr),'_blank');
+    // 5. Abrir no Maps: GPS → entregas otimizadas → casa
+    const mapsAddrs=finalOrder.map(s=>s.address);
+    if(cfg.origin) mapsAddrs.push(cfg.origin);
+    window.open(buildMapsUrl(mapsAddrs,gpsOriginStr),'_blank');
     const skipped=withoutCoords.length;
-    toast(`✅ Rota otimizada via ${method}! ${ordered.length} paradas${skipped?' (+'+skipped+' sem coords)':''}`, 'success');
+    toast(`✅ Rota via ${method}! ${ordered.length} paradas${cfg.origin?' → 🏠':''}${skipped?' (+'+skipped+' sem coords)':''}`, 'success');
   }catch(e){
     console.error(e);
     toast('Erro ao otimizar rota','error');
