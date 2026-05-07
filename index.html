@@ -3380,6 +3380,7 @@ function startSync(code){
   },err=>{setSyncUI('error','❌ Erro de conexão');console.error(err);});
   toast('🔥 Sala '+code+' ativa!','success');
   setTimeout(listenPending,500);
+  setTimeout(listenClientRequests,800);
   startLocationWatch();
 }
 
@@ -3508,6 +3509,48 @@ async function acceptPending(key){
 async function rejectPending(key){const s=pendingData[key];if(!confirm('Recusar entrega de '+(s?.name||'cliente')+'?'))return;await updateTracking(key,'recusado');await rmPending(key);}
 async function rejectAll(){const keys=Object.keys(pendingData);if(!keys.length)return;if(!confirm('Recusar todos os '+keys.length+' pedido(s)?'))return;for(const k of keys){await updateTracking(k,'recusado');await rmPending(k);}}
 async function rmPending(key){if(!fbDb)return;try{const room=localStorage.getItem('sb_room_code')||'';const {ref:r,remove}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');await remove(r(fbDb,'rooms/'+room+'/pending/'+key));}catch(e){console.error(e);}}
+
+// ── Requisições do cliente (editar / cancelar) ──────────────────────
+let _crSeen={};
+function listenClientRequests(){
+  if(!fbDb)return;
+  const room=localStorage.getItem('sb_room_code')||'';
+  if(!room)return;
+  const crRef=fbMods.ref(fbDb,'rooms/'+room+'/client_requests');
+  fbMods.onValue(crRef,snap=>{
+    const data=snap.val();
+    if(!data)return;
+    Object.entries(data).forEach(([key,raw])=>{
+      if(_crSeen[key])return;
+      _crSeen[key]=true;
+      let req;
+      try{req=typeof raw==='string'?JSON.parse(raw):raw;}catch(e){return;}
+      if(req.type==='edit') showEditRequest(key,req);
+      else if(req.type==='cancel') showCancelRequest(key,req);
+    });
+  });
+}
+function showEditRequest(key,req){
+  const f=req.fields||{};
+  const lines=Object.entries(f).filter(([,v])=>v).map(([k,v])=>`${k}: ${v}`).join('\n');
+  const msg=`✏️ Cliente quer EDITAR a entrega de "${req.name||'?'}":\n\n${lines}\n\nAceitar alterações?`;
+  if(!confirm(msg)){rmClientRequest(key);return;}
+  const si=stops.findIndex(s=>s._trackKey===key);
+  if(si>=0){Object.assign(stops[si],req.fields||{});saveStops();renderHome();toast('✅ Entrega de '+req.name+' atualizada','success');}
+  else toast('⚠️ Entrega não encontrada nos stops ativos','error');
+  rmClientRequest(key);
+}
+function showCancelRequest(key,req){
+  if(!confirm(`❌ Cliente quer CANCELAR a entrega de "${req.name||'?'}".\n\nAceitar cancelamento?`)){rmClientRequest(key);return;}
+  const si=stops.findIndex(s=>s._trackKey===key);
+  if(si>=0){stops.splice(si,1);saveStops();renderHome();toast('🗑️ Entrega de '+(req.name||'?')+' cancelada','success');}
+  rmClientRequest(key);
+}
+async function rmClientRequest(key){
+  if(!fbDb)return;
+  try{const room=localStorage.getItem('sb_room_code')||'';const{ref:r,remove}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');await remove(r(fbDb,'rooms/'+room+'/client_requests/'+key));}catch(e){console.error(e);}
+}
+
 async function updateTracking(key,status,stopInfo=null){
   if(!fbDb)return;
   try{

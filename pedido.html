@@ -138,6 +138,26 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
 .status-entregue{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3);}
 .status-recusado{background:rgba(255,69,96,.15);color:var(--red);border:1px solid rgba(255,69,96,.3);}
 
+/* CLIENT REQUEST BUTTONS */
+.client-req-btn{flex:1;padding:9px 8px;border-radius:10px;font-family:'Barlow',sans-serif;font-weight:700;font-size:13px;cursor:pointer;border:1.5px solid;text-align:center;}
+.edit-btn{background:rgba(59,130,246,.1);color:#3b82f6;border-color:rgba(59,130,246,.4);}
+.cancel-btn{background:rgba(255,69,96,.1);color:var(--red);border-color:rgba(255,69,96,.4);}
+
+/* EDIT MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:400;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+.modal-box{background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;margin-bottom:16px;}
+.modal-field{margin-bottom:12px;}
+.modal-label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+.modal-input{width:100%;background:var(--card2);border:1.5px solid var(--border);color:var(--text);border-radius:12px;padding:12px 14px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;}
+.modal-input:focus{border-color:var(--accent);}
+.modal-row{display:flex;gap:10px;}
+.modal-row .modal-field{flex:1;}
+.modal-actions{display:flex;gap:10px;margin-top:16px;}
+.modal-btn{flex:1;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;cursor:pointer;border:none;}
+.modal-btn.confirm{background:var(--accent);color:#000;}
+.modal-btn.cancel{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
+
 /* TOAST */
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;z-index:600;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -259,7 +279,7 @@ var db         = null;
 var stopCount  = 0;
 var lastSubmittedStops = [];
 var lastSubmittedKeys = [];
-var trackingListeners = [];
+var clientReqRoom = '';
 
 // ═══════════════════════════════════════════════════
 //  BAIRROS CUSTOMIZADOS (localStorage por loja)
@@ -701,25 +721,23 @@ window.submitPedido = function() {
         var typeIcon = s.serviceType === 'retirada' ? '📦 Retirada' : s.serviceType === 'troca' ? '🔄 Troca' : '🛵 Entrega';
         var dateStr  = s.deliveryDate ? ' · 📅 ' + s.deliveryDate : '';
         var key = lastSubmittedKeys[i] || '';
-        var trackUrl = key ? 'rastreio.html?room=' + encodeURIComponent(ROOM) + '&key=' + encodeURIComponent(key) : '';
-        return '<div class="success-item">' +
+        var editBtn = key ? '<button class="client-req-btn edit-btn" onclick="window.openEditModal(\'' + key + '\',' + i + ')">✏️ Editar entrega</button>' : '';
+        var cancelBtn = key ? '<button class="client-req-btn cancel-btn" onclick="window.requestCancel(\'' + key + '\',\'' + s.name.replace(/'/g,"\\'") + '\')">❌ Cancelar</button>' : '';
+        return '<div class="success-item" id="si_' + key + '">' +
           '<strong>' + typeIcon + ' ' + (i+1) + '. ' + s.name + '</strong>' + dateStr + '<br>' +
           '<span style="font-size:11px;color:var(--muted)">' + s.address + timeStr + valStr + '</span><br>' +
-          '<span class="status-badge status-pending" id="track_' + key + '">⏳ Aguardando confirmação</span>' +
-          (trackUrl ? '<br><a href="' + trackUrl + '" target="_blank" style="display:inline-block;margin-top:8px;padding:10px 20px;border-radius:12px;font-size:14px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;border:1.5px solid rgba(59,130,246,.4);text-decoration:none;letter-spacing:.3px;">📍 Rastrear entrega</a>' : '') +
+          '<span class="status-badge status-pending">⏳ Aguardando confirmação</span>' +
+          (editBtn || cancelBtn ? '<div style="display:flex;gap:8px;margin-top:8px;">' + editBtn + cancelBtn + '</div>' : '') +
           '</div>';
       }).join('');
 
       document.getElementById('successList').innerHTML =
         '<div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">' +
         newStops.length + ' entrega(s) enviada(s)</div>' + html;
+      clientReqRoom = ROOM;
       addToClientHistory(newStops, lastSubmittedKeys);
       document.getElementById('successWrap').classList.add('show');
-      
       document.getElementById('btnWhatsApp').style.display = 'inline-block';
-      
-      // Start tracking each order
-      startTracking(lastSubmittedKeys);
     })
     .catch(function(e) {
       document.getElementById('loading').classList.remove('show');
@@ -730,49 +748,61 @@ window.submitPedido = function() {
 };
 
 // ═══════════════════════════════════════════════════
-//  TRACKING — status em tempo real
+//  EDITAR / CANCELAR — requisições ao motoboy
 // ═══════════════════════════════════════════════════
-var STATUS_LABELS = {
-  'pending':   { text: '⏳ Aguardando confirmação', css: 'status-pending' },
-  'aceito':    { text: '✅ Confirmado pelo motoboy', css: 'status-aceito' },
-  'a caminho': { text: '🏍️ Motoboy a caminho!', css: 'status-acaminho' },
-  'entregue':  { text: '📦 Entregue!', css: 'status-entregue' },
-  'recusado':  { text: '❌ Recusado', css: 'status-recusado' }
+var _editKey = '';
+var _editIdx = -1;
+
+window.openEditModal = function(key, idx) {
+  _editKey = key; _editIdx = idx;
+  var s = lastSubmittedStops[idx] || {};
+  document.getElementById('editAddress').value  = s.address  || '';
+  document.getElementById('editComplement').value = s.complement || '';
+  document.getElementById('editReference').value = s.reference || '';
+  document.getElementById('editNotes').value    = s.notes    || '';
+  document.getElementById('editTimeFrom').value = s.timeFrom || '';
+  document.getElementById('editTimeTo').value   = s.timeTo   || '';
+  document.getElementById('editModal').style.display = 'flex';
+};
+window.closeEditModal = function() {
+  document.getElementById('editModal').style.display = 'none';
+};
+window.submitEdit = function() {
+  if (!_editKey || !db) return;
+  var payload = {
+    type: 'edit',
+    name: (lastSubmittedStops[_editIdx] || {}).name || '',
+    fields: {
+      address:    document.getElementById('editAddress').value.trim(),
+      complement: document.getElementById('editComplement').value.trim(),
+      reference:  document.getElementById('editReference').value.trim(),
+      notes:      document.getElementById('editNotes').value.trim(),
+      timeFrom:   document.getElementById('editTimeFrom').value.trim(),
+      timeTo:     document.getElementById('editTimeTo').value.trim()
+    },
+    ts: Date.now()
+  };
+  db.ref('rooms/' + clientReqRoom + '/client_requests/' + _editKey).set(JSON.stringify(payload))
+    .then(function() {
+      showToast('✏️ Solicitação enviada ao motoboy!', 'success');
+      window.closeEditModal();
+    })
+    .catch(function(e) { showToast('Erro ao enviar: ' + e.message, 'error'); });
+};
+window.requestCancel = function(key, name) {
+  if (!confirm('Tem certeza que deseja cancelar a entrega de ' + name + '?')) return;
+  if (!db) return;
+  var payload = { type: 'cancel', name: name, ts: Date.now() };
+  db.ref('rooms/' + clientReqRoom + '/client_requests/' + key).set(JSON.stringify(payload))
+    .then(function() {
+      showToast('❌ Cancelamento enviado ao motoboy!', 'success');
+      var item = document.getElementById('si_' + key);
+      if (item) item.style.opacity = '.4';
+    })
+    .catch(function(e) { showToast('Erro ao enviar: ' + e.message, 'error'); });
 };
 
-function startTracking(keys) {
-  stopTracking();
-  if (!db || !keys || !keys.length) return;
-  keys.forEach(function(key) {
-    if (!key) return;
-    var ref = db.ref('rooms/' + ROOM + '/tracking/' + key);
-    var unsub = ref.on('value', function(snap) {
-      var raw = snap.val();
-      if (!raw) return;
-      try {
-        var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        var status = data.status || 'pending';
-        var info = STATUS_LABELS[status] || STATUS_LABELS['pending'];
-        var badge = document.getElementById('track_' + key);
-        if (badge) {
-          badge.textContent = info.text;
-          badge.className = 'status-badge ' + info.css;
-        }
-      } catch(e) { console.error('tracking parse error:', e); }
-    });
-    trackingListeners.push({ ref: ref, cb: unsub });
-  });
-}
-
-function stopTracking() {
-  trackingListeners.forEach(function(t) {
-    try { t.ref.off('value', t.cb); } catch(e) {}
-  });
-  trackingListeners = [];
-}
-
 window.resetForm = function() {
-  stopTracking();
   document.getElementById('successWrap').classList.remove('show');
   document.getElementById('stopsWrap').innerHTML = '';
   document.getElementById('mainWrap').style.display = 'block';
@@ -891,49 +921,13 @@ function renderClientHistory() {
     var stopsHtml = entry.stops.map(function(s, i) {
       var type    = s.serviceType==='retirada'?'📦':s.serviceType==='troca'?'🔄':'🛵';
       var refStr  = s.reference ? ' · 🔍 ' + s.reference : '';
-      var trackUrl = (s.key && entry.room) ? 'rastreio.html?room=' + encodeURIComponent(entry.room) + '&key=' + encodeURIComponent(s.key) : '';
-      var trackBtn = trackUrl
-        ? '<br><a href="' + trackUrl + '" target="_blank" style="display:inline-block;margin-top:6px;padding:8px 16px;border-radius:12px;font-size:13px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;border:1.5px solid rgba(59,130,246,.4);text-decoration:none;">📍 Rastrear</a>'
-        : '';
-      var badge = s.key ? '<span class="status-badge status-pending" id="hist_track_'+s.key+'" style="margin-top:4px;display:inline-block;">⏳</span>' : '';
       return '<div style="margin-top:6px">' +
         type + ' ' + (i+1) + '. <strong>' + s.name + '</strong> — ' + (s.city||'') +
         (s.deliveryDate?' · 📅 '+s.deliveryDate:'') + refStr +
-        trackBtn + '<br>' + badge +
         '</div>';
     }).join('');
     return '<div class="hist-item"><div class="hist-item-name">📅 ' + entry.date + ' às ' + entry.time + '</div><div class="hist-item-info">' + stopsHtml + '</div></div>';
   }).join('');
-  // Atualizar status em tempo real para pedidos com key
-  startHistoryTracking(hist);
-}
-
-var histTrackListeners = [];
-function startHistoryTracking(hist) {
-  histTrackListeners.forEach(function(t){ try{t.ref.off('value',t.cb);}catch(e){} });
-  histTrackListeners = [];
-  if (!db) return;
-  hist.forEach(function(entry) {
-    if (!entry.room) return;
-    (entry.stops || []).forEach(function(s) {
-      if (!s.key) return;
-      var ref = db.ref('rooms/' + entry.room + '/tracking/' + s.key);
-      var cb = ref.on('value', function(snap) {
-        var badge = document.getElementById('hist_track_' + s.key);
-        if (!badge) return;
-        var raw = snap.val();
-        if (!raw) return;
-        try {
-          var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
-          var status = data.status || 'pending';
-          var info = STATUS_LABELS[status] || STATUS_LABELS['pending'];
-          badge.textContent = info.text;
-          badge.className = 'status-badge ' + info.css;
-        } catch(e) {}
-      });
-      histTrackListeners.push({ref: ref, cb: cb});
-    });
-  });
 }
 function initClientHistory() {
   var hist = getClientHistory();
@@ -946,5 +940,42 @@ function initClientHistory() {
 // ═══════════════════════════════════════════════════
 window.addEventListener('load', init);
 </script>
+
+<!-- MODAL EDITAR ENTREGA -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)window.closeEditModal()">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Editar entrega</div>
+    <div class="modal-field">
+      <div class="modal-label">Endereço</div>
+      <input class="modal-input" id="editAddress" type="text" placeholder="Rua, número">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Complemento</div>
+      <input class="modal-input" id="editComplement" type="text" placeholder="Apto, bloco...">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Referência</div>
+      <input class="modal-input" id="editReference" type="text" placeholder="Próximo a...">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Observações</div>
+      <input class="modal-input" id="editNotes" type="text" placeholder="Ligar antes, portão azul...">
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <div class="modal-label">Horário de</div>
+        <input class="modal-input" id="editTimeFrom" type="time">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Horário até</div>
+        <input class="modal-input" id="editTimeTo" type="time">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="window.closeEditModal()">Cancelar</button>
+      <button class="modal-btn confirm" onclick="window.submitEdit()">Enviar solicitação</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
