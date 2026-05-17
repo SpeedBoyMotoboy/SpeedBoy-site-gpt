@@ -163,12 +163,24 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.error{border-color:var(--red);color:var(--red);}
 .toast.success{border-color:var(--green);color:var(--green);}
+
+/* SERVICE TYPE GRID */
+.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.svc-card{background:var(--card2);border:1.5px solid var(--border);border-radius:12px;padding:12px 10px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;font-family:'Barlow',sans-serif;font-size:12px;font-weight:600;color:var(--muted);line-height:1.3;width:100%;}
+.svc-card .svc-icon{font-size:22px;display:block;margin-bottom:4px;}
+.svc-card.selected{border-color:var(--accent);background:rgba(245,197,24,.1);color:var(--text);}
+.svc-card:active{opacity:.75;}
+/* ORIGIN FIELD */
+.origin-field{display:none;margin-bottom:12px;}
+.origin-field.show{display:block;}
+/* SPECIAL REQ TOGGLE */
+.pay-btn.active{border-color:var(--accent);background:rgba(245,197,24,.1);color:var(--text);}
 </style>
 </head>
 <body>
 
 <div class="toast"  id="toast"></div>
-<div class="loading" id="loading"><div class="spinner"></div><div class="loading-text">Enviando para o Luan...</div></div>
+<div class="loading" id="loading"><div class="spinner"></div><div class="loading-text">Enviando pedido...</div></div>
 
 <div class="hero">
   <button class="theme-toggle" id="themeBtn" onclick="window.toggleTheme()">☀️ Claro</button>
@@ -179,10 +191,10 @@ body.light .theme-toggle{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)
 
 <div id="mainWrap">
   <div class="form-wrap">
-    <div class="sec-divider">ENTREGAS</div>
+    <div class="sec-divider">📍 PONTOS DE SERVIÇO</div>
     <div class="stops-wrap" id="stopsWrap"></div>
     <button class="btn-add-stop" id="btnAdd" onclick="window.addStop()">
-      <span style="font-size:20px">＋</span> Adicionar outro endereço
+      <span style="font-size:20px">＋</span> Adicionar outro ponto
     </button>
   </div>
   <div class="form-wrap" style="padding-top:0;">
@@ -271,7 +283,8 @@ var FIREBASE_CONFIG = {
 
 // URL params
 var params     = new URLSearchParams(window.location.search);
-var ROOM       = (params.get('room') || '').toUpperCase();
+var EMBEDDED_ROOM = 'SB-RWZ4';
+var ROOM       = (params.get('room') || EMBEDDED_ROOM).toUpperCase();
 var STORE_NAME = params.get('store') || '';
 var LUAN_PHONE = params.get('phone') || '5527999165959'; // Número do Luan para WhatsApp
 
@@ -326,6 +339,53 @@ function getAllBairros(city) {
 }
 
 // ═══════════════════════════════════════════════════
+//  TIPOS DE SERVIÇO
+// ═══════════════════════════════════════════════════
+var SERVICE_TYPES = [
+  {id:'entrega',       icon:'🛵', label:'Entrega expressa',        hasOrigin:false},
+  {id:'coleta_entrega',icon:'🔄', label:'Coleta + entrega',         hasOrigin:true },
+  {id:'aeroporto',     icon:'✈️', label:'Aeroporto / bagagem',     hasOrigin:true },
+  {id:'correios',      icon:'📬', label:'Correios / transportadora',hasOrigin:false},
+  {id:'assinatura',    icon:'✍️', label:'Coleta de assinatura',    hasOrigin:true },
+  {id:'banco_cartorio',icon:'🏦', label:'Banco / cartório',         hasOrigin:false},
+  {id:'galpao',        icon:'🏭', label:'Coleta em galpão',         hasOrigin:true },
+  {id:'embalagem',     icon:'📦', label:'Embalagem + despacho',    hasOrigin:false},
+  {id:'entrega_longa', icon:'🚗', label:'Entrega longa distância',  hasOrigin:false},
+  {id:'representante', icon:'💼', label:'Representante / empresa',  hasOrigin:false},
+  {id:'outro',         icon:'🔧', label:'Outro serviço',            hasOrigin:false}
+];
+
+function getSvcLabel(svcId) {
+  for (var i = 0; i < SERVICE_TYPES.length; i++) {
+    if (SERVICE_TYPES[i].id === svcId) return SERVICE_TYPES[i].icon + ' ' + SERVICE_TYPES[i].label;
+  }
+  return '🛵 Entrega expressa';
+}
+
+window.selectService = function(stopId, svcId) {
+  var svc = null;
+  for (var i = 0; i < SERVICE_TYPES.length; i++) {
+    if (SERVICE_TYPES[i].id === svcId) { svc = SERVICE_TYPES[i]; break; }
+  }
+  if (!svc) return;
+  var input = document.getElementById(stopId + '_svctype');
+  if (input) input.value = svcId;
+  var grid = document.getElementById(stopId + '_svcgrid');
+  if (grid) {
+    grid.querySelectorAll('.svc-card').forEach(function(card) {
+      card.classList.toggle('selected', card.getAttribute('data-svc') === svcId);
+    });
+  }
+  var originField = document.getElementById(stopId + '_originField');
+  if (originField) originField.classList.toggle('show', !!svc.hasOrigin);
+};
+
+window.toggleReq = function(stopId, reqId) {
+  var btn = document.getElementById(stopId + '_' + reqId);
+  if (btn) btn.classList.toggle('active');
+};
+
+// ═══════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════
 function init() {
@@ -334,13 +394,6 @@ function init() {
     document.getElementById('storeSpan').textContent = STORE_NAME;
     document.getElementById('heroBadge').classList.add('show');
     document.title = 'SPEEDBOY — ' + STORE_NAME;
-  }
-
-  // Verifica se tem sala
-  if (!ROOM) {
-    document.getElementById('mainWrap').style.display = 'none';
-    document.getElementById('errorWrap').classList.add('show');
-    return;
   }
 
   // Inicializa Firebase
@@ -352,13 +405,6 @@ function init() {
     console.error('Firebase init error:', e);
     showToast('Erro ao conectar. Tente novamente.', 'error');
   }
-
-  // Define data padrão como hoje
-  setTimeout(function() {
-    var dateInputs = document.querySelectorAll('input[type="date"]');
-    var today = new Date().toISOString().split('T')[0];
-    dateInputs.forEach(function(el){ if(!el.value) el.value = today; });
-  }, 100);
 
   // Restaura tema salvo
   if (localStorage.getItem('sb_pedido_theme') === 'light') {
@@ -383,20 +429,42 @@ window.addStop = function() {
   div.className = 'stop-card';
   div.id = id;
 
+  // Build service type grid
+  var svcCards = SERVICE_TYPES.map(function(t) {
+    var sel = t.id === 'entrega' ? ' selected' : '';
+    return '<button type="button" class="svc-card' + sel + '" data-svc="' + t.id +
+      '" onclick="window.selectService(\'' + id + '\',\'' + t.id + '\')">' +
+      '<span class="svc-icon">' + t.icon + '</span>' + t.label + '</button>';
+  }).join('');
+
   div.innerHTML =
+    // HEADER
     '<div class="stop-card-hdr">' +
       '<div class="stop-card-title">' +
         '<div class="stop-num">' + num + '</div>' +
-        'ENTREGA ' + num +
+        'PONTO ' + num +
       '</div>' +
       (num > 1 ? '<button class="btn-rm" onclick="window.removeStop(\'' + id + '\')">✕</button>' : '') +
     '</div>' +
     '<div class="stop-card-body">' +
+
+      // ── TIPO DE SERVIÇO ──
+      '<div class="sec-divider" style="margin:0 0 12px">⚙️ TIPO DE SERVIÇO</div>' +
+      '<input type="hidden" id="' + id + '_svctype" value="entrega">' +
+      '<div class="svc-grid" id="' + id + '_svcgrid">' + svcCards + '</div>' +
+
+      // ── ORIGEM (condicional) ──
+      '<div class="origin-field" id="' + id + '_originField">' +
+        '<div class="field-label">📍 Endereço de coleta — ponto A</div>' +
+        '<input class="field-input" id="' + id + '_origin" placeholder="Rua, número - Bairro, Cidade" />' +
+      '</div>' +
+
+      // ── DESTINATÁRIO / DESTINO ──
+      '<div class="sec-divider" style="margin:16px 0 12px">👤 DESTINATÁRIO / DESTINO</div>' +
       '<div class="field-group">' +
-        '<div class="field-label">Nome do cliente <span class="req">*</span></div>' +
+        '<div class="field-label">Nome / Empresa <span class="req">*</span></div>' +
         '<input class="field-input" id="' + id + '_name" placeholder="Ex: Pedro Santos" />' +
       '</div>' +
-      '<div class="sec-divider" style="margin:16px 0 12px">📍 Endereço</div>' +
       '<div class="field-row">' +
         '<div class="field-group">' +
           '<div class="field-label">Cidade <span class="req">*</span></div>' +
@@ -435,38 +503,53 @@ window.addStop = function() {
         '<div class="field-label">Ponto de Referência</div>' +
         '<input class="field-input" id="' + id + '_reference" placeholder="Próximo à padaria, perto do banco..." />' +
       '</div>' +
+
+      // ── SERVIÇO ──
+      '<div class="sec-divider" style="margin:16px 0 12px">📦 DETALHES DO SERVIÇO</div>' +
       '<div class="field-group">' +
-        '<div class="field-label">📅 Data da entrega <span class="req">*</span></div>' +
-        '<input class="field-input" id="' + id + '_date" type="date" style="color:var(--text)" />' +
+        '<div class="field-label">O que será transportado</div>' +
+        '<input class="field-input" id="' + id + '_item" placeholder="Documentos, encomenda, bagagem, produto..." />' +
       '</div>' +
-      '<div class="field-group">' +
-        '<div class="field-label">Tipo de serviço</div>' +
-        '<select class="field-input" id="' + id + '_type" style="appearance:none;cursor:pointer">' +
-          '<option value="entrega">🛵 Entrega</option>' +
-          '<option value="retirada">📦 Retirada</option>' +
-          '<option value="troca">🔄 Troca</option>' +
-        '</select>' +
+      '<div class="field-row">' +
+        '<div class="field-group">' +
+          '<div class="field-label">⚡ Urgência</div>' +
+          '<select class="field-input" id="' + id + '_urgency" style="appearance:none;cursor:pointer">' +
+            '<option value="normal">🟢 Normal</option>' +
+            '<option value="urgente">🔴 Urgente</option>' +
+            '<option value="agendar">📅 Agendar</option>' +
+          '</select>' +
+        '</div>' +
+        '<div class="field-group">' +
+          '<div class="field-label">📅 Data</div>' +
+          '<input class="field-input" id="' + id + '_date" type="date" style="color:var(--text)" />' +
+        '</div>' +
       '</div>' +
       '<div class="field-group">' +
         '<div class="field-label">⏰ Horário (opcional)</div>' +
         '<div class="time-row">' +
-          '<div style="flex:1">' +
-            '<div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;">DE</div>' +
-            '<input class="time-input" id="' + id + '_timeFrom" type="time" />' +
-          '</div>' +
+          '<div style="flex:1"><div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;">DE</div>' +
+          '<input class="time-input" id="' + id + '_timeFrom" type="time" /></div>' +
           '<div class="time-sep">até</div>' +
-          '<div style="flex:1">' +
-            '<div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;">ATÉ</div>' +
-            '<input class="time-input" id="' + id + '_timeTo" type="time" />' +
-          '</div>' +
+          '<div style="flex:1"><div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;">ATÉ</div>' +
+          '<input class="time-input" id="' + id + '_timeTo" type="time" /></div>' +
         '</div>' +
       '</div>' +
-      '<div class="field-row">' +
-        '<div class="field-group">' +
-          '<div class="field-label">Telefone</div>' +
-          '<input class="field-input" id="' + id + '_phone" type="tel" placeholder="(XX) XXXXX-XXXX" oninput="window.maskPhone(this)" maxlength="15" />' +
+      '<div class="field-group">' +
+        '<div class="field-label">Requisitos especiais</div>' +
+        '<div class="pay-row">' +
+          '<button type="button" class="pay-btn" id="' + id + '_needsPkg" onclick="window.toggleReq(\'' + id + '\',\'needsPkg\')">📦 Precisa embalagem</button>' +
+          '<button type="button" class="pay-btn" id="' + id + '_needsProof" onclick="window.toggleReq(\'' + id + '\',\'needsProof\')">✍️ Precisa comprovante</button>' +
         '</div>' +
       '</div>' +
+
+      // ── CONTATO ──
+      '<div class="sec-divider" style="margin:16px 0 12px">📞 CONTATO</div>' +
+      '<div class="field-group">' +
+        '<div class="field-label">Telefone</div>' +
+        '<input class="field-input" id="' + id + '_phone" type="tel" placeholder="(XX) XXXXX-XXXX" oninput="window.maskPhone(this)" maxlength="15" />' +
+      '</div>' +
+
+      // ── PAGAMENTO ──
       '<div class="field-group">' +
         '<div class="field-label">Pagamento <span class="req">*</span></div>' +
         '<div class="pay-row">' +
@@ -481,6 +564,8 @@ window.addStop = function() {
           '</div>' +
         '</div>' +
       '</div>' +
+
+      // ── OBSERVAÇÕES ──
       '<div class="field-group" style="margin-bottom:0">' +
         '<div class="field-label">Observações</div>' +
         '<input class="field-input" id="' + id + '_notes" placeholder="Ligar antes, cuidado com cachorro..." />' +
@@ -488,6 +573,11 @@ window.addStop = function() {
     '</div>';
 
   document.getElementById('stopsWrap').appendChild(div);
+
+  // Set today as default date
+  var dateEl = document.getElementById(id + '_date');
+  if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+
   renumber();
 };
 
@@ -563,7 +653,7 @@ function renumber() {
   cards.forEach(function(el, i) {
     var title = el.querySelector('.stop-card-title');
     var btn   = el.querySelector('.btn-rm');
-    if (title) title.innerHTML = '<div class="stop-num">' + (i+1) + '</div> ENTREGA ' + (i+1);
+    if (title) title.innerHTML = '<div class="stop-num">' + (i+1) + '</div> PONTO ' + (i+1);
     if (i === 0 && btn) btn.remove();
   });
 }
@@ -590,54 +680,66 @@ window.submitPedido = function() {
     var id = card.id;
     
     // Elementos
-    var nameEl      = document.getElementById(id + '_name');
-    var cityEl      = document.getElementById(id + '_city');
-    var bairroEl    = document.getElementById(id + '_bairro');
-    var ruaEl       = document.getElementById(id + '_rua');
-    var numeroEl    = document.getElementById(id + '_numero');
-    var compEl      = document.getElementById(id + '_complement');
-    var refEl       = document.getElementById(id + '_reference');
-    var phoneEl     = document.getElementById(id + '_phone');
-    var yesBtn      = document.getElementById(id + '_paid_yes');
-    var dateEl      = document.getElementById(id + '_date');
-    var typeEl      = document.getElementById(id + '_type');
-    var timeFromEl  = document.getElementById(id + '_timeFrom');
-    var timeToEl    = document.getElementById(id + '_timeTo');
-    var valEl       = document.getElementById(id + '_value');
-    var notesEl     = document.getElementById(id + '_notes');
-    
+    var nameEl       = document.getElementById(id + '_name');
+    var cityEl       = document.getElementById(id + '_city');
+    var bairroEl     = document.getElementById(id + '_bairro');
+    var ruaEl        = document.getElementById(id + '_rua');
+    var numeroEl     = document.getElementById(id + '_numero');
+    var compEl       = document.getElementById(id + '_complement');
+    var refEl        = document.getElementById(id + '_reference');
+    var phoneEl      = document.getElementById(id + '_phone');
+    var yesBtn       = document.getElementById(id + '_paid_yes');
+    var dateEl       = document.getElementById(id + '_date');
+    var svcTypeEl    = document.getElementById(id + '_svctype');
+    var originEl     = document.getElementById(id + '_origin');
+    var itemEl       = document.getElementById(id + '_item');
+    var urgencyEl    = document.getElementById(id + '_urgency');
+    var needsPkgEl   = document.getElementById(id + '_needsPkg');
+    var needsProofEl = document.getElementById(id + '_needsProof');
+    var timeFromEl   = document.getElementById(id + '_timeFrom');
+    var timeToEl     = document.getElementById(id + '_timeTo');
+    var valEl        = document.getElementById(id + '_value');
+    var notesEl      = document.getElementById(id + '_notes');
+
     // Valores
-    var name    = nameEl  ? nameEl.value.trim()      : '';
-    var city    = cityEl  ? cityEl.value             : '';
-    var bairro  = bairroEl ? bairroEl.value          : '';
-    var rua     = ruaEl   ? ruaEl.value.trim()       : '';
-    var numero  = numeroEl ? numeroEl.value.trim()   : '';
-    var comp    = compEl  ? compEl.value.trim()      : '';
-    var ref     = refEl   ? refEl.value.trim()       : '';
-    var phone   = phoneEl ? phoneEl.value.replace(/\D/g,'') : '';
+    var name    = nameEl   ? nameEl.value.trim()            : '';
+    var city    = cityEl   ? cityEl.value                   : '';
+    var bairro  = bairroEl ? bairroEl.value                 : '';
+    var rua     = ruaEl    ? ruaEl.value.trim()             : '';
+    var numero  = numeroEl ? numeroEl.value.trim()          : '';
+    var comp    = compEl   ? compEl.value.trim()            : '';
+    var ref     = refEl    ? refEl.value.trim()             : '';
+    var phone   = phoneEl  ? phoneEl.value.replace(/\D/g,'') : '';
+    var svcId   = svcTypeEl ? svcTypeEl.value               : 'entrega';
+    var svcDef  = SERVICE_TYPES.filter(function(t){ return t.id===svcId; })[0] || SERVICE_TYPES[0];
+    var originAddr  = originEl     ? originEl.value.trim()  : '';
+    var itemDesc    = itemEl       ? itemEl.value.trim()     : '';
+    var urgency     = urgencyEl    ? urgencyEl.value         : 'normal';
+    var needsPkg    = needsPkgEl   ? needsPkgEl.classList.contains('active')   : false;
+    var needsProof  = needsProofEl ? needsProofEl.classList.contains('active') : false;
 
     // VALIDAÇÕES OBRIGATÓRIAS
     var errors = [];
-    
-    if (!name)                  { errors.push(nameEl);    }
-    if (!city)                  { errors.push(cityEl);    }
-    if (!bairro)                { errors.push(bairroEl);  }
-    if (!rua)                   { errors.push(ruaEl);     }
-    if (!numero)                { errors.push(numeroEl);  }
-    if (!phone || phone.length < 10) { errors.push(phoneEl); showToast('⚠️ Telefone inválido ou não preenchido', 'error'); }
-    
+
+    if (!name)   { errors.push(nameEl);   }
+    if (!city)   { errors.push(cityEl);   }
+    if (!bairro) { errors.push(bairroEl); }
+    if (!rua)    { errors.push(ruaEl);    }
+    if (!numero) { errors.push(numeroEl); }
+    if (phone && phone.length < 10) { errors.push(phoneEl); showToast('⚠️ Telefone inválido', 'error'); }
+
     // Salva bairro customizado se for novo
     if (city && bairro) {
       addCustomBairro(city, bairro);
     }
-    
+
     if (errors.length > 0) {
       errors.forEach(function(el) { if (el) el.classList.add('error'); });
       if (!hasErr) card.scrollIntoView({behavior:'smooth',block:'center'});
       hasErr = true;
       return;
     }
-    
+
     // Remover marcação de erro se passou
     [nameEl, cityEl, bairroEl, ruaEl, numeroEl, compEl, phoneEl].forEach(function(el) {
       if (el) el.classList.remove('error');
@@ -647,9 +749,8 @@ window.submitPedido = function() {
     var address = rua + ', ' + numero + ', ' + bairro + ' - ' + CIDADE_BAIRROS[city].nome;
 
     // Verificar pagamento
-    var isPaid  = yesBtn && yesBtn.classList.contains('paid');
-    var isNoBtn = document.getElementById(id + '_paid_no');
-    var hasPay  = (yesBtn && (yesBtn.classList.contains('paid') || (isNoBtn && isNoBtn.classList.contains('due'))));
+    var isPaid     = yesBtn && yesBtn.classList.contains('paid');
+    var isNoBtn    = document.getElementById(id + '_paid_no');
     var productVal = valEl ? parseMoney(valEl.value) : 0;
 
     // Data
@@ -660,30 +761,36 @@ window.submitPedido = function() {
     }
 
     newStops.push({
-      name:         name,
-      address:      address,
-      complement:   comp,
-      reference:    ref,
-      phone:        phone,
-      timeFrom:     timeFromEl? timeFromEl.value : '',
-      timeTo:       timeToEl  ? timeToEl.value   : '',
-      deliveryDate: delivDate,
-      serviceType:  typeEl    ? typeEl.value     : 'entrega',
-      cityId:       city,
-      city:         CIDADE_BAIRROS[city].nome,
-      neighborhood: bairro,
-      street:       rua,
-      number:       numero,
-      productValue: productVal,
-      productPaid:  isPaid,
-      value:        0,
-      paid:         false,
-      notes:        notesEl   ? notesEl.value.trim() : '',
-      store:        STORE_NAME || 'Loja',
-      done:         false,
-      status:       'pending',
-      submittedAt:  new Date().toISOString(),
-      arrivedAt:    new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+      name:           name,
+      address:        address,
+      complement:     comp,
+      reference:      ref,
+      phone:          phone,
+      timeFrom:       timeFromEl   ? timeFromEl.value   : '',
+      timeTo:         timeToEl     ? timeToEl.value     : '',
+      deliveryDate:   delivDate,
+      serviceType:    svcId,
+      serviceLabel:   svcDef.label,
+      originAddress:  originAddr,
+      itemDesc:       itemDesc,
+      urgency:        urgency,
+      needsPackaging: needsPkg,
+      needsProof:     needsProof,
+      cityId:         city,
+      city:           CIDADE_BAIRROS[city].nome,
+      neighborhood:   bairro,
+      street:         rua,
+      number:         numero,
+      productValue:   productVal,
+      productPaid:    isPaid,
+      value:          0,
+      paid:           false,
+      notes:          notesEl      ? notesEl.value.trim() : '',
+      store:          STORE_NAME || 'Loja',
+      done:           false,
+      status:         'pending',
+      submittedAt:    new Date().toISOString(),
+      arrivedAt:      new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
     });
   });
 
@@ -718,7 +825,7 @@ window.submitPedido = function() {
         var timeStr = (s.timeFrom || s.timeTo)
           ? ' · ⏰ ' + (s.timeFrom||'?') + '–' + (s.timeTo||'?')
           : '';
-        var typeIcon = s.serviceType === 'retirada' ? '📦 Retirada' : s.serviceType === 'troca' ? '🔄 Troca' : '🛵 Entrega';
+        var typeIcon = s.serviceLabel || getSvcLabel(s.serviceType);
         var dateStr  = s.deliveryDate ? ' · 📅 ' + s.deliveryDate : '';
         var key = lastSubmittedKeys[i] || '';
         var editBtn = key ? '<button class="client-req-btn edit-btn" onclick="window.openEditModal(\'' + key + '\',' + i + ')">✏️ Editar entrega</button>' : '';
@@ -821,13 +928,17 @@ window.sendWhatsApp = function() {
   message += '📦 *' + lastSubmittedStops.length + ' entrega(s):*\n\n';
   
   lastSubmittedStops.forEach(function(s, i) {
-    var type = s.serviceType === 'retirada' ? '📦 Retirada' : s.serviceType === 'troca' ? '🔄 Troca' : '🛵 Entrega';
+    var type = s.serviceLabel || getSvcLabel(s.serviceType);
     message += (i+1) + '. *' + s.name + '*\n';
-    message += '   ' + type + '\n';
+    message += '   ' + type + (s.urgency==='urgente'?' 🔴 URGENTE':'') + '\n';
+    if (s.originAddress) message += '   📌 Origem: ' + s.originAddress + '\n';
     message += '   📍 ' + s.address + '\n';
+    if (s.itemDesc) message += '   📦 ' + s.itemDesc + '\n';
     if (s.reference) message += '   🔍 Ref: ' + s.reference + '\n';
     if (s.timeFrom || s.timeTo) message += '   ⏰ ' + (s.timeFrom||'?') + ' - ' + (s.timeTo||'?') + '\n';
     if (s.deliveryDate) message += '   📅 ' + s.deliveryDate + '\n';
+    if (s.needsPackaging) message += '   📦 Precisa embalagem\n';
+    if (s.needsProof) message += '   ✍️ Precisa comprovante\n';
     if (s.productValue > 0) message += '   💰 R$ ' + s.productValue.toFixed(2).replace('.',',') + ' (' + (s.productPaid ? 'pago' : 'a cobrar') + ')\n';
     message += '\n';
   });
@@ -919,7 +1030,7 @@ function renderClientHistory() {
   if (!hist.length) { list.innerHTML = '<div class="hist-empty">Nenhum pedido ainda.</div>'; return; }
   list.innerHTML = hist.map(function(entry) {
     var stopsHtml = entry.stops.map(function(s, i) {
-      var type    = s.serviceType==='retirada'?'📦':s.serviceType==='troca'?'🔄':'🛵';
+      var type    = getSvcLabel(s.serviceType).split(' ')[0];
       var refStr  = s.reference ? ' · 🔍 ' + s.reference : '';
       return '<div style="margin-top:6px">' +
         type + ' ' + (i+1) + '. <strong>' + s.name + '</strong> — ' + (s.city||'') +

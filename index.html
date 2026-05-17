@@ -489,6 +489,16 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
           <option value="entrega">🛵 Entrega</option>
           <option value="retirada">📦 Retirada</option>
           <option value="troca">🔄 Troca</option>
+          <option value="coleta_entrega">🔄 Coleta+Entrega</option>
+          <option value="aeroporto">✈️ Aeroporto</option>
+          <option value="correios">📬 Correios</option>
+          <option value="assinatura">✍️ Assinatura</option>
+          <option value="banco_cartorio">🏦 Banco/Cartório</option>
+          <option value="galpao">🏭 Galpão</option>
+          <option value="embalagem">📦 Embalagem+Despacho</option>
+          <option value="entrega_longa">🚗 Entrega Longa</option>
+          <option value="representante">💼 Representante</option>
+          <option value="outro">🔧 Outro</option>
         </select>
       </div>
     </div>
@@ -936,6 +946,16 @@ function saveCfg()     { localStorage.setItem('sb_cfg',     JSON.stringify(cfg))
 function fmtMoney(v) { return 'R$ ' + (parseFloat(v)||0).toFixed(2).replace('.',','); }
 function parseMoney(s){ return parseFloat(String(s||'').replace(',','.')) || 0; }
 
+const SVC_MAP={
+  entrega:'🛵 Entrega',retirada:'📦 Retirada',troca:'🔄 Troca',
+  coleta_entrega:'🔄 Coleta+Entrega',aeroporto:'✈️ Aeroporto',
+  correios:'📬 Correios',assinatura:'✍️ Assinatura',
+  banco_cartorio:'🏦 Banco/Cartório',galpao:'🏭 Galpão',
+  embalagem:'📦 Embalagem+Despacho',entrega_longa:'🚗 Entrega Longa',
+  representante:'💼 Representante',outro:'🔧 Outro'
+};
+function svcLabel(t){ return SVC_MAP[t]||SVC_MAP.entrega; }
+
 function maskPhone(el) {
   let v = el.value.replace(/\D/g,'');
   if(v.length>11) v=v.substring(0,11);
@@ -1140,7 +1160,7 @@ function renderHome(){
             <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
               ${s.store?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(255,107,0,.18);color:#ff6b00;">🏪 ${s.store}</span>`:''}
               ${cityLabel?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;">${cityLabel}</span>`:''}
-              <span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(255,107,0,.15);color:#ff6b00;">${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</span>
+              <span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(255,107,0,.15);color:#ff6b00;">${svcLabel(s.serviceType)}</span>
               ${prodVal>0?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:${s.productPaid?'rgba(0,230,118,.15)':'rgba(245,197,24,.12)'};color:${s.productPaid?'var(--green)':'var(--accent)'};">${s.productPaid?'✓ Cobrado':'💰 R$'+prodVal.toFixed(2).replace('.',',')}</span>`:''}
               ${s.deliveryDate?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(161,100,220,.15);color:#a164dc;">${delivDateLabel(s.deliveryDate)}</span>`:''}
             </div>
@@ -1169,7 +1189,7 @@ function renderHome(){
             ${s.city?`<div class="detail-chip"><span class="detail-chip-lbl">🏙️ Cidade</span>${cityName(resolveCityCode(s.city||s.cityId))}</div>`:''}
             ${s.deliveryDate?`<div class="detail-chip"><span class="detail-chip-lbl">📅 Data</span>${s.deliveryDate}</div>`:''}
             ${(s.timeFrom||s.timeTo)?`<div class="detail-chip"><span class="detail-chip-lbl">⏰ Horário</span>${s.timeFrom||'?'} – ${s.timeTo||'?'}</div>`:''}
-            ${s.serviceType?`<div class="detail-chip"><span class="detail-chip-lbl">Tipo</span>${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</div>`:''}
+            ${s.serviceType?`<div class="detail-chip"><span class="detail-chip-lbl">Tipo</span>${svcLabel(s.serviceType)}</div>`:''}
             ${s.arrivedAt?`<div class="detail-chip"><span class="detail-chip-lbl">📨 Chegou</span>${s.arrivedAt}</div>`:''}
             ${valStr?`<div class="detail-chip"><span class="detail-chip-lbl">💰 Taxa</span>${valStr} <span class="paid-badge ${s.paid?'yes':'no'}">${s.paid?'✓ Recebida':'A receber'}</span></div>`:''}
             ${s.productValue>0?`<div class="detail-chip"><span class="detail-chip-lbl">💳 Produto</span>R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')} <span class="paid-badge ${s.productPaid?'yes':'no'}">${s.productPaid?'✓ Pago':'A cobrar'}</span></div>`:''}
@@ -1211,7 +1231,7 @@ function renderHome(){
               </div>
               <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
                 ${cityLabel?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(59,130,246,.15);color:#3b82f6;">${cityLabel}</span>`:''}
-                <span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(255,107,0,.15);color:#ff6b00;">${s.serviceType==='retirada'?'📦 Retirada':s.serviceType==='troca'?'🔄 Troca':'🛵 Entrega'}</span>
+                <span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(255,107,0,.15);color:#ff6b00;">${svcLabel(s.serviceType)}</span>
                 ${s.store?`<span style="padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;background:rgba(161,100,220,.12);color:#a164dc;">🏪 ${s.store}</span>`:''}
               </div>
               ${(s.street||s.number||s.complement)?`<div style="font-size:13px;color:var(--muted);margin-bottom:2px;">${[s.street,s.number,s.complement].filter(Boolean).join(' ')}</div>`:''}
@@ -2020,8 +2040,7 @@ function primeiroSegundoNome(full){
 function sendQ(type){
   if(!wppStop)return;
   const loja=wppStop.store?`${wppStop.store}. `:'';
-  const tipoMap={entrega:'entrega',retirada:'retirada',troca:'troca'};
-  const tipo=tipoMap[wppStop.serviceType]||'serviço';
+  const tipo=svcLabel(wppStop.serviceType).replace(/^[^\s]+\s/,'')||'serviço';
   const nome=primeiroSegundoNome(wppStop.name);
   const msg=QM[type]
     .replace(/{nome}/g,nome)
@@ -2777,7 +2796,7 @@ async function genPDF(){
       String(i+1),s._date,s.name||'—',
       cityName(resolveCityCode(s.city||s.cityId))||'—',
       s.store||'—',
-      s.serviceType==='retirada'?'Retirada':s.serviceType==='troca'?'Troca':'Entrega',
+      svcLabel(s.serviceType).replace(/^[^\s]+\s/,''),
       fmtMoney(parseMoney(s.value)),s.paid?'✓':'—'
     ]);
     if(y>PH-60){doc.addPage();y=14;}
@@ -2819,7 +2838,7 @@ async function genPDF(){
           String(i+1),s._date,s.name||'—',
           (s.neighborhood||'').substring(0,28),
           cityName(resolveCityCode(s.city||s.cityId))||'—',
-          s.serviceType==='retirada'?'Retirada':s.serviceType==='troca'?'Troca':'Entrega',
+          svcLabel(s.serviceType).replace(/^[^\s]+\s/,''),
           fmtMoney(parseMoney(s.value)),s.paid?'✓':'—'
         ]),
         styles:{fontSize:7,cellPadding:2,textColor:[220,220,220],fillColor:[14,14,20]},
@@ -3468,7 +3487,7 @@ function renderPending(){
   badge.textContent=keys.length;
   list.innerHTML=keys.map(k=>{
     const s=pendingData[k];
-    const typeIcon = s.serviceType==='retirada'?'📦 Retirada':'🛵 Entrega';
+    const typeIcon = svcLabel(s.serviceType);
     const dateStr  = s.deliveryDate?`📅 ${s.deliveryDate}`:'';
     const timeStr  = (s.timeFrom||s.timeTo)?`⏰ ${s.timeFrom||'?'}–${s.timeTo||'?'}`:'';
     const prodStr  = s.productValue>0?`· cobrar R$ ${parseMoney(s.productValue).toFixed(2).replace('.',',')}`:'';
